@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.datatrack.dao.DataTrackDao">
+	
+	<select id="getBaseBomNoForProduct" parameterType="String" resultType="com.bt.modules.datatrack.entity.DataTrackDetail">
+		select
+			a.id as "orderBomBase.id", 
+			a.order_bom_no as "orderBomBase.orderBomNo",
+			b.id as  "sub.id",
+			b.project_id as "project.id"
+		from btg_order_bom_base a left join btg_subproject b on a.sub_proj_id = b.id 
+		<where>
+		 a.workflow_status = '4'
+		 and a.uniform_materiel_type not in('1','2') 
+	     and b.id =  #{id}
+		</where>
+	</select>
+	
+	
+	<select id="getBaseBomNoForPurchase" parameterType="String" resultType="com.bt.modules.datatrack.entity.DataTrackDetail">
+		select
+			a.id as "orderBomBase.id", 
+			a.order_bom_no as "orderBomBase.orderBomNo",
+			b.id as  "sub.id",
+			b.project_id as "project.id"
+		from btg_order_bom_base a left join btg_subproject b on a.sub_proj_id = b.id 
+		<where>
+		 a.workflow_status = '4'
+		 and a.uniform_materiel_type in('1','2') 
+	     and b.id =  #{id}
+		</where>
+	</select>
+	
+	
+	
+	<!-- 根据已有的生产单显示相关的项目列表数据 -->
+	<select id="getListForProject" parameterType="String" resultType="com.bt.modules.datatrack.entity.DataTrackDetail">
+		SELECT
+			obbase.order_bom_no AS "orderBomBase.orderBomNo",
+			obbase.order_type AS "orderBomBase.orderType",
+			obbase.id AS "orderBomBase.id",
+			obbox.box_no AS "orderBomBox.boxNo",
+			obdetail.materiel_name AS "orderBomDetail.materielName",
+			obdetail.materiel_no AS "orderBomDetail.materielNo",
+			obdetail.id AS "orderBomDetail.id",
+			obdetail.count AS "orderBomDetail.count",
+			obdetail.box_no AS "orderBomDetail.boxNo",
+			ifnull(sum(obdetail.area), 0) AS "orderBomDetail.area",
+			dict.label AS "orderBomBase.stoneColorName",
+			project.id AS "project.id",
+			project. NAME AS "project.name",
+			project.address AS "project.address",
+			sub.id AS "sub.id",
+			sub.stone_expect_date AS "sub.stoneExpectDate",
+			a.id AS "id",
+			a.seriesnumber AS "seriesnumber",
+			a. STATUS AS "status",
+			a.count AS "count",
+			a.order_bom_box_id AS "orderBomBox.id",
+			a.assignto AS "assignto.id",
+			a.documentaryby AS "documentaryby.id",
+			a.settleby AS "settleby.id",
+			a.supp AS "supp.id",
+			a.finishDate AS "finishDate",
+			min(a.plan_send_date) AS "planSendDate",
+			a.create_by AS "createBy.id",
+			a.create_date AS "createDate",
+			a.update_by AS "updateBy.id",
+			a.update_date AS "updateDate",
+			ifnull(a.remarks, "") AS "remarks",
+			ifnull(a.director_remarks, "") AS "directorremarks",
+			ifnull(a.amaldar_remarks, "") AS "amaldarremarks",
+			a.del_flag AS "delFlag",
+			a.workflow_id AS "workflowId",
+			a.workflow_status AS "workflowStatus"
+		FROM
+			btg_production a
+		LEFT JOIN btg_order_bom_box obbox ON obbox.id = a.order_bom_box_id
+		JOIN btg_order_bom_base obbase ON obbase.id = obbox.order_bom_id
+		LEFT JOIN btg_order_bom_detail obdetail ON obdetail.order_bom_id = obbox.order_bom_id
+		AND obdetail.box_no = obbox.box_no
+		LEFT JOIN sys_dict dict ON dict.
+		VALUE
+			= obbase.stone_color_name
+		LEFT JOIN btg_subproject sub ON sub.id = obbase.sub_proj_id
+		JOIN btg_project project ON project.id = sub.project_id
+		LEFT JOIN btg_supplier supp ON supp.id = a.supp
+		LEFT JOIN sys_user usersupp ON usersupp.id = supp.business_preson
+		WHERE
+			project.del_flag = '0'
+		AND obbase.del_flag = '0'
+		AND obbase.workflow_status = '4'
+		AND project.id = #{0}
+		AND obbase.id = #{1}
+		AND a. STATUS >= (10+ 0)
+		GROUP BY
+			obbase.id
+	</select>
+	
+	<select id="getDetailProduct" parameterType="String" resultType="com.bt.modules.datatrack.entity.DataTrackDetail">
+		SELECT
+			obbase.order_bom_no AS "orderBomBase.orderBomNo",
+			obbase.order_type AS "orderBomBase.orderType",
+			obbase.id AS "orderBomBase.id",
+			obdetail.materiel_name AS "orderBomDetail.materielName",
+			obdetail.materiel_no AS "orderBomDetail.materielNo",
+			obdetail.id AS "orderBomDetail.id",
+			obdetail.count AS "orderBomDetail.count",
+			obbox.id AS "orderBomBox.id",
+			ifnull(obbox. STATUS, "") AS "orderBomBox.status",
+			obdetail.box_no AS "orderBomDetail.boxNo",
+			ifnull(supp. NAME, "") AS "supp.name",
+			ifnull(usersupp. NAME, "") AS "supp.businessPreson",
+			ifnull(supp.business_tel, "") AS "supp.businessTel",
+			sub.stone_expect_date AS "sub.stoneExpectDate",
+			project.id AS "project.id",
+			project.address AS "project.address",
+			a.id AS "id",
+			a.seriesnumber AS "seriesnumber",
+			min(a. STATUS) AS "status",
+			a.count AS "count",
+			a.order_bom_box_id AS "orderBomBox.id",
+			a.assignto AS "assignto.id",
+			a.documentaryby AS "documentaryby.id",
+			a.settleby AS "settleby.id",
+			a.supp AS "supp.id",
+			a.finishDate AS "finishDate",
+			min(a.plan_send_date) AS "planSendDate",
+			a.create_by AS "createBy.id",
+			a.create_date AS "createDate",
+			a.update_by AS "updateBy.id",
+			a.update_date AS "updateDate",
+			ifnull(a.remarks, "") AS "remarks",
+			ifnull(a.director_remarks, "") AS "directorremarks",
+			ifnull(a.amaldar_remarks, "") AS "amaldarremarks",
+			a.del_flag AS "delFlag",
+			a.workflow_id AS "workflowId",
+			a.workflow_status AS "workflowStatus"
+		FROM
+			btg_production a
+		LEFT JOIN btg_order_bom_box obbox ON obbox.id = a.order_bom_box_id
+		JOIN btg_order_bom_base obbase ON obbase.id = obbox.order_bom_id
+		LEFT JOIN btg_order_bom_detail obdetail ON obdetail.order_bom_id = obbox.order_bom_id
+		AND obdetail.box_no = obbox.box_no
+		LEFT JOIN sys_user auser ON auser.id = a.assignto
+		LEFT JOIN btg_supplier supp ON supp.id = a.supp
+		LEFT JOIN sys_user usersupp ON usersupp.id = supp.business_preson
+		LEFT JOIN btg_subproject sub ON sub.id = obbase.sub_proj_id
+		LEFT JOIN btg_project project ON project.id = sub.project_id
+		WHERE
+			a.del_flag = '0'
+		AND obbase.del_flag = '0'
+		AND obbase.workflow_status = '4'
+		
+		AND a.STATUS >= (#{0}+ 0)
+		AND obbase.id = #{1}
+		GROUP BY
+			obbox.id
+		ORDER BY
+			(a. STATUS + 0) ASC,
+			a.update_date,
+			obbox.box_no DESC
+
+	</select>
+	
+	
+	<select id="getDetailPurchase" parameterType="String" resultType="com.bt.modules.datatrack.entity.DataTrackDetail">
+		SELECT
+			obbase.order_bom_no AS "orderBomBase.orderBomNo",
+			obbase.order_type AS "orderBomBase.orderType",
+			obbase.id AS "orderBomBase.id",
+			obdetail.materiel_name AS "orderBomDetail.materielName",
+			obdetail.materiel_no AS "orderBomDetail.materielNo",
+			obdetail.id AS "orderBomDetail.id",
+			obdetail.count AS "orderBomDetail.count",
+			ifnull(ifnull(purchase.STATUS,assign.STATUS),a.STATUS) AS "status"
+		FROM
+			btg_purchase_demand a
+			LEFT JOIN btg_purchase_demand_assign assign ON a.id = assign.purchase_demand_id
+			LEFT JOIN btg_purchase purchase on a.id = purchase.purchase_demand_id
+			LEFT JOIN btg_purchase_demand_order_bom_detail_mapping b ON a.id = b.purchase_demand_id
+			LEFT JOIN btg_order_bom_detail obdetail ON b.order_bom_detail_id = obdetail.id
+			JOIN btg_order_bom_base obbase ON obbase.id = obdetail.order_bom_id
+			WHERE a.del_flag = '0'
+			AND obbase.del_flag = '0'
+			AND obbase.workflow_status = '4'
+			AND a. STATUS >= (10 + 0)
+			AND obbase.id = #{1}
+			ORDER BY
+				(a. STATUS + 0) ASC,
+				a.update_date DESC
+	</select>
+	 
+	
+</mapper>

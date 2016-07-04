@@ -1,0 +1,350 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.contract.service;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bt.modules.activiti.constants.ActivitiConstants;
+import com.bt.modules.activiti.interfaces.ProcessDataHandler;
+import com.bt.modules.contract.dao.ContractAccountDao;
+import com.bt.modules.contract.dao.LaborcontractDao;
+import com.bt.modules.contract.dao.LaboritemsDao;
+import com.bt.modules.contract.entity.Laborcontract;
+import com.bt.modules.contract.entity.Laboritems;
+import com.bt.modules.utils.CommonStatus;
+import com.bt.modules.utils.SeriesNumberUtils;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.EntityUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 劳务合同Service
+ * @author yhh
+ * @version 2015-08-05
+ */
+@Service(value = LaborcontractService.BEAN_NAME)
+@Transactional(readOnly = true)
+public class LaborcontractService extends ConContainDetailService<LaborcontractDao,
+		LaboritemsDao, Laborcontract, Laboritems> implements ProcessDataHandler {
+
+	public static final String BEAN_NAME = "com.bt.modules.contract.service.LaborcontractService";
+	
+	private static final String type = "应付";
+	
+	@Autowired
+	private LaborcontractAccountService accountService;
+	@Autowired
+	private ContractAccountDao contractAccountDao;
+	@Autowired
+	private LaborcontractDao laborcontractDao;
+	@Autowired
+	private LaborcontractBillService laborcontractBillService;
+	
+	public Laborcontract get(String id) {
+		return super.get(id);
+	}
+	
+	public List<Laborcontract> findList(Laborcontract laborcontract) {
+		return super.findList(laborcontract);
+	}
+	
+	public Page<Laborcontract> findPage(Page<Laborcontract> page, Laborcontract laborcontract) {
+		return super.findPage(page, laborcontract);
+	}
+	/**
+	 * 查询我创建的
+	 * @param page
+	 * @param laborcontract
+	 * @return
+	 */
+	public Page<Laborcontract> findMyLaborcontract(Page<Laborcontract> page, Laborcontract laborcontract) {
+		laborcontract.setPage(page);
+		laborcontract.setCreateBy(UserUtils.getUser());
+		laborcontract.setWorkflowstatus(CommonStatus.WORK_FLOW_INIT);
+		List<Laborcontract> list = laborcontractDao.findList(laborcontract);
+		page.setList(list);
+		return page;
+	}
+	/**
+	 * 查看待我审批的列表数据
+	 * @param page
+	 * @param laborcontract
+	 * @return
+	 */
+	public Page<Laborcontract> findUnAuditLaborcontract(Page<Laborcontract> page, Laborcontract laborcontract) {
+		laborcontract.setPage(page);
+		laborcontract.getExtraData().put("wfInit", CommonStatus.WORK_FLOW_INIT);
+		laborcontract.getExtraData().put("wfEnd", CommonStatus.WORK_FLOW_END);
+		page.setList(laborcontractDao.findUnAuditLaborcontract(laborcontract));
+		return page;
+	}
+	/**
+	 * 查看所有
+	 * @param page
+	 * @param laborcontract
+	 * @return
+	 */
+	public Page<Laborcontract> findAuditDoneLaborcontract(Page<Laborcontract> page, Laborcontract laborcontract) {
+		laborcontract.setPage(page);
+//		page.setList(laborcontractDao.findAuditDoneLaborcontract(laborcontract));
+		laborcontract.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+		page.setList(laborcontractDao.findList(laborcontract));
+		return page;
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(Laborcontract laborcontract, String delId) {
+		super.save(laborcontract);
+		accountService.updateFromLaborContract(laborcontract);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(Laborcontract laborcontract) {
+		Laborcontract originLaborcontract = dao.get(laborcontract.getId());
+		if(originLaborcontract!=null&&CommonStatus.WORK_FLOW_END.equals(originLaborcontract.getWorkflowstatus())
+				&&!Laborcontract.CON_STATUS_STOP.equals(laborcontract.getConStatus())
+				&&!Laborcontract.CON_STATUS_RELIEVE.equals(laborcontract.getConStatus())
+				&&(Laborcontract.CON_STATUS_NORMAL.equals(laborcontract.getConStatus())
+						&&Laborcontract.CON_STATUS_NORMAL.equals(originLaborcontract.getConStatus()))){//
+			laborcontract.setConStatus(Laborcontract.CON_STATUS_CHANGE);
+		}
+		super.save(laborcontract);
+		//记录日志操作信息 bill表  update
+		if(Laborcontract.CON_STATUS_CHANGE.equals(laborcontract.getConStatus())){
+			laborcontractBillService.insertChangeLog(laborcontract);
+		}else if(EntityUtils.verificationEntityField(originLaborcontract, laborcontract)){
+			laborcontractBillService.insertUpdateLog(laborcontract);
+		}
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(Laborcontract laborcontract) {
+		super.delete(laborcontract);
+	}
+	
+	@Transactional(readOnly = false)
+	public void deleteByProjectBuilding(Laborcontract laborcontract) {
+		laborcontractDao.deleteByProjectBuilding(laborcontract);
+	}
+	
+	/**
+	 * 删除多个
+	 */
+	@Transactional(readOnly = false)
+	public void delete(String ids) {
+		if(StringUtils.isNotEmpty(ids)){
+			String[] array =ids.split(",");
+			if(array !=null && array.length>0){
+				for(int i=0;i<array.length;i++){
+					Laborcontract subproject = new Laborcontract();
+					subproject.setId(array[i]);
+					super.dao.delete(subproject);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * 删除多个
+	 * 删除子数据明细数据
+	 */
+	@Transactional(readOnly = false)
+	public void deleteForParentid(String parentid) {
+		if(StringUtils.isNotEmpty(parentid)){
+			Laborcontract laborcontract = new Laborcontract();
+			laborcontract.setParentid(parentid);
+			super.dao.deleteForParentid(laborcontract);
+		}
+	}
+	
+	public List<Laborcontract> findListForParent(String parentid) {
+		Laborcontract laborcontract=new Laborcontract();
+		laborcontract.setDelFlag("0");
+		laborcontract.setParentid(parentid);
+		return super.findList(laborcontract);
+	}
+	
+	/**
+	 * 判断记录是否存在
+	 * @param id
+	 * @return
+	 */
+	public boolean isExist(String id){
+		return super.isExist(id);
+	}
+	
+	/**
+	 * 判断明细记录是否存在
+	 * @param id
+	 * @return
+	 */
+	public boolean isExistDetail(String id){
+		return super.isExistDetail(id);
+	}
+	
+
+	/**
+	 * 批量删除选中ids
+	 */
+	@Transactional(readOnly = false)
+	public void batchDeleteDetails(String ids){
+		super.batchDeleteDetails(ids);
+	}
+	
+	/**
+	 * 查询单项合同
+	 * @param lc
+	 * @return
+	 */
+	public Laborcontract search(Laborcontract lc){
+		return super.get(lc);
+	}
+
+
+	/**
+	 * 通过 项目ID 和 楼栋号查询一条劳务合同
+	 * @param projectId 项目ID
+	 * @param buildingNO 楼栋号
+	 * @return
+	 */
+	public Laborcontract getOneByProIdAndBuild(String projectId, String buildingNO){
+		Laborcontract laborcontract = new Laborcontract();
+		laborcontract.setProjectId(projectId);
+		laborcontract.setBuildings(buildingNO);
+		return dao.getOneByProIdAndBuild(laborcontract);
+	}
+	
+	
+	/**
+	 * 通过 项目ID 和 楼栋号查询一条劳务合同
+	 * @param projectId 项目ID
+	 * @param buildingNO 楼栋号
+	 * @return
+	 */
+	public List<Laborcontract> getByProIdAndBuild(Laborcontract laborcontract){
+		return dao.getByProIdAndBuild(laborcontract);
+	}
+	
+	/**
+	 * 通过父ID去更新
+	 * @param projectId 项目ID
+	 * @param buildingNO 楼栋号
+	 * @return
+	 */
+	@Transactional(readOnly = false)
+	public int updateForParentid(Laborcontract laborcontract){	
+		laborcontract.setParentid(laborcontract.getId());
+		return dao.updateForParentid(laborcontract);
+	}
+	
+	/**
+	 * 产值为100的劳务合同
+	 * @return
+	 */
+	 public List<Laborcontract> findFinishBuildilgs(){ 	
+		 return dao.findFinishBuildilgs();
+	 }
+	 
+	/**
+	 * 生成合同编号
+	 * @param entity
+	 * @return
+	 */
+	public String createSeriesnumber(Laborcontract entity){
+		String fristType = entity.getFristType();
+		String secondType = entity.getSecondType();
+		String projectCode = entity.getProName();
+		String ctype = entity.getCtype();
+		String exeScope = entity.getExeScope();
+		String buildings = entity.getBuildings();
+		String isStandardContract = "是".equals(entity.getIsStandardContract())?"标准":"非标";
+		String prefix = type;
+		if(StringUtils.isNotBlank(fristType)){
+			prefix = prefix + fristType + "-";
+		}
+		if(StringUtils.isNotBlank(secondType)){
+			prefix = prefix + secondType + "-";
+		}
+		if(StringUtils.isNotBlank(projectCode)){
+			prefix = prefix + projectCode + "-";
+		}
+		if(StringUtils.isNotBlank(ctype)){
+			prefix = prefix + ctype + "-";
+		}
+		if(StringUtils.isNotBlank(exeScope)){
+			prefix = prefix + exeScope + "-";
+		}
+		if(StringUtils.isNotBlank(buildings)){
+			String building = "";
+			//解析行列表
+			try {
+				building =  URLDecoder.decode(buildings, "utf-8");
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+			prefix = prefix + building + "-";
+		}
+		if(StringUtils.isNotBlank(isStandardContract)){
+			prefix = prefix + isStandardContract + "-";
+		}
+		String date = DateUtils.getDate("yyyyMMdd");
+		int count = dao.getTodayCount(date);
+		String number = SeriesNumberUtils.createSeriesNumber(prefix, count);
+		return number;
+	}
+	
+	/**
+	 * 生成工程名称
+	 * @param entity
+	 * @return
+	 */
+	public String createprojectname(Laborcontract entity){
+		String projectCode = entity.getProName();
+		String exeScope = entity.getExeScope();
+		String buildings = entity.getBuildings();
+		String prefix = type;
+		if(StringUtils.isNotBlank(projectCode)){
+			prefix = prefix + projectCode + "-";
+		}
+		if(StringUtils.isNotBlank(buildings)){
+			String building = "";
+			//解析行列表
+			try {
+				building =  URLDecoder.decode(buildings, "utf-8");
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
+			prefix = prefix + building + "-";
+		}
+		if(StringUtils.isNotBlank(exeScope)){
+			prefix = prefix + exeScope + "装饰工程";
+		}
+		return prefix;
+	}
+
+	@Transactional(readOnly = false)
+	public void update(Laborcontract entity){
+		dao.update(entity);
+	}
+
+	@Override
+	@Transactional(readOnly = false)
+	public void processFinishedNotify(Map<String, Object> variables) {
+		String primaryKey = (String)variables.get(ActivitiConstants.PRIMARY_KEY);
+		Laborcontract laborcontract = this.get(primaryKey);
+		laborcontract.setConStatus(Laborcontract.CON_STATUS_NORMAL);
+		laborcontract.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+		dao.update(laborcontract);
+	}
+
+}

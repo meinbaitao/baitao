@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.execution.dao.ScheduleIssueDao">
+    
+	<sql id="scheduleIssueColumns">
+		a.id AS "id",
+		a.projectupdate_id AS "projectupdateId",
+		a.typeaoproblem AS "typeaoproblem",
+		a.typeaproblem AS "typeaproblem",
+		a.typeasolution AS "typeasolution",
+		a.typeastatus AS "typeastatus",
+		a.typeacomment AS "typeacomment",
+		a.typeboproblemt AS "typeboproblemt",
+		a.typebproblemt AS "typebproblemt",
+		a.typebsolution AS "typebsolution",
+		a.typebstatus AS "typebstatus",
+		a.typebcomment AS "typebcomment",
+		a.typecoproblem AS "typecoproblem",
+		a.typecproblem AS "typecproblem",
+		a.typecsolution AS "typecsolution",
+		a.typecstatus AS "typecstatus",
+		a.typeccomment AS "typeccomment",
+		a.typedoproblem AS "typedoproblem",
+		a.typedproblem AS "typedproblem",
+		a.typedsolution AS "typedsolution",
+		a.typedstatus AS "typedstatus",
+		a.typedcomment AS "typedcomment",
+		a.typeeoproblem AS "typeeoproblem",
+		a.typeeproblem AS "typeeproblem",
+		a.typeesolution AS "typeesolution",
+		a.typeestatus AS "typeestatus",
+		a.typeecomment AS "typeecomment",
+		a.typefoproblem AS "typefoproblem",
+		a.typefproblem AS "typefproblem",
+		a.typefsolution AS "typefsolution",
+		a.typefstatus AS "typefstatus",
+		a.typefcomment AS "typefcomment",
+		a.typegoproblem AS "typegoproblem",
+		a.typegproblem AS "typegproblem",
+		a.typegsolution AS "typegsolution",
+		a.typegstatus AS "typegstatus",
+		a.typegcomment AS "typegcomment",
+		a.typehoproblem AS "typehoproblem",
+		a.typehproblem AS "typehproblem",
+		a.typehsolution AS "typehsolution",
+		a.typehstatus AS "typehstatus",
+		a.typehcomment AS "typehcomment",
+		a.typeioproblem AS "typeioproblem",
+		a.typeiproblem AS "typeiproblem",
+		a.typeisolution AS "typeisolution",
+		a.typeistatus AS "typeistatus",
+		a.typeicomment AS "typeicomment",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="scheduleIssueJoins">
+	</sql>
+    
+	<select id="get" resultType="ScheduleIssue">
+		SELECT 
+			<include refid="scheduleIssueColumns"/>
+		FROM btg_exe_scheduleissue a
+		<include refid="scheduleIssueJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="ScheduleIssue">
+		SELECT 
+			<include refid="scheduleIssueColumns"/>
+		FROM btg_exe_scheduleissue a
+		<include refid="scheduleIssueJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ScheduleIssue">
+		SELECT 
+			<include refid="scheduleIssueColumns"/>
+		FROM btg_exe_scheduleissue a
+		<include refid="scheduleIssueJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_exe_scheduleissue(
+			id,
+			projectupdate_id,
+			typeaoproblem,
+			typeaproblem,
+			typeasolution,
+			typeastatus,
+			typeacomment,
+			typeboproblemt,
+			typebproblemt,
+			typebsolution,
+			typebstatus,
+			typebcomment,
+			typecoproblem,
+			typecproblem,
+			typecsolution,
+			typecstatus,
+			typeccomment,
+			typedoproblem,
+			typedproblem,
+			typedsolution,
+			typedstatus,
+			typedcomment,
+			typeeoproblem,
+			typeeproblem,
+			typeesolution,
+			typeestatus,
+			typeecomment,
+			typefoproblem,
+			typefproblem,
+			typefsolution,
+			typefstatus,
+			typefcomment,
+			typegoproblem,
+			typegproblem,
+			typegsolution,
+			typegstatus,
+			typegcomment,
+			typehoproblem,
+			typehproblem,
+			typehsolution,
+			typehstatus,
+			typehcomment,
+			typeioproblem,
+			typeiproblem,
+			typeisolution,
+			typeistatus,
+			typeicomment,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{projectupdateId},
+			#{typeaoproblem},
+			#{typeaproblem},
+			#{typeasolution},
+			#{typeastatus},
+			#{typeacomment},
+			#{typeboproblemt},
+			#{typebproblemt},
+			#{typebsolution},
+			#{typebstatus},
+			#{typebcomment},
+			#{typecoproblem},
+			#{typecproblem},
+			#{typecsolution},
+			#{typecstatus},
+			#{typeccomment},
+			#{typedoproblem},
+			#{typedproblem},
+			#{typedsolution},
+			#{typedstatus},
+			#{typedcomment},
+			#{typeeoproblem},
+			#{typeeproblem},
+			#{typeesolution},
+			#{typeestatus},
+			#{typeecomment},
+			#{typefoproblem},
+			#{typefproblem},
+			#{typefsolution},
+			#{typefstatus},
+			#{typefcomment},
+			#{typegoproblem},
+			#{typegproblem},
+			#{typegsolution},
+			#{typegstatus},
+			#{typegcomment},
+			#{typehoproblem},
+			#{typehproblem},
+			#{typehsolution},
+			#{typehstatus},
+			#{typehcomment},
+			#{typeioproblem},
+			#{typeiproblem},
+			#{typeisolution},
+			#{typeistatus},
+			#{typeicomment},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_exe_scheduleissue SET 	
+			projectupdate_id = #{projectupdateId},
+			typeaoproblem = #{typeaoproblem},
+			typeaproblem = #{typeaproblem},
+			typeasolution = #{typeasolution},
+			typeastatus = #{typeastatus},
+			typeacomment = #{typeacomment},
+			typeboproblemt = #{typeboproblemt},
+			typebproblemt = #{typebproblemt},
+			typebsolution = #{typebsolution},
+			typebstatus = #{typebstatus},
+			typebcomment = #{typebcomment},
+			typecoproblem = #{typecoproblem},
+			typecproblem = #{typecproblem},
+			typecsolution = #{typecsolution},
+			typecstatus = #{typecstatus},
+			typeccomment = #{typeccomment},
+			typedoproblem = #{typedoproblem},
+			typedproblem = #{typedproblem},
+			typedsolution = #{typedsolution},
+			typedstatus = #{typedstatus},
+			typedcomment = #{typedcomment},
+			typeeoproblem = #{typeeoproblem},
+			typeeproblem = #{typeeproblem},
+			typeesolution = #{typeesolution},
+			typeestatus = #{typeestatus},
+			typeecomment = #{typeecomment},
+			typefoproblem = #{typefoproblem},
+			typefproblem = #{typefproblem},
+			typefsolution = #{typefsolution},
+			typefstatus = #{typefstatus},
+			typefcomment = #{typefcomment},
+			typegoproblem = #{typegoproblem},
+			typegproblem = #{typegproblem},
+			typegsolution = #{typegsolution},
+			typegstatus = #{typegstatus},
+			typegcomment = #{typegcomment},
+			typehoproblem = #{typehoproblem},
+			typehproblem = #{typehproblem},
+			typehsolution = #{typehsolution},
+			typehstatus = #{typehstatus},
+			typehcomment = #{typehcomment},
+			typeioproblem = #{typeioproblem},
+			typeiproblem = #{typeiproblem},
+			typeisolution = #{typeisolution},
+			typeistatus = #{typeistatus},
+			typeicomment = #{typeicomment},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_exe_scheduleissue SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

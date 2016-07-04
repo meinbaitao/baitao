@@ -1,0 +1,264 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.contract.service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bt.modules.activiti.constants.ActivitiConstants;
+import com.bt.modules.activiti.interfaces.ProcessDataHandler;
+import com.bt.modules.contract.dao.LaborDemandDao;
+import com.bt.modules.contract.entity.LaborDemand;
+import com.bt.modules.contract.entity.Laborcontract;
+import com.bt.modules.project.entity.Project;
+import com.bt.modules.utils.CommonStatus;
+import com.bt.modules.utils.CommonUtils;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.IdGen;
+
+/**
+ * 劳务需求Service
+ * @author yhh
+ * @version 2015-09-08
+ */
+@Service(LaborDemandService.BEAN_NAME)
+@Transactional(readOnly = true)
+public class LaborDemandService extends CrudService<LaborDemandDao, LaborDemand> implements ProcessDataHandler{
+	
+	public static final String BEAN_NAME = "com.bt.modules.contract.service.LaborDemandService";
+
+	@Autowired
+	private LaborDemandDao laborDemandDao;
+	
+	@Autowired
+	private LaborcontractService laborContractService;
+	
+	@Autowired
+	private LaborcontractAccountService accountService;
+	
+	public LaborDemand get(String id) {
+		return super.get(id);
+	}
+	
+	/**
+	 * 判断记录是否存在
+	 * @param id
+	 * @return
+	 */
+	public boolean isExist(String id){
+		LaborDemand entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = laborDemandDao.get(id);
+		}
+		if(entity == null){
+			return false;
+		}
+		return true;
+		
+	}
+	
+	public List<LaborDemand> findList(LaborDemand laborDemand) {
+		return super.findList(laborDemand);
+	}
+	
+	public Page<LaborDemand> findPage(Page<LaborDemand> page, LaborDemand laborDemand) {
+		return super.findPage(page, laborDemand);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(LaborDemand laborDemand) {
+		if(isExist(laborDemand.getId())){
+			laborDemand.setIsNewRecord(false);
+			super.save(laborDemand);
+		}else{
+			laborDemand.setIsNewRecord(true);
+			super.save(laborDemand);
+		}
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(LaborDemand laborDemand) {
+		super.delete(laborDemand);
+	}
+	
+	/**
+	 * 由施工合同获取
+	 */
+	public LaborDemand getByNum(LaborDemand laborDemand){
+		return laborDemandDao.getByNum(laborDemand);
+	}
+	
+	/**
+	 *  流程结束回调函数
+	 * @param variables
+	 */
+	@Override
+	@Transactional(readOnly = false)
+	public void processFinishedNotify(Map<String, Object> variables) {
+		String contractId = (String) variables.get(ActivitiConstants.PRIMARY_KEY);
+		//根据id对相应的数据进行处理
+		LaborDemand jc = get(contractId);
+		jc.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+		save(jc);
+		
+		
+		
+		//劳务需求结束流程，调用生成添加到劳务评审
+		Laborcontract laborContract = this.laborContractSave(jc);
+		//修改数据
+		this.processLaborDemand(laborContract);
+		
+		
+		
+		//生成劳务台账记录
+//		BtgConJiaContractDetail jiaContractDetail = accountService.getJiaContractByLaborContract(laborContract);
+//		String finishDate = null;
+//		if(null != jiaContractDetail){
+//			finishDate = jiaContractDetail.getEndDate();
+//		}
+		
+	}
+	/**
+	 * 
+	 */
+	@Transactional(readOnly = false)
+	private void processLaborDemand(Laborcontract jc){
+		String parentId = jc.getId();
+//		jc.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+		if(StringUtils.isNotBlank(jc.getBuildings())){
+			//将合同的楼栋组合体转成集合
+			List<String> buildings = CommonUtils.stringToList(jc.getBuildings());
+			//重新组装数据，每个楼栋一份合同
+			for(int i=0;i<buildings.size();i++){
+				jc.setId(IdGen.uuid());
+				jc.setBuildings(buildings.get(i).trim());
+				jc.setParentid(parentId);
+				jc.setDelFlag("0");
+				jc.setWorkflowid(null);
+				jc.setIsNewRecord(true);
+				
+				String houseType = dao.getSubProjectByBuilding(jc);
+				jc.setHouse(houseType);
+				//插入新楼栋合同数据
+				laborContractService.save(jc);
+				accountService.createByLaborContract(jc.getId());
+			}
+		}
+	}
+	
+	
+	
+	//生成劳务评审数据
+	private Laborcontract laborContractSave(LaborDemand jc){
+		//劳务需求结束流程,添加到劳务评审
+		Laborcontract laborContract = new Laborcontract();
+		laborContract.setId(IdGen.uuid());
+		laborContract.setContractJiafang(jc.getContractJiafang());
+		laborContract.setContractNo("待定");
+		laborContract.setLaborcontract(jc.getLaborcontract());
+		laborContract.setProjectId(jc.getProjectId());
+		laborContract.setProName(jc.getProName());
+		laborContract.setAddress(jc.getAddress());
+		laborContract.setExetype(jc.getExetype());
+		laborContract.setSubsidy(jc.getSubsidy());
+		laborContract.setCtype(jc.getCtype());
+		laborContract.setHouse(jc.getHouse());
+		laborContract.setBuildings(jc.getBuildings());
+		laborContract.setHurrybuildings(jc.getHurrybuildings());
+		laborContract.setStartdate(jc.getStartdate());
+		laborContract.setEnddate(jc.getEnddate());
+		laborContract.setDuration(jc.getDuration());
+		laborContract.setProjectleadBid(jc.getProjectleadBid());
+		laborContract.setProjectleadBidtel(jc.getProjectleadBidtel());
+		laborContract.setProjectmanagerAid(jc.getProjectmanagerAid());
+		laborContract.setProjectmanagerAidtel(jc.getProjectmanagerAidtel());
+		laborContract.setMfloatratio(jc.getMfloatratio());
+		laborContract.setContractscopeadjust(jc.getContractscopeadjust());
+		laborContract.setRightrespadjust(jc.getRightrespadjust());
+		laborContract.setQualityreqadjust(jc.getQualityreqadjust());
+		laborContract.setWarrantyadjust(jc.getWarrantyadjust());
+		laborContract.setSettletermadjust(jc.getSettletermadjust());
+		laborContract.setPartyBCode(jc.getPartyBCode());
+		laborContract.setPartyBName(jc.getPartyBName());
+		
+		laborContract.setIsHurry(jc.getIsHurry());
+//		laborContract.setAgreementDate(DateUtils.getDateStrByPattern(new Date(), "yyyy-MM-dd"));
+		laborContract.setSettleterm(jc.getSettleterm());
+		laborContract.setExeScope(jc.getContractscopeadjust());
+		laborContract.setContractscopeadjust(jc.getContractscopeadjust());
+		
+		laborContract.setIsNewRecord(true);
+		laborContract.setDelFlag("2");
+		laborContractService.save(laborContract);
+		return laborContract;
+	}
+	/**
+	 * 由项目id获取劳务需求信息
+	 * @param projectId
+	 * @return
+	 */
+	public Project getProjecctById(String projectId){
+		return laborDemandDao.getProjecctById(projectId);
+	}
+	
+	/**
+	 * start 2015年11月16日
+	 * xiaocai
+	 */
+	/**
+	 * 根据项目信息获取对应的劳务合同
+	 * @param proName	项目名称
+	 * @param buildings	楼栋号
+	 * @return
+	 */
+	public List<LaborDemand> getByProject(String proName,String building){
+		if(StringUtils.isBlank(proName)||StringUtils.isBlank(building)){
+			return new ArrayList<LaborDemand>();
+		}
+		//组装查询条件
+		LaborDemand laborDemand = new LaborDemand();
+		laborDemand.setProName(proName);
+		laborDemand.setBuildings(building);
+		laborDemand.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+		List<LaborDemand> listLD = laborDemandDao.getByProject(laborDemand);	//获取列表数据
+		List<LaborDemand> reList = new ArrayList<LaborDemand>();
+		Map<String,Object> maps;
+		for(LaborDemand ld:listLD){	//循环处理返回的数据集合
+			maps = CommonUtils.getMaps(ld.getBuildings());
+			if(maps.containsKey(building)){	//判断返回的集合是否包含当前楼栋号
+				reList.add(ld);
+			}
+		}
+		return reList;
+	}
+	
+	public Page<LaborDemand> findMyLaborDemand(Page<LaborDemand> page, LaborDemand laborDemand) {
+		laborDemand.setPage(page);
+		page.setList(laborDemandDao.findMyLaborDemand(laborDemand));
+		return page;
+	}
+	public Page<LaborDemand> findUnAuditLaborDemand(Page<LaborDemand> page, LaborDemand laborDemand) {
+		laborDemand.setPage(page);
+		page.setList(laborDemandDao.findUnAuditLaborDemand(laborDemand));
+		return page;
+	}
+	public Page<LaborDemand> findAuditDoneLaborDemand(Page<LaborDemand> page, LaborDemand laborDemand) {
+		laborDemand.setPage(page);
+		page.setList(laborDemandDao.findAuditDoneLaborDemand(laborDemand));
+		return page;
+	}
+	
+	/**
+	 * end 2015年11月16日
+	 * xiaocai
+	 */
+	
+}

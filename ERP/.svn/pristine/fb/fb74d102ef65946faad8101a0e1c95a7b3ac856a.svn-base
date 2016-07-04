@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.finance.dao.LaborSettlementDao">
+    
+	<sql id="laborSettlementColumns">
+		a.id AS "id",
+		a.seriesnumber AS "seriesnumber",
+		a.labor_contract AS "laborContract.id",
+		a.house_type AS "houseType",
+		a.building AS "building",
+		a.jia_end_date AS "jiaEndDate",
+		a.start_date AS "startDate",
+		a.end_date AS "endDate",
+		a.duration AS "duration",
+		a.is_offline AS "isOffline",
+		a.contract_price AS "contractPrice",
+		a.price AS "price",
+		a.price_difference AS "priceDifference",
+		a.price_difference_ratio AS "priceDifferenceRatio",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.statue AS "statue",
+		a.payment_seriesnumber AS "paymentSeriesnumber",
+		a.payment_type AS "paymentType",
+		a.payment_date AS "paymentDate",
+		a.workflow_id AS "workflowid",
+		a.workflow_status "workflowstatus",
+		v.pro_name AS "projectName",
+		v.contract_no AS "contractNo",
+		v.project_Id as "laborContract.projectId",
+		b.name AS "partyBName"
+	</sql>
+	
+	<sql id="laborSettlementJoins">
+		left join btg_con_laborcontract as v on v.id = a.labor_contract
+		left join btg_con_execution as b on b.id = v.CType
+	</sql>
+    
+	<select id="get" resultType="LaborSettlement">
+		SELECT 
+			<include refid="laborSettlementColumns"/>
+		FROM btg_labor_settlement a
+		<include refid="laborSettlementJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="LaborSettlement">
+		SELECT 
+			<include refid="laborSettlementColumns"/>
+		FROM btg_labor_settlement a
+		<include refid="laborSettlementJoins"/>
+		<where>
+			a.del_flag = #{delFlag}
+			<if test="workflowstatus != null and workflowstatus != ''">
+				AND a.workflow_status = #{workflowstatus}
+			</if>
+			<if test="createBy != null and createBy.id != null and createBy.id != ''">
+				AND a.create_by = #{createBy.id}
+			</if>
+			<if test="laborContract != null and laborContract != ''">
+				AND a.labor_contract = #{laborContract.id}
+			</if>
+			<if test="search != null and search != ''">
+				AND a.seriesnumber like concat('%',#{search},'%')
+				or v.contract_no like concat('%',#{search},'%')
+				or v.pro_name like concat('%',#{search},'%')
+				or a.building like concat('%',#{search},'%')
+				or a.payment_seriesnumber like concat('%',#{search},'%')
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="LaborSettlement">
+		SELECT 
+			<include refid="laborSettlementColumns"/>
+		FROM btg_labor_settlement a
+		<include refid="laborSettlementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_labor_settlement(
+			id,
+			seriesnumber,
+			labor_contract,
+			house_type,
+			building,
+			jia_end_date,
+			start_date,
+			end_date,
+			duration,
+			is_offline,
+			contract_price,
+			price,
+			price_difference,
+			price_difference_ratio,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			payment_seriesnumber,
+			payment_type,
+			payment_date
+		) VALUES (
+			#{id},
+			#{seriesnumber},
+			#{laborContract.id},
+			#{houseType},
+			#{building},
+			#{jiaEndDate},
+			#{startDate},
+			#{endDate},
+			#{duration},
+			#{isOffline},
+			#{contractPrice},
+			#{price},
+			#{priceDifference},
+			#{priceDifferenceRatio},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{paymentSeriesnumber},
+			#{paymentType},
+			#{paymentDate}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_labor_settlement SET 	
+			seriesnumber = #{seriesnumber},
+			labor_contract = #{laborContract.id},
+			house_type = #{houseType},
+			building = #{building},
+			jia_end_date = #{jiaEndDate},
+			start_date = #{startDate},
+			end_date = #{endDate},
+			duration = #{duration},
+			is_offline = #{isOffline},
+			contract_price = #{contractPrice},
+			price = #{price},
+			price_difference = #{priceDifference},
+			price_difference_ratio = #{priceDifferenceRatio},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			statue = #{statue},
+			payment_seriesnumber = #{paymentSeriesnumber},
+			payment_type = #{paymentType},
+			payment_date = #{paymentDate},
+			workflow_id = #{workflowid},
+			workflow_status = #{workflowstatus}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_labor_settlement SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<!--查询当天生成单数	-->
+	<select id="getTodayCount" parameterType="String" resultType="int">
+		SELECT
+			count(*)
+		FROM
+			btg_labor_settlement AS a
+		WHERE
+			a.seriesnumber LIKE concat('%',#{date},'%')
+	</select>
+	<!--查询可选项目-->
+	<select id="findProject" parameterType="String" resultType="LaborSettlement">
+		SELECT 
+			a.code AS "projectName"
+		FROM btg_project a
+		LEFT JOIN v_project_member_str b ON b.id = a.id
+		<where>
+			<if test="aboutUser !=null and aboutUser.id !=null and aboutUser.id != ''">
+				FIND_IN_SET(#{aboutUser.id},b.member_list_str)
+			</if>
+		</where>
+		GROUP BY a.code
+	</select>
+	
+	<select id="findUnAuditLaborSettlement" resultType="LaborSettlement">
+		SELECT 
+			<include refid="laborSettlementColumns"/>
+		FROM btg_labor_settlement a
+		<include refid="laborSettlementJoins"/>
+		left join btg_act_current_task act on act.entry_id=a.id
+		left join btg_act_done_task adt on adt.entry_id=a.id
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} 
+			and a.workflow_status &gt; #{extraData.wfInit}
+			and a.workflow_status &lt; #{extraData.wfEnd}
+			and (act.user_id = #{currentUser.id} 
+				or a.create_by = #{currentUser.id} 
+				or adt.user_id = #{currentUser.id})
+		</where>
+		group by a.id
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+</mapper>

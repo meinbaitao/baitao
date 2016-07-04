@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.act.dao.ActAuditTraceDao">
+    
+	<sql id="actAuditTraceColumns">
+		a.id AS "id",
+		a.proinstid AS "proinstid",
+		a.submitnode AS "submitnode",
+		a.submitpeople AS "submitpeople",
+		a.auditresult AS "auditresult",
+		a.auditproposal AS "auditproposal",
+		a.audittime AS "audittime",
+		a.auditType AS "auditType",
+		a.nextAuditPeople AS "nextAuditPeople",
+		a.nextNode AS "nextNode"
+	</sql>
+	
+	<sql id="actAuditTraceJoins">
+	</sql>
+
+	
+	<select id="getFlowAuditTrace" resultType="ActAuditTrace">
+		SELECT 
+			<include refid="actAuditTraceColumns"/>
+		FROM btg_act_audit_trace a
+		<include refid="actAuditTraceJoins"/>
+		<where>
+			a.proinstid = #{proinstid}
+		</where>
+		  ORDER BY a.id ASC
+
+	</select>
+	
+
+	
+	<insert id="insert">
+		INSERT INTO btg_act_audit_trace(
+			proinstid,
+			submitnode,
+			submitpeople,
+			auditresult,
+			auditproposal,
+			audittime,
+			auditType,
+			nextNode,
+			nextAuditPeople
+		) VALUES (
+			#{proinstid},
+			#{submitnode},
+			#{submitpeople},
+			#{auditresult},
+			#{auditproposal},
+			#{audittime},
+			#{auditType},
+			#{nextNode},
+			#{nextAuditPeople}
+		)
+	</insert>
+	
+
+
+	
+</mapper>

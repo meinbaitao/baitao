@@ -1,0 +1,410 @@
+package com.bt.modules.execution.web;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.bt.modules.attachment.entity.Attachment;
+import com.bt.modules.attachment.service.AttachmentService;
+import com.bt.modules.execution.entity.Schedule;
+import com.bt.modules.execution.entity.ScheduleIssue;
+import com.bt.modules.execution.entity.Scheduledetail;
+import com.bt.modules.execution.service.ScheduleIssueService;
+import com.bt.modules.execution.service.ScheduleService;
+import com.bt.modules.project.entity.Subproject;
+import com.bt.modules.project.service.ProjectService;
+import com.bt.modules.project.service.SubProjectService;
+import com.bt.modules.utils.UploadUtils;
+import com.thinkgem.jeesite.common.utils.IdGen;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+
+/**
+ * 施工管理 -->项目进度管理
+ * @author xjp
+ * @version 2015-8-1
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/schedule")
+public class ScheduleController extends BaseController {
+	
+	/**
+	 * 项目进度管理
+	 */
+	@Autowired
+	private ScheduleService scheduleService;
+	
+	
+	/**
+	 * 一级项目信息
+	 */
+	@Autowired
+	private ProjectService projectService;
+	
+	/**
+	 * 二级项目信息
+	 */
+	@Autowired
+	private SubProjectService subProjectService;
+	
+	/**
+	 * 项目问题信息
+	 */
+	@Autowired
+	private ScheduleIssueService scheduleIssueService;
+	
+	/**
+	 * 附件上传
+	 */
+	@Autowired
+	private AttachmentService attachService;
+	
+	/**
+	 * 一级项目进度查询列表
+	 * @param schedule
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @return
+	 */
+	@RequiresPermissions("schedule:view")
+	@RequestMapping(value = {"list", ""})
+	public String findScheduleList(HttpServletRequest request,HttpServletResponse response,Model model) {
+		//获取当前登陆人
+		User user = UserUtils.getUser();
+		//根据当前登陆人(项目负责人)查询一二级项目信息
+		List<Map<String, Object>> list = projectService.findProjectByLoginName(user.getId());
+		model.addAttribute("list",list);
+		model.addAttribute("Scheduledetail",new Scheduledetail());
+		//3.查询周报管理表信息
+		return "modules/execution/scheduleList";
+	}
+	
+	/**
+	 * 二级项目进度查询列表
+	 * @param schedule
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @return
+	 */
+	@RequiresPermissions("schedule:view")
+	@ResponseBody
+	@RequestMapping(value = {"queryschedulelist", ""})
+	public List<Map<String, Object>> findScheduleList2(HttpServletRequest request,HttpServletResponse response,Model model) {
+		String projectId = request.getParameter("projectId");
+		//根据一级项目查询二级项目信息
+//		List<Map<String, Object>> list =subProjectService.findLeftScheduleList(projectId);
+//		return list;
+		return new ArrayList<Map<String,Object>>();
+	}
+	
+	/**
+	 * 添加二级项目进度
+	 * @param schedule
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@RequiresPermissions("schedule:edit")
+	@RequestMapping(value = "addschedule")
+	public String saveSchedule(Schedule schedule,HttpServletRequest request,RedirectAttributes redirectAttributes) {
+		
+		//获取一级项目ID，用于统计累计产值、累计签证
+		String projectId = request.getParameter("projectId");
+		//二级项目ID
+		String subProjectId = request.getParameter("subProjectId");
+		//获取填写进度ID
+		String scheduleId = request.getParameter("scheduleId");
+		
+		//获取二级项目状态,修改二级项目信息状态
+		String subProjectStatus = request.getParameter("subProjectStatus");
+		Subproject subProject = new Subproject();
+		subProject.setId(subProjectId);
+		subProject.setStatus(subProjectStatus);
+		subProjectService.udpateStrtus(subProject);
+		
+		//如果页面没有生成UUID则自动创建
+		if(StringUtils.isEmpty(scheduleId)){
+			scheduleId = IdGen.uuid();
+		}
+		schedule.setId(scheduleId);
+		
+		//查询累计产值与累计签证份数
+		Schedule scheduleSum = scheduleService.findRevenueRatio(projectId);
+		if(null !=scheduleSum){
+			//累计产值
+			schedule.setAccumulaterevenue(scheduleSum.getAccumulaterevenue());
+			//累计签证
+			schedule.setAccumulatevisa(scheduleSum.getAccumulatevisa());
+		}else{
+			schedule.setAccumulaterevenue("".equals(schedule.getRevenue())?"0":schedule.getRevenue());
+			schedule.setAccumulatevisa(schedule.getVisaCount());
+		}
+		
+		//产值
+		schedule.setRevenue("".equals(schedule.getRevenue())?"0":schedule.getRevenue());
+		scheduleService.save(schedule);
+		
+		//楼栋立面ID
+		String facadeId = IdGen.uuid();
+		
+		//MappID
+		String mapId = IdGen.uuid();
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("mapId", mapId);
+		map.put("scheduleId", scheduleId);//进度ID
+		map.put("subProjectId", subProjectId);//二级项目ID
+		map.put("facadeId", facadeId);//楼栋立面ID
+		scheduleService.saveMap(map);
+		addMessage(redirectAttributes, "填写项目进度成功");
+		return "redirect:" + adminPath + "/schedule/list/";
+	}
+
+	
+	/**
+	 * 添加问题解决情况
+	 * @param scheduleIssue
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@RequiresPermissions("schedule:edit")
+	@RequestMapping(value = "addscheduleissue")
+	public String saveScheduleIssue(ScheduleIssue scheduleIssue,RedirectAttributes redirectAttributes) {
+		
+		//根据项目添加施工所遇到的问题，往项目问题表中插入数据
+		scheduleIssueService.save(scheduleIssue);
+		
+		return "redirect:" + adminPath + "/schedule/list/";
+	}
+	
+	
+	/**
+	 * 上传附件
+	 * @param schedule
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@RequiresPermissions("schedule:edit")
+	@ResponseBody
+	@RequestMapping(value = "uploadfile",method=RequestMethod.POST)
+	public String uploadAttach(MultipartFile file,HttpServletRequest request,RedirectAttributes redirectAttributes) {
+		//下载地址
+		String url = request.getRequestURL().toString();
+		url=url.substring(0,url.lastIndexOf("/"));
+		String fileName =file.getOriginalFilename();
+		if(StringUtils.isEmpty(fileName)){
+			fileName  = request.getParameter("iconImg");
+		}
+		String type = fileName.substring(fileName.lastIndexOf(".")+1,fileName.length());
+		
+		String scheduleId = request.getParameter("scheduleId");
+		String basePath = "upload";
+		String dirName = "images";
+	
+		// 文件保存目录路径
+		String savePath = "D:/dm/"+ basePath + "/";
+		
+		// 创建文件夹
+		savePath += dirName + "/";
+		//saveUrl += dirName + "/";
+		File saveDirFile = new File(savePath);
+		if (!saveDirFile.exists()) {
+			saveDirFile.mkdirs();
+		}
+		// .../basePath/dirName/yyyyMMdd/
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		String ymd = sdf.format(new Date());
+		savePath += ymd + "/";
+		
+		UploadUtils utils = new UploadUtils();
+		String info =utils.uploadFile(request, file, savePath);
+		
+		Attachment attachment = new Attachment();
+		attachment.setId(IdGen.uuid());
+		attachment.setAttachAddress(savePath); //服务器存放地址
+		attachment.setName(fileName);
+		attachment.setAttachType(type);
+		attachment.setType(scheduleId);
+		attachment.setAttachUrl(url);
+		attachService.save(attachment);
+		
+		if("true".equals(info)){
+			return file.getOriginalFilename();
+		}
+		return info;
+	}
+	
+	/**
+	 * 上传附件
+	 * @param schedule
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@RequiresPermissions("schedule:edit")
+	@ResponseBody
+	@RequestMapping(value = "uploadimage",method=RequestMethod.POST)
+	public String uploadImage(@RequestParam(value = "iconImg") MultipartFile iconImg,HttpServletRequest request,RedirectAttributes redirectAttributes) {
+		//下载地址
+		String url = request.getRequestURL().toString();
+		url=url.substring(0,url.lastIndexOf("/"));
+		String fileName =iconImg.getOriginalFilename();
+		if(StringUtils.isEmpty(fileName)){
+			fileName  = request.getParameter("iconImg");
+		}
+		String type = fileName.substring(fileName.lastIndexOf(".")+1,fileName.length());
+		String scheduleId = request.getParameter("scheduleId");
+		String basePath = "upload";
+		String dirName = "images";
+	
+		// 文件保存目录路径
+		String savePath = "D:/dm/"+ basePath + "/";
+		
+		// 创建文件夹
+		savePath += dirName + "/";
+		//saveUrl += dirName + "/";
+		File saveDirFile = new File(savePath);
+		if (!saveDirFile.exists()) {
+			saveDirFile.mkdirs();
+		}
+		// .../basePath/dirName/yyyyMMdd/
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		String ymd = sdf.format(new Date());
+		savePath += ymd + "/";
+		
+		UploadUtils utils = new UploadUtils();
+		String info =utils.uploadFile(request, iconImg, savePath);
+		
+		Attachment attachment = new Attachment();
+		attachment.setId(IdGen.uuid());
+		attachment.setAttachAddress(savePath); //服务器存放地址
+		attachment.setName(fileName);
+		attachment.setAttachType(type);
+		attachment.setType(scheduleId);
+		attachment.setAttachUrl(url);
+		attachService.save(attachment);
+		
+		if("true".equals(info)){
+			return iconImg.getOriginalFilename();
+		}
+		return info;
+	}
+	
+	
+	/**
+	 * 下载附件
+	 * @param schedule
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@RequiresPermissions("schedule:edit")
+	@RequestMapping(value = "download")
+	public String downloadImage(String fileName,RedirectAttributes redirectAttributes,HttpServletResponse response) {
+		response.setCharacterEncoding("utf-8");
+		response.setContentType("multipart/form-data");
+		response.setHeader("Content-Disposition", "attachment;fileName="
+				+ fileName);
+		String basePath = "upload";
+
+		String dirName = "images";
+		InputStream inputStream = null;
+		OutputStream os =null;
+		try {
+			String path = "D:/dm/" + basePath + "/" + dirName + "/";
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+			String ymd = sdf.format(new Date());
+			path += ymd + "/";
+			inputStream = new FileInputStream(new File(path + File.separator
+					+ fileName));
+			os = response.getOutputStream();
+			byte[] b = new byte[2048];
+			int length;
+			while ((length = inputStream.read(b)) > 0) {
+				os.write(b, 0, length);
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (null != os) {
+				try {
+					os.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (null != inputStream) {
+				try {
+					inputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			
+		}
+		return null;
+	}
+	
+	
+	/**
+	 * 二级项目进度查询列表
+	 * @param schedule
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @return
+	 */
+	@RequiresPermissions("schedule:view")
+	@ResponseBody
+	@RequestMapping(value = {"findattachlist", ""})
+	public List<Attachment> findAttachType(HttpServletRequest request,HttpServletResponse response,Model model) {
+		Attachment attachment = new Attachment();
+		attachment.setType(request.getParameter("scheduleId"));
+		return attachService.findAttachType(attachment);
+	}
+
+	/**
+	 * 根据二级项目ID与楼栋号查询所有的日志
+	 * @param subProjectId
+	 * @param building
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@RequiresPermissions("schedule:view")
+	@ResponseBody
+	@RequestMapping(value = "findscheduledetail")
+	public List<Schedule> findScheduleDetail(Schedule schedule,HttpServletRequest request,RedirectAttributes redirectAttributes) {
+		String subProjectId = request.getParameter("subProjectId");
+		Map<String,Object> map = new HashMap<String, Object>();
+		map.put("subProjectId",subProjectId);
+		map.put("delFlag",schedule.DEL_FLAG_NORMAL);
+		return scheduleService.findScheduleDetail(map);
+	}
+	
+}

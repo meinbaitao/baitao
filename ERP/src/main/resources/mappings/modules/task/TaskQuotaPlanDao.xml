@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.task.dao.TaskQuotaPlanDao">
+    
+	<sql id="taskQuotaPlanColumns">
+		a.id AS "id",
+		a.parent_id AS "parentId",
+		a.dept_id AS "deptId",
+		a.review_dept_id AS "reviewDeptId",
+		a.group_concern AS "groupConcern",
+		a.long_term_task AS "longTermTask",
+		a.discussion_suggestion AS "discussionSuggestion",
+		a.task_month AS "taskMonth",
+		a.quotas AS "quotas",
+		a.weight AS "weight",
+		a.quota_desc AS "quotaDesc",
+		a.responsible_person AS "responsiblePerson",
+		a.actual_finish_quantity AS "actualFinishQuantity",
+		a.goal AS "goal",
+		a.summary_remarks AS "summaryRemarks",
+		a.status AS "status",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="taskQuotaPlanJoins">
+	</sql>
+    
+	<select id="get" resultType="TaskQuotaPlan">
+		SELECT 
+			<include refid="taskQuotaPlanColumns"/>
+		FROM btg_task_quota_plan a
+		<include refid="taskQuotaPlanJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="TaskQuotaPlan">
+		SELECT 
+		 	u.name AS "showPerson",
+		    o.name AS "showDept",
+			<include refid="taskQuotaPlanColumns"/>
+		FROM btg_task_quota_plan a
+		left join sys_user u on u.id=a.responsible_person
+		left join sys_office o on o.id=a.review_dept_id 
+		<include refid="taskQuotaPlanJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="TaskQuotaPlan">
+		SELECT 
+			<include refid="taskQuotaPlanColumns"/>
+		FROM btg_task_quota_plan a
+		<include refid="taskQuotaPlanJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_task_quota_plan(
+			id,
+			parent_id,
+			dept_id,
+			review_dept_id,
+			group_concern,
+			long_term_task,
+			discussion_suggestion,
+			task_month,
+			quotas,
+			weight,
+			quota_desc,
+			responsible_person,
+			actual_finish_quantity,
+			goal,
+			summary_remarks,
+			status,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{parentId},
+			#{deptId},
+			#{reviewDeptId},
+			#{groupConcern},
+			#{longTermTask},
+			#{discussionSuggestion},
+			#{taskMonth},
+			#{quotas},
+			#{weight},
+			#{quotaDesc},
+			#{responsiblePerson},
+			#{actualFinishQuantity},
+			#{goal},
+			#{summaryRemarks},
+			#{status},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_task_quota_plan SET 	
+			parent_id = #{parentId},
+			dept_id = #{deptId},
+			review_dept_id = #{reviewDeptId},
+			<if test="groupConcern != null and groupConcern != ''">
+				group_concern = #{groupConcern},
+			</if>
+			<if test="longTermTask != null and longTermTask != ''">
+				long_term_task = #{longTermTask},
+			</if>
+			<if test="discussionSuggestion != null and discussionSuggestion != ''">
+				discussion_suggestion = #{discussionSuggestion},
+			</if>					
+			task_month = #{taskMonth},
+			quotas = #{quotas},
+			weight = #{weight},
+			<if test="quotaDesc != null and quotaDesc != ''">
+				quota_desc = #{quotaDesc},
+			</if>			
+			responsible_person = #{responsiblePerson},
+			actual_finish_quantity = #{actualFinishQuantity},
+			goal = #{goal},
+			summary_remarks = #{summaryRemarks},
+			<if test="status != null and status != ''">
+				status = #{status},
+			</if>				
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_task_quota_plan SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.sys.dao.DataHandleDao">
+    
+	<sql id="dataHandleColumns">
+		a.id AS "id",
+		a.menu AS "menu",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.remote_addr AS "remoteAddr",
+		a.request_uri AS "requestUri",
+		a.method AS "method",
+		a.params AS "params",
+		a.exception AS "exception",
+		u.name AS "createBy.name",
+		c.name AS "createBy.company.name",
+		o.name AS "createBy.office.name"
+	</sql>
+	
+	<sql id="dataHandleJoins">
+		JOIN sys_user u ON u.id = a.create_by
+		JOIN sys_office c ON c.id = u.company_id
+		JOIN sys_office o ON o.id = u.office_id
+	</sql>
+    
+	<select id="get" resultType="DataHandle">
+		SELECT 
+			<include refid="dataHandleColumns"/>
+		FROM btg_data_interceptor a
+		<include refid="dataHandleJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="DataHandle">
+		SELECT 
+			<include refid="dataHandleColumns"/>
+		FROM btg_data_interceptor a
+		<include refid="dataHandleJoins"/>
+		<where>
+			a.create_date BETWEEN #{beginDate} AND #{endDate}
+			<if test="menu != null and menu != ''">
+				AND a.menu LIKE 
+					<if test="dbName == 'mysql'">concat('%',#{menu},'%')</if>
+			</if>
+			<if test="userName != null and userName != null and userName != ''">
+				AND u.name = #{userName}
+			</if>
+			<if test="method != null and method != null and method != ''">
+				AND a.method = #{method}
+			</if>
+			<if test="createDate != null and createDate != ''">
+				AND a.create_date LIKE 
+					<if test="dbName == 'mysql'">concat('%',#{createDate},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_data_interceptor(
+			id,
+			menu,
+			create_by,
+			create_date,
+			remote_addr,
+			request_uri,
+			method,
+			params,
+			exception
+		) VALUES (
+			#{id},
+			#{menu},
+			#{createBy.id},
+			#{createDate},
+			#{remoteAddr},
+			#{requestUri},
+			#{method},
+			#{params},
+			#{exception}
+		)
+	</insert>
+	
+</mapper>

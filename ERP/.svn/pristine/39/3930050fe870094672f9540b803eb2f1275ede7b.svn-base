@@ -1,0 +1,546 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.project.dao.SubprojectDao">
+    
+	<sql id="subprojectColumns">
+		a.id AS "id",
+		a.project_id AS "projectId",
+		a.material_id AS "materialId",
+		a.house_type AS "houseType",
+		<!--a.building AS "building",使用显示名称来显示 许俊雄20160405-->
+		a.building AS "building",
+		a.building_display_name as "buildingDisplayName",
+		a.status AS "status",
+		a.type AS "type",
+		a.design_leader_bid AS "designLeaderBid",
+		a.design_leader_mobile AS "designLeaderMobile",
+		a.designer AS "designer",
+		a.designer_mobile AS "designerMobile",
+		a.areaof_stone AS "areaofStone",
+		a.stone_actual_area AS "stoneActualArea",
+		a.plan_start_date AS "planStartDate",
+		a.plan_end_date AS "planEndDate",
+		a.design_start_date AS "designStartDate",
+		a.design_complete_date AS "designCompleteDate",
+		a.stone_order_date AS "stoneOrderDate",
+		a.stone_complete_date AS "stoneCompleteDate",
+		a.stone_expect_date AS "stoneExpectDate",
+		a.stone_actual_date AS "stoneActualDate",
+		a.skeleton_order_date AS "skeletonOrderDate",
+		a.skeleton_complete_date AS "skeletonCompleteDate",
+		a.skeleton_expect_date AS "skeletonExpectDate",
+		a.skeleton_actual_date AS "skeletonActualDate",
+		a.pendant_order_date AS "pendantOrderDate",
+		a.pendant_complete_date AS "pendantCompleteDate",
+		a.pendant_expect_date AS "pendantExpectDate",
+		a.pendant_actual_date AS "pendantActualDate",
+		a.estimate_revenue AS "estimateRevenue",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.jia_contract_num AS "jiaContractNum",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="subprojectJoins">
+		
+	</sql>
+    
+	<select id="get" resultType="Subproject">
+		SELECT 
+			<include refid="subprojectColumns"/>
+		FROM btg_subproject a
+		<include refid="subprojectJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Subproject">
+		SELECT 
+			<include refid="subprojectColumns"/>
+		FROM btg_subproject a
+		<include refid="subprojectJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="projectId != null and projectId != ''">
+				AND a.project_id = #{projectId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Subproject">
+		SELECT 
+			<include refid="subprojectColumns"/>
+		FROM btg_subproject a
+		<include refid="subprojectJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_subproject(
+			id,
+			project_id,
+			material_id,
+			house_type,
+			building,
+			building_display_name,
+			status,
+			type,
+			designer,
+			design_leader_bid,
+			areaof_stone,
+			stone_actual_area,
+			plan_start_date,
+			plan_end_date,
+			design_start_date,
+			design_complete_date,
+			stone_order_date,
+			stone_complete_date,
+			stone_expect_date,
+			stone_actual_date,
+			skeleton_order_date,
+			skeleton_complete_date,
+			skeleton_expect_date,
+			skeleton_actual_date,
+			pendant_order_date,
+			pendant_complete_date,
+			pendant_expect_date,
+			pendant_actual_date,
+			estimate_revenue,
+			workflow_id,
+			workflow_status,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			jia_contract_num,
+			del_flag
+		) VALUES (
+			#{id},
+			#{projectId},
+			#{materialId},
+			#{houseType},
+			#{building},
+			#{buildingDisplayName},
+			#{status},
+			#{type},
+			#{designer},
+			#{designLeaderBid},
+			#{areaofStone},
+			#{stoneActualArea},
+			#{planStartDate},
+			#{planEndDate},
+			#{designStartDate},
+			#{designCompleteDate},
+			#{stoneOrderDate},
+			#{stoneCompleteDate},
+			#{stoneExpectDate},
+			#{stoneActualDate},
+			#{skeletonOrderDate},
+			#{skeletonCompleteDate},
+			#{skeletonExpectDate},
+			#{skeletonActualDate},
+			#{pendantOrderDate},
+			#{pendantCompleteDate},
+			#{pendantExpectDate},
+			#{pendantActualDate},
+			#{estimateRevenue},
+			#{workflowid},
+			#{workflowstatus},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{jiaContractNum},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_subproject SET 	
+			house_type =#{houseType},
+			<!--building =#{building},不准更新楼栋编号，只可以变更名称 许俊雄 20160401-->
+			building_display_name =#{buildingDisplayName},
+			<if test="status != null and status != ''">
+				status=#{status},
+			</if>
+			<if test="type != null and type != ''">
+				type =#{type},
+			</if>
+			<if test="materialId != null and materialId != ''">
+				material_id =#{materialId},
+			</if>
+			areaof_stone = #{areaofStone},
+			designer = #{designer},
+			design_leader_bid = #{designLeaderBid},
+			stone_actual_area = #{stoneActualArea},
+			plan_start_date = #{planStartDate},
+			plan_end_date = #{planEndDate},
+			design_start_date = #{designStartDate},
+			design_complete_date = #{designCompleteDate},
+			stone_order_date = #{stoneOrderDate},
+			stone_complete_date = #{stoneCompleteDate},
+			stone_expect_date = #{stoneExpectDate},
+			stone_actual_date = #{stoneActualDate},
+			skeleton_order_date = #{skeletonOrderDate},
+			skeleton_complete_date = #{skeletonCompleteDate},
+			skeleton_expect_date = #{skeletonExpectDate},
+			skeleton_actual_date = #{skeletonActualDate},
+			pendant_order_date = #{pendantOrderDate},
+			pendant_complete_date = #{pendantCompleteDate},
+			pendant_expect_date = #{pendantExpectDate},
+			pendant_actual_date = #{pendantActualDate},
+			estimate_revenue = #{estimateRevenue},
+			workflow_id = #{workflowid},
+			workflow_status = #{workflowstatus},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			jia_contract_num = #{jiaContractNum},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="updateStoneExpectDateById">
+		UPDATE btg_subproject SET 	
+			stone_expect_date = #{stoneExpectDate}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_subproject SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delFlag">
+		UPDATE btg_subproject SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE project_id = #{projectId}
+	</update>
+	
+	<update id="updateWorkflow">		
+		<choose>
+			<when test="workflowid != null and workflowid != ''">
+				UPDATE btg_subproject SET 
+					workflow_id = #{workflowid},
+					workflow_status=#{workflowstatus}
+				WHERE project_id =#{projectId}
+			</when>
+			<otherwise>
+				UPDATE btg_subproject SET 
+					workflow_status=#{workflowstatus}
+				WHERE project_id =#{projectId}
+			</otherwise>
+		</choose>
+	</update>
+	
+	<!-- 添加二级项目同时添加Map表数据-->
+	<insert id="addProjectMap">
+		INSERT INTO btg_project_mapping(
+			id,
+			project_id,
+			subproject_id,
+			contract_cid
+		) VALUES (
+			#{mapId},
+			#{projectId},
+			#{subProjectId},
+			#{contractCid}
+		)
+	</insert>
+	
+	<!-- 根据一级项目ID关联查询二级项目信息 -->
+	<select id="findByProjectIdList" resultType="Subproject">
+		SELECT 
+			d1.label AS "showStatus",
+			d2.label AS "showType",
+			d3.label AS "showMaterial",
+			u.name AS "showdesigner",
+			v.name AS "showdesignLeader",
+			<include refid="subprojectColumns"/>
+		FROM btg_subproject a
+		LEFT JOIN sys_dict d1 ON d1.value = a.status
+		LEFT JOIN sys_dict d2 ON d2.value = a.type
+		LEFT JOIN sys_dict d3 ON d3.value = a.material_id
+		LEFT JOIN sys_user u ON u.id = a.designer
+		LEFT JOIN sys_user v ON v.id = a.design_leader_bid
+    	<where>
+			a.project_id=#{projectId}
+			and
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		ORDER BY a.update_date desc
+	</select>
+	
+	<!-- 根据项目ID查询二级项目信息与项目进度信息 -->
+	<select id="findLeftScheduleList" resultType="Map">
+		SELECT * from (
+			SELECT
+			sub.id AS "id",
+			sub.Name AS "name",
+			<!--sub.Building AS "Building",-->
+			sub.building_display_name AS "Building",
+			IFNULL(sub.Status,'') AS "Status",
+			IFNULL(sub.EstimateRevenue,0) AS "EstimateRevenue",
+      		IFNULL(t1.id,'') AS "scheduleId",
+ 			IFNULL(t1.SkelentonPlanRatio,0) AS "SkelentonPlanRatio",
+ 			IFNULL(t1.SkeletonCompRatio,0) AS "SkeletonCompRatio",
+ 			IFNULL(t1.StonePlanRatio,0) AS "StonePlanRatio",
+ 			IFNULL(t1.StoneCompRatio,0) AS "StoneCompRatio",
+ 			IFNULL(t1.Revenue,0) AS "Revenue",
+ 			IFNULL(t1.RevenueRatio,0) AS "RevenueRatio"
+			from (
+				SELECT @rowid:=@rowid+1 as rowid,t.* FROM btg_exe_schedule t,(SELECT @rowid:=0) as init ORDER BY t.update_date DESC) t1
+			LEFT JOIN btg_schedule_mapping sm on sm.schedule_id=t1.id
+			LEFT JOIN btg_project_mapping pm on pm.subproject_id=sm.subproject_id
+		  	LEFT JOIN btg_subproject sub on sub.id=pm.subproject_id
+			<where>
+				pm.project_id=#{projectId}
+		      	and 
+		      	t1.del_flag =#{DEL_FLAG_NORMAL}
+			</where>
+			ORDER BY t1.rowid
+		) t2
+		GROUP BY t2.id
+	</select>
+	
+	<select id="findSubprojectScheduleList" resultType="Map">
+		SELECT
+			sub.id AS "id",
+			sub.Name AS "name",
+			<!--sub.Building AS "Building",-->
+			sub.building_display_name AS "Building",
+			IFNULL(sub.Status,'') AS "Status",
+			IFNULL(sub.EstimateRevenue,0) AS "EstimateRevenue",
+      		'' AS "scheduleId",
+ 			0 AS "SkelentonPlanRatio",
+ 			0 AS "SkeletonCompRatio",
+ 			0 AS "StonePlanRatio",
+ 			0 AS "StoneCompRatio",
+ 			0 AS "Revenue",
+ 			0 AS "RevenueRatio"
+			from btg_subproject sub
+			LEFT JOIN btg_project_mapping pm on pm.subproject_id=sub.id
+		    <where>
+				pm.project_id=#{projectId}
+		      	and 
+		      	sub.del_flag =#{DEL_FLAG_NORMAL}
+			</where>
+			ORDER BY sub.update_date DESC
+	</select>
+	
+	<select id="countBuilding" resultType="Map">
+		SELECT 
+			IFNULL(count(t.Building),0) AS "count"
+		FROM btg_subproject t
+		LEFT JOIN btg_project_mapping pm on pm.subproject_id=t.id
+		<where>
+			pm.project_id=#{projectId}
+			and
+			t.Building =#{building}
+		</where>
+	</select>
+	
+	<!-- 更新项目状态 -->
+	<update id="udpateStrtus">
+		UPDATE btg_subproject SET 
+			status = #{status}
+		WHERE id = #{id}
+	</update>
+	
+	<!--修改设计师 -->
+	<update id="adddesigner">
+		UPDATE btg_subproject SET
+			designer = #{designer},
+			design_leader_bid = #{designLeaderBid},
+			designer_mobile = #{designerMobile},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 根据一级项目ID获取二级项目列表数据 -->
+	<select id="getSubByProID" parameterType="String" resultType="map">
+		select sub.house_type as subHouseType,sub.id as subID
+ 			from btg_subproject sub 
+ 				where sub.project_id=#{proID}
+ 			group by sub.house_type
+	</select>
+	
+	<!-- 根据一级项目ID和栋号获取二级项目Id -->
+	<select id="getSubIdByProID" resultType="String">
+		select sub.id as subID
+ 			from btg_subproject sub 
+ 			where sub.project_id=#{projectId} and 
+ 			sub.building =#{building}
+ 			and sub.house_type=#{houseType}
+ 			limit 1
+	</select>
+	
+	<!-- 根据户型获取二级项目列表数据 -->
+	<select id="getSubByHouseType" parameterType="map" resultType="map">
+		select sub.house_type as subHouseType,sub.id as subID,
+			   sub.building as subBuilding,
+			   sub.building_display_name as buildingDisplayName,
+			   d2.label as subType,<!--sub.type as subType,-->
+			   sub.building_display_name as subBuildingDisplayName,
+			   sub.areaof_stone as subAreaofstone	
+ 			from btg_subproject sub 
+ 			left join sys_dict d2 on d2.value=sub.type
+ 				where sub.project_id=#{proID} and sub.house_type=#{houseType}
+	</select>
+	<!-- 根据一级项目名称获取对应的全部的二级项目 -->
+	<select id="getSubByConditionForInventory" parameterType="String" resultType="Subproject">
+		SELECT  
+			<include refid="subprojectColumns"/>
+		FROM btg_subproject a	
+			left join btg_project project on project.id=a.project_id
+			join btg_order_bom_base obbase on obbase.sub_proj_id=a.id
+		<include refid="subprojectJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="project != null and project.name!=null and project.name != ''">
+				and project.name =#{project.name}
+			</if>
+			<if test="houseType!=null and houseType != ''">
+				and a.house_type =#{houseType}
+			</if>
+		</where>
+			<if test="gbStr != null and gbStr != '' and gbStr=='building'">
+				group by a.building
+			</if>
+			<if test="gbStr != null and gbStr != '' and gbStr=='housetype'">
+				group by a.house_type
+			</if>		
+	</select>
+	
+	<!-- 根据一级项目ID关联查询二级项目信息关联附件 -->
+	<select id="findByPIdAttachmentList" resultType="Subproject">
+		SELECT 
+			d1.label AS "showStatus",
+			d2.label AS "showType",
+			d3.label AS "showMaterial",
+			u.name AS "showdesigner",
+			c.id AS "subattachmentId",
+			c.name AS "subattachmentName",
+			c.create_date AS "subattachmenCreateDate",
+			d4.label AS "processChartType",
+			<include refid="subprojectColumns"/>
+		FROM btg_subproject a
+		LEFT JOIN sys_dict d1 ON d1.value = a.status
+		LEFT JOIN sys_dict d2 ON d2.value = a.type
+		LEFT JOIN sys_dict d3 ON d3.value = a.material_id
+		LEFT JOIN sys_user u ON u.id = a.designer
+		LEFT JOIN btg_attachment c ON c.type = a.id and c.del_flag = 0
+		LEFT JOIN sys_dict d4 ON d4.value = c.process_chart_type
+    	<where>
+			a.project_id=#{projectId}
+			and
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="isJgcry">
+				and (c.process_chart_type is Null OR c.process_chart_type='processChartType1')
+			</if>			
+		</where>
+		GROUP BY a.house_type,c.`name`,c.process_chart_type
+		ORDER BY a.house_type,a.update_date desc
+	</select>
+
+
+	<select id="getOneByProjectAndBuild" resultType="Subproject">
+		select
+		<include refid="subprojectColumns"/>
+		 from btg_subproject a
+		<where>
+		a.del_flag = #{DEL_FLAG_NORMAL}
+		and a.project_id=#{projectId}
+		and a.building=#{building}
+		</where>
+		limit 1
+	</select>
+	
+	<select id="getOneByCondition" resultType="Subproject">
+		select
+			project.name as "project.name",
+			project.id as "project.id",
+		<include refid="subprojectColumns"/>
+		 from btg_subproject a
+		 	left join btg_project project on project.id=a.project_id
+		<where>
+				a.del_flag = #{DEL_FLAG_NORMAL}
+		 	<if test="project != null and project.name!=null and project.name != ''">
+				and project.name =#{project.name}
+			</if>
+			<if test="building != null and building != ''">
+				and a.building =#{building}
+			</if>
+			<if test="houseType != null and houseType != ''">
+				and a.house_type =#{houseType}
+			</if>
+		</where>
+		limit 0,1
+	</select>
+
+	<select id="getByCondition" resultType="Subproject">
+		select
+			project.name as "project.name",
+			project.id as "project.id",
+		<include refid="subprojectColumns"/>
+		 from btg_subproject a
+		 	left join btg_project project on project.id=a.project_id
+		<where>
+				a.del_flag = #{DEL_FLAG_NORMAL}
+		 	<if test="project != null and project.name!=null and project.name != ''">
+				and project.name =#{project.name}
+			</if>
+			<if test="project != null and project.id!=null and project.id != ''">
+				and project.id =#{project.id}
+			</if>
+			<if test="building != null and building != ''">
+				and a.building =#{building}
+			</if>
+			<if test="houseType != null and houseType != ''">
+				and a.house_type =#{houseType}
+			</if>
+		</where>
+	</select>
+
+	<select id="findAllBuildingNameByProject" resultType="Subproject">
+		select a.project_id as "projectId",
+		a.id AS "id",
+		a.house_type AS "houseType",
+       a.building as "building",
+		a.stone_actual_area AS "stoneActualArea",
+       a.building_display_name as "buildingDisplayName"
+		from btg_subproject a
+		<where>
+			a.project_id = #{projectId}
+			AND
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+	</select>
+
+
+</mapper>

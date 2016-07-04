@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.material.dao.MaterialDao">
+    
+	<sql id="materialColumns">
+		a.id AS "id",
+		a.type AS "type",
+		a.parent_id AS "parentId",
+		a.name AS "name",
+		a.alias AS "alias",
+		a.series_number AS "seriesNumber",
+		a.length AS "length",
+		a.width AS "width",
+		a.height AS "height",
+		a.quantity AS "quantity",
+		a.unit AS "unit",
+		a.comment AS "comment",
+		a.status AS "status",
+		a.materia AS "materia",
+		a.uweight AS "uweight",
+		a.model AS "model",
+		a.loss_rate AS "lossRate",
+		a.version AS "version",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="materialJoins">
+	</sql>
+    
+	<select id="get" resultType="Material">
+		SELECT 
+			<include refid="materialColumns"/>
+		FROM btg_material a
+		<include refid="materialJoins"/>
+		WHERE a.id = #{id}
+	</select>
+    
+	<select id="findListBySeriesNumber" resultType="Material">
+		SELECT 
+			<include refid="materialColumns"/>
+		FROM btg_material a
+		WHERE a.series_number = #{seriesNumber}
+	</select>
+	
+	<select id="findList" resultType="Material">
+		SELECT 
+			<include refid="materialColumns"/>
+		FROM btg_material a
+		<include refid="materialJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC,a.series_number
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Material">
+		SELECT 
+			<include refid="materialColumns"/>
+		FROM btg_material a
+		<include refid="materialJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllMaterialList" resultType="Material">
+		SELECT 
+		<include refid="materialColumns"/>
+ 		FROM btg_material a 
+		<where>
+			a.del_flag = 0
+		</where>
+
+		ORDER BY a.update_date DESC
+
+	</select>
+	
+	<select id="getTopLevelTypeMaterials" resultType="Material">
+		SELECT 
+			a.id AS "id",
+			a.name AS "name"
+			FROM btg_material a
+		<include refid="materialJoins"/>
+		<where>
+			a.del_flag = 0 and a.parent_id = 0
+		</where>		
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_material(
+			id,
+			type,
+			parent_id,
+			name,
+			alias,
+			series_number,
+			length,
+			width,
+			height,
+			quantity,
+			unit,
+			comment,
+			status,
+			materia,
+			uweight,
+			model,
+			loss_rate,
+			version,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{type},
+			#{parentId},
+			#{name},
+			#{alias},
+			#{seriesNumber},
+			#{length},
+			#{width},
+			#{height},
+			#{quantity},
+			#{unit},
+			#{comment},
+			#{status},
+			#{materia},
+			#{uweight},
+			#{model},
+			#{lossRate},
+			#{version},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_material SET 	
+			type = #{type},
+			parent_id = #{parentId},
+			name = #{name},
+			alias = #{alias},
+			series_number = #{seriesNumber},
+			length = #{length},
+			width = #{width},
+			height = #{height},
+			quantity = #{quantity},
+			unit = #{unit},
+			comment = #{comment},
+			status = #{status},
+			materia = #{materia},
+			uweight = #{uweight},
+			model = #{model},
+			loss_rate = #{lossRate},
+			version = #{version},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_material SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

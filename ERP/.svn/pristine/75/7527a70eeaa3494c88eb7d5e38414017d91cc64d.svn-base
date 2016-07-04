@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.report.labor.dao.LaborReportDao">
+    
+	<sql id="laborReportColumns">
+		a.projectname as "project.name",
+		a.projectcode as "project.code",
+		a.subprojecthouse_type as "subproject.houseType",
+		a.subprojectbuilding_display_name as "subproject.buildingDisplayName",
+		a.subprojectplan_start_date as "subproject.planStartDate",
+		a.subprojectplan_end_date as "subproject.planEndDate",
+		ifnull((a.laborcontractstone_exeArea),0) as "laborcontract.stoneArea",
+		ifnull((a.laborcontractbone_exeArea),0) as "laborcontract.boneArea",
+		ifnull((a.laborcontractother_exeArea),0) as "laborcontract.otherArea",
+		a.buildingScheduleid as "buildingSchedule.id",
+		a.buildingScheduleplan_transfer_date as "buildingSchedule.planTransferDate",
+		a.buildingScheduleplan_finish_date as "buildingSchedule.planFinishDate",
+		a.buildingSchedulemember_count as "buildingSchedule.memberCount",
+		a.buildingSchedulehurry as "buildingSchedule.hurry",
+		a.buildingSchedulesubsidy as "buildingSchedule.subsidy",
+		a.buildingSchedulefact_finish_rate_gj as "buildingSchedule.factFinishRateGj",
+		a.buildingSchedulefact_finish_rate_sc as "buildingSchedule.factFinishRateSc",
+		a.houseTypelabor_area as "houseType.laborArea"
+	</sql>
+	<sql id="laborReportBasicColumns">
+		project.name as "projectname",
+		project.code as "projectcode",
+		subproject.house_type as "subprojecthouse_type",
+		subproject.building_display_name as "subprojectbuilding_display_name",
+		subproject.plan_start_date as "subprojectplan_start_date",
+		subproject.plan_end_date as "subprojectplan_end_date",
+		ifnull(sum(laborcontract.stone_exeArea),0) as "laborcontractstone_exeArea",
+		ifnull(sum(laborcontract.bone_exeArea),0) as "laborcontractbone_exeArea",
+		houseType.labor_area-ifnull(sum(laborcontract.stone_exeArea),0) as "laborcontractnot_stone_exeArea",
+		houseType.labor_area-ifnull(sum(laborcontract.bone_exeArea),0) as "laborcontractnot_bone_exeArea",
+		ifnull(sum(laborcontract.other_exeArea),0) as "laborcontractother_exeArea",
+		buildingSchedule.id as "buildingScheduleid",
+		buildingSchedule.plan_transfer_date as "buildingScheduleplan_transfer_date",
+		buildingSchedule.plan_finish_date as "buildingScheduleplan_finish_date",
+		buildingSchedule.member_count as "buildingSchedulemember_count",
+		buildingSchedule.hurry as "buildingSchedulehurry",
+		buildingSchedule.subsidy as "buildingSchedulesubsidy",
+		buildingSchedule.fact_finish_rate_gj as "buildingSchedulefact_finish_rate_gj",
+		buildingSchedule.fact_finish_rate_sc as "buildingSchedulefact_finish_rate_sc",
+		houseType.labor_area as "houseTypelabor_area"
+	</sql>
+	
+	<sql id="laborReportJoins">
+		
+	</sql>
+	
+	<sql id="keyWordJoins">
+		<if test="keyWord!=null and keyWord!=''">
+			and (
+				  a.projectcode like CONCAT('%', #{keyWord}, '%')
+				or a.subprojectbuilding_display_name like CONCAT('%', #{keyWord}, '%')
+				or a.subprojectplan_start_date like CONCAT('%', #{keyWord}, '%')
+				or a.subprojectplan_end_date like CONCAT('%', #{keyWord}, '%')
+				or a.laborcontractnot_stone_exeArea like CONCAT('%', #{keyWord}, '%')
+				or a.laborcontractnot_bone_exeArea like CONCAT('%', #{keyWord}, '%')
+				or DATE_FORMAT(a.buildingScheduleplan_transfer_date,'%Y-%m-%d') like CONCAT('%', #{keyWord}, '%')
+				or DATE_FORMAT(a.buildingScheduleplan_finish_date,'%Y-%m-%d') like CONCAT('%', #{keyWord}, '%')
+				<if test="buildingSchedule!=null and buildingSchedule.hurry!=null and buildingSchedule.hurry!=''">
+					or a.buildingSchedulehurry = #{buildingSchedule.hurry}
+				</if>
+				<if test="buildingSchedule!=null and buildingSchedule.subsidy!=null and buildingSchedule.subsidy!=''">
+					or a.buildingSchedulesubsidy = #{buildingSchedule.subsidy}
+				</if>
+			)
+		</if>
+	</sql>
+    
+	<select id="findList" resultType="LaborReport">
+		select 
+			<include refid="laborReportColumns"/>
+		 from (
+		select 
+			<include refid="laborReportBasicColumns"/>
+		from btg_subproject subproject
+			left join btg_project project on project.id=subproject.project_id 
+				and subproject.del_flag = #{DEL_FLAG_NORMAL} and project.del_flag = #{DEL_FLAG_NORMAL}
+			left join btg_proj_weekly_report weeklyReport on weeklyReport.project_id=project.id
+			left join btg_building_schedule buildingSchedule 
+				on buildingSchedule.build_no=subproject.building and buildingSchedule.report_id=weeklyReport.id
+			left join btg_house_type houseType on houseType.house_type=subproject.house_type
+			left join btg_con_laborcontract laborcontract on laborcontract.project_id=project.id and laborcontract.Buildings=subproject.building and laborcontract.del_flag = #{DEL_FLAG_NORMAL}
+		where (1=1)
+			<!-- 关键字搜索 -->
+			<!-- <if test="keyWord!=null and keyWord!=''">
+				and (
+					  project.code like CONCAT('%', #{keyWord}, '%')
+					or subproject.building_display_name like CONCAT('%', #{keyWord}, '%')
+					or subproject.plan_start_date like CONCAT('%', #{keyWord}, '%')
+					or subproject.plan_end_date like CONCAT('%', #{keyWord}, '%')
+					or DATE_FORMAT(buildingSchedule.plan_transfer_date,'%Y-%m-%d') like CONCAT('%', #{keyWord}, '%')
+					or DATE_FORMAT(buildingSchedule.plan_finish_date,'%Y-%m-%d') like CONCAT('%', #{keyWord}, '%')
+					<if test="buildingSchedule!=null and buildingSchedule.hurry!=null and buildingSchedule.hurry!=''">
+						or buildingSchedule.hurry = #{buildingSchedule.hurry}
+					</if>
+					<if test="buildingSchedule!=null and buildingSchedule.subsidy!=null and buildingSchedule.subsidy!=''">
+						or buildingSchedule.subsidy = #{buildingSchedule.subsidy}
+					</if>
+				)
+			</if> -->
+			<!-- 
+			<if test="project!=null and project.code!=null and project.code!=''">
+				and project.code like CONCAT('%', #{project.code}, '%')
+			</if>
+			<if test="subproject!=null and subproject.buildingDisplayName!=null and subproject.buildingDisplayName!=''">
+				and subproject.building_display_name like CONCAT('%', #{subproject.buildingDisplayName}, '%')
+			</if>
+			<if test="buildingSchedule!=null and buildingSchedule.hurry!=null and buildingSchedule.hurry!=''">
+				and buildingSchedule.hurry = #{buildingSchedule.hurry}
+			</if>
+			<if test="buildingSchedule!=null and buildingSchedule.subsidy!=null and buildingSchedule.subsidy!=''">
+				and buildingSchedule.subsidy = #{buildingSchedule.subsidy}
+			</if>	-->
+			group by subproject.id ) a
+			where 1=1
+			<include refid="keyWordJoins"/>
+	</select>
+	
+</mapper>

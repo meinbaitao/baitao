@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.orbom.dao.OrderBomBaseDao">
+    
+	<sql id="orderBomBaseColumns">
+		a.id AS "id",
+		a.order_bom_no AS "orderBomNo",
+		a.original_no AS "originalNo",
+		a.sub_proj_id AS "subProjId",
+		a.house_type AS "houseType",
+		a.uniform_materiel_type AS "uniformMaterielType",
+		a.stone_color_name AS "stoneColorName",
+		a.building AS "building",
+		a.outside_wall_orientation AS "outsideWallOrientation",
+		a.facing_process AS "facingProcess",
+		a.order_level AS "orderLevel",
+		a.order_type AS "orderType",
+		a.has_done_flag AS "hasDoneFlag",
+		a.order_made_time AS "orderMadeTime",
+		a.create_by AS "createUser",
+		a.remark AS "remark",
+		a.last_update AS "lastUpdate",
+		a.workflow_id AS "workflowid",
+		a.order_finish_date AS "orderFinishDate",
+		a.del_flag AS "delFlag",
+		a.workflow_status AS "workflowstatus",
+		a.copyNum AS "copyNum"
+	</sql>
+	
+	<sql id="orderBomBaseJoins">
+	</sql>
+	
+	<sql id="orderBomBaseJoinsSqlMap">
+		LEFT JOIN sys_user ud ON ud.id = sp.designer
+		LEFT JOIN sys_user udl ON udl.id = sp.design_leader_bid
+	
+		LEFT JOIN sys_user up ON up.id = p.project_manager_bid
+		LEFT JOIN sys_user ur ON ur.id = p.regional_manager_bid
+		LEFT JOIN sys_user ums ON ums.id = p.material_staff_bid
+		LEFT JOIN sys_user ucs ON ucs.id = p.construct_staff_bid
+		LEFT JOIN sys_user um ON um.id = p.cost_manager_bid
+		LEFT JOIN sys_user uo ON uo.id = p.cost_officer_bid
+		LEFT JOIN sys_user ul ON ul.id = p.cost_leader_bid
+	</sql>
+    
+	<select id="get" resultType="OrderBomBase">
+		SELECT 
+		 d.label AS "showStoneColorName",
+			<include refid="orderBomBaseColumns"/>
+		FROM btg_order_bom_base a
+		LEFT JOIN sys_dict d ON d.value = a.stone_color_name
+		<include refid="orderBomBaseJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OrderBomBase">
+		SELECT 
+		 	d.label AS "showStoneColorName",
+			<include refid="orderBomBaseColumns"/>
+		FROM btg_order_bom_base a
+		LEFT JOIN btg_subproject sp ON sp.id = a.sub_proj_id
+		LEFT JOIN btg_project p ON p.id = sp.project_id
+		LEFT JOIN sys_dict d ON d.value = a.stone_color_name
+		<include refid="orderBomBaseJoinsSqlMap"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="orderType !=null and orderType != ''">
+				and a.order_type = #{orderType}
+			</if>
+			<if test="uniformMaterielType !=null and uniformMaterielType != ''">
+				and a.uniform_materiel_type = #{uniformMaterielType}
+			</if>
+			<if test="orderBomNo != null and orderBomNo != ''">
+				AND a.order_bom_no LIKE concat('%',#{orderBomNo},'%')
+			</if>
+		</where>
+		${sqlMap.dsf}
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.workflow_status ASC,a.order_made_time desc
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OrderBomBase">
+		SELECT 
+			<include refid="orderBomBaseColumns"/>
+		FROM btg_order_bom_base a
+		<include refid="orderBomBaseJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!--提供给采购 -->
+	<select id="findListForPurchase" resultType="OrderBomBase">
+		SELECT 
+			<include refid="orderBomBaseColumns"/>
+		FROM btg_order_bom_base a
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="orderType !=null and orderType != ''">
+				and a.order_type = #{orderType}
+			</if>
+		</where>
+	</select>
+	
+	<!-- 统计当天添加的数据量  -->
+	<select id="getTodayCount" parameterType="Date" resultType="int">
+		select count(*) from btg_order_bom_base a
+			where 
+		TO_DAYS(a.order_made_time) = TO_DAYS(#{date});
+	</select>
+	
+	<insert id="insert"> 
+		INSERT INTO btg_order_bom_base(
+			id,
+			order_bom_no,
+			original_no,
+			sub_proj_id,
+			house_type,
+			uniform_materiel_type,
+			stone_color_name,
+			building,
+			outside_wall_orientation,
+			facing_process,
+			order_level,
+			order_type,
+			has_done_flag,
+			order_made_time,
+			create_by,
+			remark,
+			last_update,
+			workflow_id,
+			del_flag,
+			order_finish_date,
+			workflow_status,
+			copyNum
+		) VALUES (
+			#{id},
+			#{orderBomNo},
+			#{originalNo},
+			#{subProjId},
+			#{houseType},
+			#{uniformMaterielType},
+			#{stoneColorName},
+			#{building},
+			#{outsideWallOrientation},
+			#{facingProcess},
+			#{orderLevel},
+			#{orderType},
+			#{hasDoneFlag},
+			#{orderMadeTime},
+			#{createUser},
+			#{remark},
+			#{lastUpdate},
+			#{workflowid},
+			#{delFlag},
+			#{orderFinishDate},
+			#{workflowstatus},
+			#{copyNum}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_order_bom_base SET 	
+			order_bom_no = #{orderBomNo},
+			original_no = #{originalNo},
+			sub_proj_id = #{subProjId},
+			house_type = #{houseType},
+			uniform_materiel_type = #{uniformMaterielType},
+			stone_color_name = #{stoneColorName},
+			building = #{building},
+			outside_wall_orientation = #{outsideWallOrientation},
+			facing_process = #{facingProcess},
+			order_level = #{orderLevel},
+			order_type = #{orderType},
+			has_done_flag = #{hasDoneFlag},
+			order_made_time = #{orderMadeTime},
+			remark = #{remark},
+			order_finish_date = #{orderFinishDate},
+			last_update = #{lastUpdate},
+			copyNum = #{copyNum}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="updateWorkflowId">
+		UPDATE btg_order_bom_base SET 	
+			<if test="workflowid !=null and workflowid != ''">
+				workflow_id = #{workflowid},
+			</if>			
+			copyNum = #{copyNum},
+			order_finish_date = #{orderFinishDate},
+			workflow_status = #{workflowstatus}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_order_bom_base SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	
+	<select id="getAllBomAndProjInfo" resultType="HashMap">
+		
+	</select>
+
+	<select id="findAllOrderBySubProjForSC" parameterType="Map" resultType="OrderBomBase">
+		SELECT
+		    a.id as "id", a.order_bom_no as "orderBomNo", a.sub_proj_id as "subProjId"
+		from btg_order_bom_base a
+		join btg_order_bom_box obb on a.id = obb.order_bom_id
+		join btg_production bpt on bpt.order_bom_box_id = obb.id
+		where a.sub_proj_id=#{subProjId} and a.order_type is not null and a.order_type != #{excludeOrderType}
+		and bpt.status=#{status}
+		and a.del_flag = #{DEL_FLAG_NORMAL}
+		group by  a.id, a.order_bom_no, a.sub_proj_id
+	</select>
+
+	<select id="findAllOrderBySubProjForGFL" parameterType="Map" resultType="OrderBomBase">
+		SELECT
+		     a.id as "id", a.order_bom_no as "orderBomNo", a.sub_proj_id as "subProjId"
+		from btg_order_bom_base a
+			join btg_order_bom_detail obd on a.id = obd.order_bom_id
+			join btg_purchase_demand_order_bom_detail_mapping pdodm on pdodm.order_bom_detail_id = obd.id
+			join btg_purchase bp on bp.purchase_demand_id = pdodm.purchase_demand_id
+	  where a.sub_proj_id=#{subProjId} and a.order_type is not null and a.order_type = #{orderType}
+		and bp.status=#{status}
+		and a.del_flag = #{DEL_FLAG_NORMAL}
+		group by a.id, a.order_bom_no, a.sub_proj_id
+	</select>
+	
+	<select id="getOrderBomCountVal" resultType="map">
+		select ifnull(sum(a.weight),0) as sumWeight,
+			ifnull(count(a.obboxID),0) as countBox
+		from (select sum(obdetail.wdight) as weight,
+					obbox.id as obboxID
+				from 
+					btg_order_bom_detail obdetail 
+						left join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+						left join btg_order_bom_box obbox on obbox.order_bom_id=obdetail.order_bom_id and obbox.box_no=obdetail.box_no
+						left join btg_production production on production.order_bom_box_id=obbox.id
+					where (1=1) and obbase.del_flag=#{DEL_FLAG_NORMAL}
+						<if test="ids !=null and ids.size > 0 ">
+							and obbase.id in
+								<foreach collection="ids" item="id" index="i"
+				           			 open="(" close=")" separator=",">
+				           		 			#{id}
+				        		</foreach>
+				        </if>
+				        <if test="listIds !=null and listIds.size > 0 ">
+			        		and production.id in 
+			        			<foreach collection="listIds" item="pid" index="i"
+				           			 open="(" close=")" separator=",">
+				           		 			#{pid}
+				        		</foreach>
+				        </if>
+					group by obbox.id
+			) a
+	</select>
+	<!-- 石材进度跟进 -->
+	<select id="getListForStoneSchedule" resultType="OrderBomBase">
+		select 
+			 a.projectprovince as "project.province",
+			 a.projectname as "project.name",
+			 a.projectid as "project.id",
+			 ifnull(count(a.obboxid),0) as "boxCount",
+			 a.projectaddress as "project.address"
+		 from (
+		select 
+			 province.ProvinceName as "projectprovince",
+			 project.name as "projectname",
+			 project.id as "projectid",
+			 project.address as "projectaddress",
+			 obbox.id as "obboxid"
+			from btg_order_bom_detail obdetail
+				left join btg_order_bom_box obbox on obbox.box_no=obdetail.box_no and obbox.order_bom_id=obdetail.order_bom_id
+				left join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+				left join btg_subproject sub on sub.id=obbase.sub_proj_id
+				left join btg_project project on project.id=sub.project_id
+				left join sys_province province on province.ProvinceID=project.province
+		where (1=1) and obbase.del_flag=#{DEL_FLAG_NORMAL}
+			<if test="lsgtVal !=null and lsgtVal != ''">
+				and obbase.order_type &lt;&gt; #{lsgtVal}
+			</if>
+			<if test="project !=null and project.id!=null and project.id != ''">
+				and project.id=#{project.id}
+			</if>
+			<if test="project !=null and project.name!=null and project.name != ''">
+				and project.name like CONCAT('%', #{project.name}, '%')
+			</if>
+			<if test="sub !=null and sub.building!=null and sub.building != ''">
+				and sub.building like CONCAT('%', #{sub.building}, '%')
+			</if>
+		group by obbox.id ) a 
+		group by a.projectid
+	</select>
+	<!-- 获取库存需要使用的数据 -->
+	<select id="getListToInventory" resultType="OrderBomBase">
+		select 
+			 province.ProvinceName as "project.province",
+			 project.name as "project.name",
+			 project.id as "project.id",
+			 project.address as "project.address"
+			from btg_order_bom_detail obdetail
+				left join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+				left join btg_subproject sub on sub.id=obbase.sub_proj_id
+				left join btg_project project on project.id=sub.project_id
+				left join sys_province province on province.ProvinceID=project.province
+		where (1=1) and obbase.del_flag=#{DEL_FLAG_NORMAL}
+			<if test="lsgtVal !=null and lsgtVal != ''">
+				and obbase.order_type &lt;&gt; #{lsgtVal}
+			</if>
+			<if test="orderType !=null and orderType != ''">
+				and obbase.order_type = #{orderType}
+			</if>
+			<if test="project !=null and project.id!=null and project.id != ''">
+				and project.id=#{project.id}
+			</if>
+			<if test="project !=null and project.name!=null and project.name != ''">
+				and project.name=#{project.name}
+			</if>
+			<if test="sub !=null and sub.building!=null and sub.building != ''">
+				and sub.building=#{sub.building} 
+			</if>
+		group by project.id 
+	</select>
+
+	<select id="findOrderBomNo" resultType="String">
+		select distinct a.order_bom_no from btg_order_bom_base a 
+		<where> 
+		a.order_bom_no=#{orderBomNo}
+		</where>
+	</select>
+</mapper>

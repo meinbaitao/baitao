@@ -1,0 +1,526 @@
+$(function(){
+	//根据项目拉取二级项目项目数据
+	$("#projectNameOne").live("change",function(){
+		var proID = $(this).val();
+		var d={proID:proID};
+		var url="/a/project/getSubByProID";
+		startUp.postData(url,d,function(data){
+			var html="<select name='houseType' id=\"houseTypeTwo\" class='input-medium requireds'>";
+			html+="<option value1='' value=''>请选择</option>";
+			for(var i=0;i<data.length;i++){
+				html+="<option value1='"+data[i].subID+"' value='"+data[i].subHouseType+"'>"+data[i].subHouseType+"</option>";
+			}
+			html+="</select>";
+			$("#houseTypeOne").html(html);
+			$("#houseTypeTwo").select2();
+		});
+	});
+	//根据项目拉取二级项目项目数据
+	$("#houseTypeOne").live("change",function(){
+		var c = $("#houseTypeTwo").val();
+		$("#subprojectId").val($("#houseTypeTwo").find("option[value='"+c+"']").attr("value1"));
+		var proID = $("#projectNameOne").val();
+		var houseType = $("#houseTypeTwo").val();
+		var d={proID:proID,houseType:houseType};
+		var url="/a/project/getSubByHouseType";
+		startUp.postData(url,d,function(data){
+			var html="<select name='building' id='buildingTwo' multiple='mutiple' class='input-medium' tabindex='-1'>";
+//			html+="<option value=''>请选择</option>";
+			for(var i=0;i<data.length;i++){
+				html+="<option value='"+data[i].subBuilding+"'>"+data[i].subBuildingDisplayName+"</option>";
+			}
+			html+="</select>";
+//			html+="";
+			$("#buildingOne").html(html);
+			$("#buildingTwo").select2();
+		});
+	});
+	//隐藏/显示 导入操作  
+	$("#btnImport").click(function(){
+		$("#importBox").slideToggle();
+	});
+	
+	//下料单导入
+	$("#btnImportSubmit").click(function(){
+		var subprojectId = $("#subprojectId").val();
+		var houseType = $("#houseTypeTwo").val();
+		var multipartFile = $("#multipartFile").val();
+		var building = $("#buildingTwo").val();
+		debugger;
+		
+		if(houseType == '' || subprojectId == ''){
+			window.alertx("请先选择项目和户型！");
+			return;
+		}
+		if(building =='' || building == null){
+			window.alertx("请先选择栋号！");
+			return;
+		}
+		if(multipartFile ==''){
+			window.alertx("请先选择文件！");
+			return;
+		}
+		//$('#importForm').submit();
+		submitWValidLoading($('#importForm'));
+	});
+	
+	//新增补料单
+	$("#btnRepair").click(function(){
+		var isChange = 1;//是否补料或变更；1-补料 2-变更
+		var orderType = $("#orderType").val();
+		var orderId = "";
+		var vCheckd =[]; 
+		var num = 0;
+		$('input[name="checkdbox"]:checked').each(function(){ 
+			orderId = $(this).attr("id"); 
+			num++;
+		}); 
+		if(num == 0){
+			window.alertx("请先勾选下料单！"); 
+			return;
+		}
+		if(num > 1){
+			window.alertx("只能勾选一个下料单！"); 
+			return;
+		}
+		var submitForm = $('#importForm');
+		submitForm.attr('action',startUp.getRootPath()+"/a/orbom/orderBomBase/changeForm?orderId="+orderId+"&orderType="+orderType+"&isChange="+isChange);
+		submitForm.submit();				
+	});
+	
+	//新增变更单
+	$("#btnChange").click(function(){
+		var isChange = 2;//是否补料或变更；1-补料 2-变更
+		var orderType = $("#orderType").val();
+		var orderId = "";
+		var vCheckd =[]; 
+		var num = 0;
+		$('input[name="checkdbox"]:checked').each(function(){ 
+			orderId = $(this).attr("id"); 
+			num++;
+		}); 
+		if(num == 0){
+			window.alertx("请先勾选下料单！"); 
+			return;
+		}
+		if(num > 1){
+			window.alertx("只能勾选一个下料单！"); 
+			return;
+		}
+		var submitForm = $('#importForm');
+		submitForm.attr('action',startUp.getRootPath()+"/a/orbom/orderBomBase/changeForm?orderId="+orderId+"&orderType="+orderType+"&isChange="+isChange);
+		submitForm.submit();		
+	});
+	
+	//删除
+	$("#btnDelete").click(function(){
+		var orderType = $("#orderType").val();
+		var vCheckd =[]; 
+		$('input[name="checkdbox"]:checked').each(function(){ 
+			vCheckd.push($(this).attr("id")); 
+		}); 
+		if(vCheckd.length==0){
+			//alert("请先勾选删除项！"); 
+			window.alertx("请先勾选删除项！"); 
+			return;
+		}
+		window.confirmx("确定要删除？",function(){
+			var inputForm = $('#deleteForm');
+			inputForm.attr('action',startUp.getRootPath()+"/a/orbom/orderBomBase/delete?vCheckd="+vCheckd);
+			//inputForm.submit();
+			submitWValidLoading(inputForm);
+		});
+	});
+	//删除明细
+//	$("#btnDeleteDetail").click(function(){
+//		var vCheckd =[]; 
+//		$('input[name="checkdbox"]:checked').each(function(){ 
+//			vCheckd.push($(this).attr("id")); 
+//		}); 
+//		if(vCheckd.length==0){
+//			//alert("请先勾选删除项！"); 
+//			window.alertx("请先勾选删除项！"); 
+//			return;
+//		}
+//		if(window.confirmx("确定要删除？")){
+//			var inputForm = $('#deleteDetailForm');
+//			inputForm.attr('action',startUp.getRootPath()+"/a/cost/volumeControlDetail/delete?vCheckd="+vCheckd);
+//			inputForm.submit();				
+//		}
+//	});
+	//明细查询
+//	$("#btnquery").click(function(){
+//		var subprojectId = $("#subprojectId").val();
+//		var houseType = $("#houseTypeTwo").val();
+//		if(houseType == '' || subprojectId == ''){
+//			alert("请先选择项目和户型！");
+//			return;
+//		}
+//		var inputForm = $('#searchForm');
+//		inputForm.attr('action',startUp.getRootPath()+"/a/cost/volumeControlDetail/list?volumeControlId="+subprojectId);
+//		inputForm.submit();				
+//	});
+
+	
+	/****************************************
+	 * 下料单流程处理 start
+	 */
+	$(document).ready(function() {
+		debugger;
+		var workflowId = $("#workflowId").val();
+		var workflowStatus = $("#workflowStatus").val();
+		if(workflowId!=null && workflowId!=''){
+			$("#showWorkflowAuditHistory").removeAttr("disabled"); //启用流程轨迹按钮
+		}
+
+		if(workflowStatus == '1'){
+			isCandidateUser(workflowId);
+		}
+		if(!(workflowId && workflowStatus)){ 
+			$("#importOrder").removeAttr("disabled");//导入
+			$("#submitOrder").removeAttr("disabled");//提交 开始流程
+			$("#uploadOrder").removeAttr("disabled");//上传附件
+			
+//			$("#passOrder").css("display","none");//审核通过
+//			$("#rebutOrder").attr("disabled","disabled");//驳回
+//			
+//			$("#trackOrder").attr("disabled","disabled");// 流程图
+//			$("#signOrder").attr("disabled","disabled");//签收
+			
+		}
+		if(workflowStatus == '4'){
+			$("#trackOrder").removeAttr("disabled");// 流程图
+			$("#deleteAttach").css("display","none");//删除附件
+			
+//			$("#passOrder").css("display","none");//审核通过
+//			$("#rebutOrder").attr("disabled","disabled");//驳回
+//			$("#importOrder").attr("disabled","disabled");//导入
+//			$("#uploadOrder").attr("disabled","disabled");//上传附件
+//			$("#deleteAttach").css("display","none");//删除附件
+////			$("#trackOrder").attr("disabled","disabled");// 流程图
+//			$("#signOrder").attr("disabled","disabled");//签收
+//			$("#submitOrder").attr("disabled","disabled");//提交 开始流程
+		}
+	});
+	
+	//释放签收按钮-即处理当前操作人的按钮显示
+	function isCandidateUser(workflowId){
+		var url = "/a/act/access/task/direct/isCandidateUser/"+workflowId;
+		startUp.postData(url,{},function(data){
+			if(data){
+				$("#trackOrder").removeAttr("disabled");// 流程图
+				$("#signOrder").removeAttr("disabled");//签收
+				
+//				$("#passOrder").css("display","none");//审核通过
+//				$("#rebutOrder").attr("disabled","disabled");//驳回
+//				$("#importOrder").attr("disabled","disabled");//导入
+//				$("#uploadOrder").attr("disabled","disabled");//上传附件
+//				$("#deleteAttach").css("display","none");//删除附件
+////				$("#trackOrder").attr("disabled","disabled");// 流程图
+////				$("#signOrder").attr("disabled","disabled");//签收
+//				$("#submitOrder").attr("disabled","disabled");//提交 开始流程
+			}else{
+				isAssigneeUser(workflowId);
+			}
+		});
+	}
+	
+	function isAssigneeUser(workflowId){
+		var url = "/a/act/access/task/direct/isAssigneeUser/"+workflowId;
+		startUp.postData(url,{},function(data){
+			if(data){
+				signBtn();
+				
+//				$("#passOrder").css("display","block");//审核通过
+////				$("#rebutOrder").attr("disabled","disabled");//驳回
+//				$("#importOrder").attr("disabled","disabled");//导入
+//				$("#uploadOrder").attr("disabled","disabled");//上传附件
+//				$("#deleteAttach").css("display","none");//删除附件
+////				$("#trackOrder").attr("disabled","disabled");// 流程图
+//				$("#signOrder").attr("disabled","disabled");//签收
+//				$("#submitOrder").css("display","none");//提交 开始流程
+				getTaskForm(workflowId);
+			}else{
+				$("#trackOrder").removeAttr("disabled");// 流程图
+				$("#deleteAttach").css("display","none");//删除附件
+				
+//				$("#passOrder").css("display","block");//审核通过
+//				$("#passOrder").attr("disabled","disabled");
+//				$("#rebutOrder").attr("disabled","disabled");//驳回
+//				$("#importOrder").attr("disabled","disabled");//导入
+//				$("#uploadOrder").attr("disabled","disabled");//上传附件
+//				$("#deleteAttach").css("display","none");//删除附件
+////				$("#trackOrder").attr("disabled","disabled");// 流程图
+//				$("#signOrder").attr("disabled","disabled");//签收
+//				$("#submitOrder").css("display","none");//提交 开始流程
+			}
+		});
+		
+	}
+	
+	//显示提交，驳回，禁用签收(被驳回且进入修改状态)
+	function getTaskForm(workflowId){
+		var url = "/a/act/access/task/direct/getTaskForm/"+workflowId;
+		$.ajax({
+			url : startUp.getRootPath()+url,
+			type : "GET",
+			success : function(data) {
+				if(data != null && data == "editApplyForm"){
+					$("#submitOrder").css("display","none");//提交 开始流程
+					$("#passOrder").css("display","block");//审核通过
+					$("#passOrder").removeAttr("disabled");//审核通过
+					$("#importOrder").removeAttr("disabled");//导入
+					$("#uploadOrder").removeAttr("disabled");//上传附件
+					$("#deleteAttach").css("display","block");//删除附件
+					$("#rebutOrder").attr("disabled","disabled");//驳回
+//					$("#signOrder").attr("disabled","disabled");//签收
+					
+					
+//					$("#passOrder").css("display","block");//审核通过
+//					$("#importOrder").removeAttr("disabled");//导入
+//					$("#uploadOrder").removeAttr("disabled");//上传附件
+//					$("#deleteAttach").css("display","none");//删除附件
+//					$("#rebutOrder").attr("disabled","disabled");//驳回
+//					$("#signOrder").attr("disabled","disabled");//签收
+//					$("#submitOrder").css("display","none");//提交 开始流程
+				}
+			}
+		});
+	}
+	
+	//提交数据 开启流程
+	$("#submitOrder").unbind("click").bind("click",function(){
+		var orderBomId = $("#orderBomId").val();
+		var copyNum = $("#copyNum").val();
+		var url = "/a/orbom/orderBomBase/submitOrder";
+		var json = {orderBomId:orderBomId,copyNum:copyNum};
+		btnDisabled();
+		startUp.postData(url,json,function(data){
+			if(data){
+				window.alertx("提交成功！");
+				//$("#returnForm").submit();
+				submitWValidLoading($("#returnForm"));
+			}else{
+				window.alertx("提交失败！");
+			}
+		});
+	});
+	//审核通过 下一步
+	$("#passOrder").unbind("click").bind("click",function(){
+		var workflowId=$("#workflowId").val();
+		var url = "/a/act/access/task/direct/complete";
+		var json = '{"processInstanceId":"'+workflowId+'","approval":"1","rejectBackReason":""}'
+		btnDisabled();
+		startUp.postActData(url,json,"application/json",function(data){
+			if(data){
+				window.alertx("提交成功！");
+				//$("#returnForm").submit();
+				submitWValidLoading($("#returnForm"));
+			}
+		});
+	});
+	//签收任务
+	$("#signOrder").unbind("click").bind("click",function(){
+		var workflowId=$("#workflowId").val();
+		var url = "/a/act/access/task/direct/claim/"+workflowId;
+		btnDisabled();
+		startUp.postData(url,{},function(data){
+			if(data){
+				signBtn();
+				window.alertx("签收成功！");
+//				$("#passOrder").css("display","block");//审核通过
+//				$("#rebutOrder").removeAttr("disabled");//驳回
+//				$("#passOrder").removeAttr("disabled");//驳回
+//				$("#importOrder").attr("disabled","disabled");//导入
+//				$("#uploadOrder").attr("disabled","disabled");//上传附件
+//				$("#deleteAttach").css("display","none");//删除附件
+//				$("#signOrder").attr("disabled","disabled");//签收
+//				$("#submitOrder").css("display","none");//提交 开始流程
+			}
+		});
+	});
+
+
+	/**
+	 * 审核驳回
+	 */
+	var workflowId=$("#workflowId").val();
+	bindRejectEvent($("#rebutOrder"), 'reimportDetail', callbackWhenActionDone, workflowId);
+
+
+	/**
+	 * 流程轨迹
+	 */
+	$("#showWorkflowAuditHistory").on("click", function(){
+		var wfId = $("#workflowId").val();
+		showFlowAuditHistoryTrace(wfId);
+	});
+
+	//签收完成按钮控制
+	function signBtn(){
+		$("#submitOrder").css("display","none");//提交
+		$("#passOrder").removeAttr("disabled");//审核通过
+		$("#passOrder").css("display","block");//审核
+		$("#rebutOrder").removeAttr("disabled");//驳回
+		$("#trackOrder").removeAttr("disabled");// 流程图
+		$("#deleteAttach").css("display","none");//删除附件
+	}
+	//可操作btn只读
+	function btnDisabled(){
+		$("#submitOrder").attr("disabled","disabled");//提交
+		$("#passOrder").attr("disabled","disabled");//审核通过
+		$("#rebutOrder").attr("disabled","disabled");//驳回
+		$("#signOrder").attr("disabled","disabled");//签收
+		$("#importOrder").attr("disabled","disabled");//导入
+		$("#uploadOrder").attr("disabled","disabled");//上传附件
+		$("#deleteAttach").attr("display","none");//删除附件
+	}
+	//查看流程图
+	$("#trackOrder").unbind("click").bind("click",function(){
+		var workflowId = $("#workflowId").val();
+		var workflowStatus = $("#workflowStatus").val();
+		if(parseInt(workflowStatus)==4){
+			showTraceDiagramInHistory(workflowId);
+		}else{
+			showTraceDiagramInRuntime(workflowId);
+		}
+	});
+	
+	//隐藏/显示 导入操作  如果是 变更单 则直接调后台方法
+	$("#importOrder").click(function(){
+		var isChange = $("#isChange").val();
+		if(isChange == '2'){
+			//$("#importFileForm").submit();
+			submitWValidLoading($("#importFileForm"));
+		}else{
+			$("#importFile").slideToggle();
+		}
+	});
+	
+	//隐藏/显示 上传附件操作
+	$("#uploadOrder").click(function(){
+		$("#uploadFile").slideToggle();
+	});
+	
+	$("#uploadAttachment").live("click",function(){
+		var uploadOrderId = $("#uploadOrderId").val();
+		var file = $("#file").val();
+		if(file == ''){
+			window.alertx("请先选择文件！");
+			return;
+		}
+		var url ="/a/orbom/orderBomBase/upload";
+		var param ={"uploadOrderId":uploadOrderId};
+    	var fileId="file";
+    	startUp.ajaxFileUpload(url,fileId,param,function(data){
+    		var url ="/a/attachment/attachment/findattachlist?type="+uploadOrderId;
+    		startUp.getData(url,function(data){
+    			var showAttach = $("#showAttach");
+    			showAttach.text("");
+    			$.each(data, function(idx,item){
+    				var a ="<div>\
+						<a id='"+item.id+"' href='"+ctx+item.attachUrl+"/download?id="+item.id+"'>"+item.name+" </a>&nbsp;&nbsp;\
+				 		<span id='deleteAttach' deleteId='"+item.id+"'  class='glyphicon glyphicon-remove-circle'></span>\
+				 		</div>";
+    					showAttach.append(a);
+    			});
+    		});
+    	});
+	});
+	
+	/**
+	 * 删除附件
+	 */
+	$("#deleteAttach").live("click", function(){
+		var deleteId = this.getAttribute("deleteId");
+		var url = "/a/attachment/attachment/deleteAttach?deleteId="+deleteId;
+		startUp.getData(url,function(data){
+			$("a#"+deleteId).parent().remove();
+		});
+	});
+	
+	//驳回之后  导入明细
+	$("#btnImportFile").click(function(){
+		var multipartFile = $("#multipartFile").val();
+		if(multipartFile ==''){
+			window.alertx("请先选择文件！");
+			return;
+		}
+		var flag;//是否覆盖原有数据的标识
+		var submit = function (v, h, f){
+		    if (v == true){
+		    	flag = true;
+		    }else{
+		    	flag = false;
+		    }
+		    //return true;
+		};
+		$.jBox.confirm("是否要覆盖原有的数据？", "提示",submit, { buttons: { '是': true, '否': false},closed:function(){ 
+			var url = $('#importFileForm').attr('action')+"?flag="+flag;
+			$('#importFileForm').attr("action",url);
+			//$('#importFileForm').submit();
+			submitWValidLoading($('#importFileForm'));
+			}
+		});
+	});
+	/**
+	 * 下料单流程处理 end
+	 ***************************************/
+	
+});
+
+/**
+ * 附件下载，#转译
+ * xiaocai
+ */
+function download(url,fileId){
+//	var id = $(this).attr("id");
+//	debugger;
+//	var fileName = encodeURI(str);
+	window.location=url+"/download?id="+fileId;
+//	document.getElementById('mainFrame').location=url+"/download?fileId="+fileId;
+//	window.frames["mainFrame"].location=url+"/download?fileId="+fileId;
+}
+
+/**
+ * 立面方向选取，及返回按钮逻辑
+ * zjs
+ */
+$(function(){
+	$(document).ready(function() {form_validate("inputForm"); });
+	
+	$("#outsideWallOrientation").unbind("change").bind("change",function(){
+		var outsideWallOrientation = $(this).val();//立面方向
+		var orderBomId = $("#orderBomId").val();
+		var inputForm = $('#importFileForm');
+		window.parent.changeNum-=1;
+		//alert(window.parent.changeNum);
+		var title = document.getElementById("outsideWallOrientation").title;
+		if (title == "showdetail"){
+			inputForm.attr('action',startUp.getRootPath()+"/a/orbom/orderBomShowDetail/showDetail?orderType="+orderType+"&orderBomId="+orderBomId+"&outsideWallOrientation="+outsideWallOrientation);
+	    }else if (title == "detail"){
+			inputForm.attr('action',startUp.getRootPath()+"/a/orbom/orderBomDetail/list?orderType="+orderType+"&orderBomId="+orderBomId+"&outsideWallOrientation="+outsideWallOrientation);
+	    }
+		inputForm.submit();				
+	});
+
+	$("#returnForm").unbind("click").bind("click",function(){
+		var title = document.getElementById("returnForm").title;
+		if(title!="detail"){
+			window.history.go(window.parent.changeNum);
+			window.parent.changeNum=-1;
+		}	
+	});
+	
+	$(".operationg-new").unbind("click").bind("click",function(){
+		var value = $("#return").val();
+		if(value != "返回"){
+			window.parent.changeNum-=1;
+		}
+	});
+});
+
+
+function callbackWhenActionDone(){
+	submitWValidLoading($("#returnForm"));
+}

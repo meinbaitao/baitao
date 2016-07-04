@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.purchase.dao.PurchaseDemandOrderBomDetailMappingDao">
+    
+	<sql id="pdObdMappingColumns">
+		a.id AS "id",
+		a.purchase_demand_id AS "pdid",
+		a.order_bom_detail_id AS "obdid"
+	</sql>
+	
+	<sql id="pdObdMappingJoins">
+	</sql>
+    
+	<select id="get" resultType="PurchaseDemandOrderBomDetailMapping">
+		SELECT 
+			<include refid="pdObdMappingColumns"/>
+		FROM btg_purchase_demand_order_bom_detail_mapping a
+		<include refid="pdObdMappingJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="PurchaseDemandOrderBomDetailMapping">
+		SELECT 
+			<include refid="pdObdMappingColumns"/>
+		FROM btg_purchase_demand_order_bom_detail_mapping a
+		<include refid="pdObdMappingJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="PurchaseDemandOrderBomDetailMapping">
+		SELECT 
+			<include refid="pdObdMappingColumns"/>
+		FROM btg_purchase_demand_order_bom_detail_mapping a
+		<include refid="pdObdMappingJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_purchase_demand_order_bom_detail_mapping(
+			id,
+			purchase_demand_id,
+			order_bom_detail_id
+		) VALUES (
+			#{id},
+			#{pdid},
+			#{obdid}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_purchase_demand_order_bom_detail_mapping SET 	
+			purchase_demand_id = #{pdid},
+			order_bom_detail_id = #{obdid}
+		WHERE id = #{id}
+	</update>
+	
+	
+	
+</mapper>

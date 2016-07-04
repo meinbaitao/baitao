@@ -1,0 +1,450 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.project.service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bt.common.exceptions.BusinessException;
+import com.bt.modules.activiti.constants.ActivitiConstants;
+import com.bt.modules.activiti.interfaces.ProcessDataHandler;
+import com.bt.modules.project.dao.ProjectDao;
+import com.bt.modules.project.dao.SubprojectDao;
+import com.bt.modules.project.entity.Project;
+import com.bt.modules.project.entity.Subproject;
+import com.bt.modules.utils.CommonStatus;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 主项目信息Service
+ * @author xjp
+ * @version 2015-07-31
+ */
+@Service(ProjectService.BEAN_NAME)
+@Transactional(readOnly = true)
+public class ProjectService extends CrudService<ProjectDao, Project>  implements ProcessDataHandler{
+    
+	public static final String BEAN_NAME = "com.bt.modules.project.service.ProjectService";
+	
+	
+
+	@Autowired
+	private ProjectDao projectDao;
+	
+	@Autowired
+	private SubprojectDao subprojectDao;
+	
+	public Project get(String id) {
+		Project p = super.get(id);
+		return p;
+	}
+	
+	/**
+	 * 项目必填信息检测
+	 * @param p
+	 * @param row
+	 * @param reg
+	 * @param code
+	 * @return
+	 * @throws Exception
+	 */
+	public Boolean checkProject(Project p,String row,String reg,String code) throws Exception{
+		Map<String, String> map = this.initCheckMap(p);
+		if (StringUtils.isBlank(map.get(row))||"NULL".equals(map.get(row))) {
+			throw new BusinessException(code);
+		}
+		return true;
+	}
+	/**
+	 * 验证项目字段返回提示语不抛异常
+	 * @param p	项目
+	 * @param row	字段
+	 * @param reg	正则表达式
+	 * @param msg	提示语
+	 * @return
+	 */
+	public String checkProjectReturnStr(Project p,String row,String reg,String msg){
+		Map<String, String> map = this.initCheckMap(p);
+		if (StringUtils.isBlank(map.get(row))||"NULL".equals(map.get(row))) {
+			return msg;
+		}
+		return "";
+	}
+	/**
+	 * 初始需要验证的字段
+	 * @param p
+	 * @return
+	 */
+	private Map<String, String> initCheckMap(Project p){
+		Map<String, String> map = new HashMap<String, String>();
+		map.put("id",p.getId());
+		map.put("name", p.getName());
+		map.put("code",p.getCode());
+		map.put("location", p.getLocation());
+		map.put("province", p.getProvince());
+		map.put("city", p.getCity());
+		map.put("projectManagerBid", p.getProjectManagerBid());
+		map.put("coordinatorLeaderBid", p.getCoordinatorLeaderBid());
+		map.put("regionalManagerBid", p.getRegionalManagerBid());
+		map.put("materialStaffBid", p.getMaterialStaffBid());
+		map.put("address", p.getAddress());
+		return map;
+	}
+	
+	public List<Project> findList(Project project) {
+		return super.findList(project);
+	}
+	
+	public List<Project> findAllApprovaledProjects(){
+		Project project  =  new Project();
+		project.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+		return findList(project);
+	}
+	
+	public Page<Project> findPage(Page<Project> page, Project project) {
+		//xujianpeng 2016-04-27
+		project.getSqlMap().put("dsf", dataScopeFilter(project.getCurrentUser(),"uos,uc,udl,um,uo,ul,ums,ucs,up,ur"));
+		return super.findPage(page, project);
+	}
+	
+//	@Transactional(readOnly = false)
+//	public void save(Project project) {
+//		super.save(project);
+//	}
+	
+	@Transactional(readOnly = false)
+	public void insert(Project project) throws BusinessException {
+		project.setIsNewRecord(true);
+		this.validateProjectNameDuplicate(project);
+		project.preInsert();
+		super.dao.insert(project);
+	}
+	
+	@Transactional(readOnly = false)
+	public void update(Project project) throws BusinessException {
+		this.validateProjectNameDuplicate(project);
+		project.preUpdate();
+		super.dao.update(project);
+	}
+	/**
+	 * 验证项目名称重复
+	 * @param project
+	 * @throws BusinessException 
+	 */
+	public void validateProjectNameDuplicate(Project project) throws BusinessException{
+		Project vproject = this.getProjectByName(project.getName());
+		if(vproject!=null&&!vproject.getId().equals(project.getId())){
+			throw new BusinessException("project.name.duplicate",project.getName());
+		}
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(Project project) {
+		super.delete(project);
+	}
+	
+	@Transactional(readOnly = false)
+	public void delFlag(String ids) {
+		String[] array =ids.split(",");
+		if(array !=null && array.length>0){
+			for(int i=0;i<array.length;i++){
+				Project project = new Project();
+				project.setId(array[i]);
+				super.delete(project);
+			}
+		}
+	}
+	
+	/**
+	 * 根据当前登陆人查询项目信息
+	 * @param projectManagerBid
+	 * @return
+	 */
+	public List<Map<String, Object>> findProjectByLoginName(String projectManagerBid) {
+		Project project = new Project();
+		project.setProjectManagerBid(projectManagerBid);
+		return projectDao.findProjectByLoginName(project);
+	}
+	
+	/**
+     * 查询所有的一级项目名称
+     * @return
+     */
+	public List<Project> findByProjectName() {
+		Project project = new Project();
+		project.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+		return projectDao.findByProjectName(project);
+	}
+	
+	/**
+     * 根据二级项目ID反查一级项目信息
+     * @return
+     */
+	public Project findBysubProjectId(String subProjectId) {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("subProjectId", subProjectId);
+		map.put("delFlag", Project.DEL_FLAG_NORMAL);
+		return projectDao.findBysubProjectId(map);
+	}
+	
+	/**
+	 * 由项目名获取项目
+	 * @param project
+	 * @return
+	 */
+	public Project getByProjectName(Project project){
+		project.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+		return projectDao.getByProjeceName(project);
+	}
+	/**
+	 * 根据项目名称获取走完流程项目信息
+	 * @param projectName
+	 * @return
+	 */
+	public Project getByProjectName(String projectName){
+		Project project = new Project();
+		project.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+		project.setName(projectName);
+		return projectDao.getByProjeceName(project);
+	}
+	/**
+	 * 根据项目名称获取走完流程项目信息
+	 * @param projectName
+	 * @return
+	 */
+	public Project getProjectByName(String name){
+		Project project = new Project();
+		project.setName(name);
+		return projectDao.getByProjeceName(project);
+	}
+	/**
+	 * 项目信息填写
+	 * @param project
+	 */
+	@Transactional(readOnly = false)
+	public void addProject(Project project) {
+		projectDao.addProject(project);
+	}
+	
+	/**
+	 * 成本信息填写
+	 * @param project
+	 */
+	@Transactional(readOnly = false)
+	public void addcost(Project project) {
+		projectDao.addcost(project);
+	}
+	
+	
+	/**
+	 * 修改项目人员信息
+	 * @param project
+	 */
+	@Transactional(readOnly = false)
+	public void updateProjectPersonnel(Project project) {
+		projectDao.updateProjectPersonnel(project);
+	}
+	
+	/**
+	 * 设计主管填写
+	 * @param project
+	 */
+	@Transactional(readOnly = false)
+	public void adddesign(Project project) {
+		projectDao.adddesign(project);
+	}
+	
+	/**
+	 * 根据条件对名字进行分组 
+	 * @return
+	 */
+	public List<Map<String, Object>> gbProByName(){ 
+		Map<String,Object> map = new HashMap<String,Object>();
+		map.put("delFlag", Project.DEL_FLAG_NORMAL);
+		map.put("workflowstatus", CommonStatus.WORK_FLOW_END);
+		return projectDao.gbProByName(map);
+	}
+	
+	/**
+	 * 根据项目简称对项目数据进行分组
+	 * @param project
+	 * @return
+	 */
+	public List<Project> gbProjectByCode(Project project){
+		project.setGbCondition("code");
+		return this.gbProjectByCondition(project);
+	}
+	/**
+	 * 根据条件对项目数据进行分组
+	 * @param project
+	 * @return
+	 */
+	public List<Project> gbProjectByCondition(Project project){ 
+		project.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+		return projectDao.gbProjectByCondition(project);
+	}
+	
+	/**
+	 * 修改流程状态
+	 * @param project
+	 */
+	@Transactional(readOnly = false)
+	public void updateWorkflow(Project project) {
+		projectDao.updateWorkflow(project);
+		
+		Subproject subproject = new Subproject();
+		subproject.setProjectId(project.getId());
+		subproject.setWorkflowid(project.getWorkflowid());
+		subproject.setWorkflowstatus(CommonStatus.WORK_FLOW_OPEN);
+		subprojectDao.updateWorkflow(subproject);
+	}
+	
+	/**
+	 * 流程结束回写状态
+	 */
+	@Override
+	@Transactional(readOnly = false)
+	public void processFinishedNotify(Map<String, Object> variables) {
+	    String id = (String)variables.get(ActivitiConstants.PRIMARY_KEY);
+	    Project project = new Project();
+	    project.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+	    //project.setWorkflowId(id);
+	    project.setId(id);
+		projectDao.updateWorkflow(project);
+		
+		Subproject subproject = new Subproject(); 
+		subproject.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+		//subproject.setWorkflowId(id);
+		subproject.setProjectId(id);
+		subprojectDao.updateWorkflow(subproject);
+	}
+	
+	/**
+	 * 人员汇总
+	 * @param id
+	 * @return
+	 */
+	public Map<String,String> getPersonList(String id){
+		return projectDao.getPersonList(id);
+	}
+	
+	/**
+	 * 根据条件对名字进行分组 
+	 * @return
+	 */
+	@SuppressWarnings("static-access")
+	public List<Map<String, Object>> getProAttachmentList(){
+		Project project = new Project();
+		Map<String,Object> map = new HashMap<String,Object>();
+		map.put("delFlag", project.DEL_FLAG_NORMAL);
+		map.put("workflowstatus", CommonStatus.WORK_FLOW_END);
+		return projectDao.getProAttachmentList(map);
+	}
+	
+	/**
+	 * 根据设计主管Id 筛选 获取项目list
+	 * @param designLeaderBid
+	 * @return
+	 */
+	public Page<Project> findPageByStatus(Page<Project> page, Project entity) {
+		entity.setPage(page);
+		page.setList(projectDao.findListByStatus(entity));
+		return page;
+	}
+	
+	/**
+	 * 项目数据权限过滤
+	 * @param page
+	 * @param entity
+	 * @return
+	 */
+	public Page<Project> findPageByStatusOnData(Page<Project> page, Project entity) {
+		entity.setPage(page);
+		entity.getSqlMap().put("dsf", dataScopeFilter(UserUtils.getUser(), "uos,uc,up,ur"));
+		page.setList(projectDao.findListByStatus(entity));
+		return page;
+	}
+	
+	@Override
+	protected String extraCondition() {
+		return " OR " + "a.design_leader_bid LIKE" + "'%" + UserUtils.getUser().getId() + "%'";
+	}
+	
+	public Page<Project> findPageByDesignLeaderBid(Page<Project> page, Project entity) {
+		entity.setPage(page);
+		page.setList(projectDao.findListByDesignLeaderBid(entity));
+		return page;
+	}
+	
+	/**
+	 * 更新信息
+	 * @param project
+	 */
+	@Transactional(readOnly = false)
+	public void traceUpdateUser(Project project){
+		projectDao.traceUpdateUser(project);
+	}
+	/**
+	 * 我创建的工程
+	 * @param project
+	 * @return
+	 */
+	public Page<Project> findMyProjects(Page<Project> page, Project project){
+		project.setPage(page);
+		page.setList(projectDao.findMyProjects(project));
+		return page;
+	}
+
+	/**
+	 * 未审核的工程
+	 * @param project
+	 * @return
+	 */
+	public Page<Project> findUnAuditProjects(Page<Project> page, Project project){
+		project.setPage(page);
+		page.setList(projectDao.findUnAuditProjects(project));
+		return page;
+	}
+
+	/**
+	 * 我审核过的工程
+	 * @param project
+	 * @return
+	 */
+	public Page<Project> findAuditDoneProjects(Page<Project> page, Project project){
+		project.setPage(page);
+		page.setList(projectDao.findAuditDoneProjects(project));
+		return page;
+	}
+	
+	/**
+	 * 与项目人员相关项目
+	 * @param project
+	 * @return
+	 */
+	public Page<Project> getListForProject(Page<Project> page,Project project){
+		project.setPage(page);
+		page.setList(projectDao.getListForProject(project));
+		return page;
+	}
+	
+	/**
+	 * 与加工厂人员相关
+	 * @param project
+	 * @return
+	 */
+	public Page<Project> getListForProjectByJGC(Page<Project> page,Project project){
+		project.setPage(page);
+		page.setList(projectDao.getListForProjectByJGC(project));
+		return page;
+	}
+}

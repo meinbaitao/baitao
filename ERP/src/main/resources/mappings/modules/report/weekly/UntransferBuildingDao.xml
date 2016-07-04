@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.report.weekly.mianly.dao.UntransferBuildingDao">
+    
+	<sql id="untransferBuildingColumns">
+		a.id AS "id",
+		a.del_flag AS "delFlag",
+		a.report_id AS "reportId",
+		a.build_no AS "buildNo",
+		a.district AS "district",
+		a.plan_transfer_date AS "planTransferDate",
+		a.actual_stone_area as "actualStoneArea",
+		a.plan_finish_date as "planFinishDate",
+		a.member_count as "memberCount",
+		a.hurry as "hurry",
+		a.subsidy as "subsidy"
+	</sql>
+	
+	<sql id="untransferBuildingJoins">
+	</sql>
+    
+	<select id="get" resultType="UntransferBuilding">
+		SELECT 
+			<include refid="untransferBuildingColumns"/>
+		FROM btg_untransfer_building a
+		<include refid="untransferBuildingJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="UntransferBuilding">
+		SELECT 
+			<include refid="untransferBuildingColumns"/>
+		FROM btg_untransfer_building a
+		<include refid="untransferBuildingJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="reportId != null and reportId != ''">
+				and a.report_id = #{reportId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="UntransferBuilding">
+		SELECT 
+			<include refid="untransferBuildingColumns"/>
+		FROM btg_untransfer_building a
+		<include refid="untransferBuildingJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="reportId != null and reportId != ''">
+				and a.report_id = #{reportId}
+			</if>
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_untransfer_building(
+			id,
+			report_id,
+			build_no,
+			district,
+			plan_transfer_date,
+			actual_stone_area,
+			plan_finish_date,
+			member_count,
+			hurry,
+			subsidy
+		) VALUES (
+			#{id},
+			#{reportId},
+			#{buildNo},
+			#{district},
+			#{planTransferDate},
+			#{actualStoneArea},
+			#{planFinishDate},
+			#{memberCount},
+			#{hurry},
+			#{subsidy}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_untransfer_building SET
+			report_id = #{reportId},
+			build_no = #{buildNo},
+			district = #{district},
+			plan_transfer_date = #{planTransferDate}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		update btg_untransfer_building
+		 set del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+	<select id="getProjectUntransferBuilding" resultType="UntransferBuilding" >
+		select
+		a.id AS "id",
+		a.del_flag AS "delFlag",
+		a.report_id AS "reportId",
+		a.build_no AS "buildNo",
+		a.district AS "district",
+		a.plan_transfer_date AS "planTransferDate"
+ 	from btg_untransfer_building a join btg_proj_weekly_report pwr on a.report_id = pwr.id
+   where
+   a.del_flag = #{DEL_FLAG_NORMAL} and
+   pwr.week_serial_num = #{week_serial_num} and pwr.project_id = #{project_id}
+	</select>
+
+	<delete id="deleteAllByReportId" >
+		delete from btg_untransfer_building where report_id = #{reportId}
+	</delete>
+	
+</mapper>

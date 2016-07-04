@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.factory.dao.ManufPersonDao">
+    
+	<sql id="manufPersonColumns">
+		a.id AS "id",
+		a.factory AS "factory",
+		a.area AS "area",
+		a.manager AS "manager",
+		a.principal AS "principal",
+		a.principal_tel AS "principalTel",
+		a.tracer AS "tracer",
+		a.tracer_tel AS "tracerTel",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="manufPersonJoins">
+	</sql>
+    
+	<select id="get" resultType="ManufPerson">
+		SELECT 
+			<include refid="manufPersonColumns"/>
+		FROM btg_manuf_person a
+		<include refid="manufPersonJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="ManufPerson">
+		SELECT 
+			<include refid="manufPersonColumns"/>
+		FROM btg_manuf_person a
+		<include refid="manufPersonJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="factory != null and factory != ''">
+				AND a.factory = #{factory}
+			</if>
+			<if test="area != null and area != ''">
+				AND a.area = #{area}
+			</if>
+			<if test="manager != null and manager != ''">
+				AND a.manager = #{manager}
+			</if>
+			<if test="tracer != null and tracer != ''">
+				AND a.tracer = #{tracer}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ManufPerson">
+		SELECT 
+			<include refid="manufPersonColumns"/>
+		FROM btg_manuf_person a
+		<include refid="manufPersonJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_manuf_person(
+			id,
+			factory,
+			area,
+			manager,
+			principal,
+			principal_tel,
+			tracer,
+			tracer_tel,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{factory},
+			#{area},
+			#{manager},
+			#{principal},
+			#{principalTel},
+			#{tracer},
+			#{tracerTel},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_manuf_person SET 	
+			factory = #{factory},
+			area = #{area},
+			manager = #{manager},
+			principal = #{principal},
+			principal_tel = #{principalTel},
+			tracer = #{tracer},
+			tracer_tel = #{tracerTel},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_manuf_person SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<!--由工厂名获取对象-->
+	<select id="getByFactoryName" resultType="ManufPerson">
+		SELECT 
+			<include refid="manufPersonColumns"/>
+		FROM btg_manuf_person a
+		<include refid="manufPersonJoins"/>
+		WHERE a.factory = #{factory}
+	</select>
+	
+	<!--查询所有生产经理-->
+	<select id="findManagers" resultType="String">
+		SELECT DISTINCT
+			a.manager
+		FROM
+			btg_manuf_person a
+		WHERE
+			a.del_flag = #{DEL_FLAG_NORMAL}
+	</select>
+</mapper>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.purchase.dao.PurchaseDemandSubProjectMappingDao">
+    
+	<sql id="pdSpMappingColumns">
+		a.id AS "id",
+		a.purchase_demand_id AS "pdid",
+		a.subproject_id AS "subid"
+	</sql>
+	
+	<sql id="pdSpMappingJoins">
+	</sql>
+    
+	<select id="get" resultType="PurchaseDemandSubProjectMapping">
+		SELECT 
+			<include refid="pdSpMappingColumns"/>
+		FROM btg_purchase_demand_subproject_mapping a
+		<include refid="pdSpMappingJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="PurchaseDemandSubProjectMapping">
+		SELECT 
+			<include refid="pdSpMappingColumns"/>
+		FROM btg_purchase_demand_subproject_mapping a
+		<include refid="pdSpMappingJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="PurchaseDemandSubProjectMapping">
+		SELECT 
+			<include refid="pdSpMappingColumns"/>
+		FROM btg_purchase_demand_subproject_mapping a
+		<include refid="pdSpMappingJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_purchase_demand_subproject_mapping(
+			id,
+			purchase_demand_id,
+			subproject_id
+		) VALUES (
+			#{id},
+			#{pdid},
+			#{subid}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_purchase_demand_subproject_mapping SET 	
+			purchase_demand_id = #{pdid},
+			subproject_id = #{subid}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_purchase_demand_subproject_mapping
+		WHERE id = #{id}
+	</update>
+	
+	
+	<!-- 根据采购编号获取相应的详细数据信息 -->
+	<select id="getDetailBySeriesNumber" parameterType="String" resultType="map">
+		select pro.`name` as proName,pro.`id` as proID,
+				sub.house_type as subHouseType,sub.id as subID,
+				sub.building as subBuilding,d2.label as subType,<!--sub.type as subType,-->
+				sub.areaof_stone as subAreaofstone,
+				pd.type as pType,pd.count as pCount,
+				pd.sort as pSort,pd.workflow_id as workflowid 
+		from btg_purchase_demand_subproject_mapping pdsm
+			left join btg_purchase_demand pd on pd.id=pdsm.purchase_demand_id
+			left join btg_subproject sub on sub.id=pdsm.subproject_id
+			left join sys_dict d2 on d2.value=sub.type
+			left join btg_project pro on pro.id=sub.project_id
+		where pd.seriesnumber=#{seriesNumber}
+	GROUP BY sub.id
+		<!-- select 	pro.`name` as proName,pro.`id` as proID,
+				sub.house_type as subHouseType,sub.id as subID,
+				sub.building as subBuilding,sub.type as subType,
+				sub.areaof_stone as subAreaofstone,
+				pd.type as pType,pd.count as pCount,
+				pd.sort as pSort
+ 		from btg_purchase_demand pd 
+			left join btg_purchase_demand_subproject_mapping pdsm on pdsm.purchase_demand_id=pd.id
+			left join btg_subproject sub on sub.id=pdsm.subproject_id
+			left join btg_project pro on pro.id=sub.project_id
+		where pd.seriesnumber=#{seriesNumber} -->
+	</select>
+	
+</mapper>

@@ -1,0 +1,832 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.contract.web;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.bt.common.exceptions.BusinessException;
+import com.bt.modules.activiti.constants.ActivitiConstants;
+import com.bt.modules.activiti.constants.ProcessDefinitionKeyEnum;
+import com.bt.modules.activiti.entities.WFOperationResult;
+import com.bt.modules.activiti.support.VariablesBuilder;
+import com.bt.modules.attachment.entity.Attachment;
+import com.bt.modules.attachment.service.AttachmentService;
+import com.bt.modules.contract.entity.Execution;
+import com.bt.modules.contract.entity.LaborItemsPrice;
+import com.bt.modules.contract.entity.Laborcontract;
+import com.bt.modules.contract.entity.Laboritems;
+import com.bt.modules.contract.service.ConYearContractService;
+import com.bt.modules.contract.service.ExecutionService;
+import com.bt.modules.contract.service.LaborDemandService;
+import com.bt.modules.contract.service.LaborItemsPriceService;
+import com.bt.modules.contract.service.LaborcontractAccountService;
+import com.bt.modules.contract.service.LaborcontractBillService;
+import com.bt.modules.contract.service.LaborcontractService;
+import com.bt.modules.contract.service.LaboritemsService;
+import com.bt.modules.houseType.entity.HouseType;
+import com.bt.modules.houseType.service.HouseTypeService;
+import com.bt.modules.project.entity.Project;
+import com.bt.modules.project.entity.Subproject;
+import com.bt.modules.project.service.ProjectService;
+import com.bt.modules.project.service.SubProjectService;
+import com.bt.modules.qualityitem.entity.Qualityitem;
+import com.bt.modules.qualityitem.service.QualityitemService;
+import com.bt.modules.utils.CommonStatus;
+import com.bt.modules.utils.CommonUtils;
+import com.bt.modules.utils.UploadUtils;
+import com.google.common.collect.Lists;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.IdGen;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.utils.excel.ExportExcel;
+import com.thinkgem.jeesite.common.utils.excel.ImportExcel;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 劳务合同Controller
+ * @author yhh
+ * @version 2015-08-05
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/contract/laborcontract")
+public class LaborcontractController extends BaseController {
+
+	@Autowired
+	private LaborcontractService laborcontractService;
+	
+	
+	//注入项目信息
+	@Autowired
+	private ProjectService projectService;
+	
+	//注入二级项目信息
+	@Autowired
+	private SubProjectService subProjectService;
+	
+	//注入年度合同
+	@Autowired
+	private ConYearContractService conYearContractService;
+	
+	//劳务清单服务
+	@Autowired
+	private LaboritemsService laboritemsService;
+	
+	//劳务清单价库服务
+	@Autowired
+	private LaborItemsPriceService laborItemsPriceService;
+	
+	@Autowired
+	private LaborcontractAccountService accountService;
+	
+	@Autowired
+	private QualityitemService qualityitemService;
+	
+	@Autowired
+	private HouseTypeService houseTypeService;
+
+	//附件管理服务
+	@Autowired
+	private AttachmentService attachService;
+	
+	//劳务需求服务
+	@Autowired
+	private LaborDemandService laborDemandService;
+	
+	@Autowired
+	private ExecutionService executionService;
+	@Autowired
+	private LaborcontractBillService laborcontractBillService;	//劳务日志
+
+	@Autowired
+	private ActTaskService actTaskService;
+	
+	@ModelAttribute
+	public Laborcontract get(@RequestParam(required=false) String id) {
+		Laborcontract entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = laborcontractService.get(id);
+		}
+		if (entity == null){
+			entity = new Laborcontract();
+		}
+		return entity;
+	}
+	
+	@RequestMapping(value = "allList")
+	public String allList( Laborcontract laborcontract, HttpServletRequest request, HttpServletResponse response, Model model) {
+		laborcontract.setDelFlag("2");
+		Page<Laborcontract> page = laborcontractService.findPage(new Page<Laborcontract>(request, response), laborcontract); 
+		
+		model.addAttribute("page", page);
+		return "modules/contract/laborVerifyList";
+	}
+	
+	@RequestMapping(value = "listVerify")
+	public String listVerify( Laborcontract laborcontract, HttpServletRequest request, HttpServletResponse response, Model model) {
+//		laborcontract.setDelFlag("2");
+//		Page<Laborcontract> page = laborcontractService.findPage(new Page<Laborcontract>(request, response), laborcontract); 
+//		
+//		model.addAttribute("page", page);
+//		return "modules/contract/laborVerifyList";
+		return findMyLaborcontract(laborcontract, request, response, model);
+	}
+	/**
+	 * 查看我创建的劳务合同
+	 * 注：当前用户创建且没有提交的数据
+	 * @param laborcontract
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "findMyLaborcontract")
+	public String findMyLaborcontract( Laborcontract laborcontract, HttpServletRequest request, HttpServletResponse response, Model model) {
+		laborcontract.setDelFlag("2");
+		laborcontract.setCreateBy(UserUtils.getUser());
+		Page<Laborcontract> page = laborcontractService.findMyLaborcontract(new Page<Laborcontract>(request, response), laborcontract); 
+		for(Laborcontract l : page.getList()){
+			l.setBuildingsDisName(subProjectService
+					.getBuilDisplayNameStr(l.getProjectId(), l.getBuildings()));
+		}
+		model.addAttribute("page", page);
+		return "modules/contract/laborVerifyList";
+	}
+	/**
+	 * 查看待我审批
+	 * 注：显示当前用户已提交未审批完成及待当前用户审批的所有数据
+	 * @param laborcontract
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "findUnAuditLaborcontract")
+	public String findUnAuditLaborcontract( Laborcontract laborcontract, HttpServletRequest request, HttpServletResponse response, Model model) {
+		laborcontract.setDelFlag("2");
+		Page<Laborcontract> page = laborcontractService.findUnAuditLaborcontract(new Page<Laborcontract>(request, response), laborcontract); 
+		
+		model.addAttribute("page", page);
+		return "modules/contract/laborVerifyList";
+	}
+	/**
+	 * 查看我审批过的-即与我相关的
+	 * 注：先默认显示全部已审批完毕
+	 * @param laborcontract
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "findAuditDoneLaborcontract")
+	public String findAuditDoneLaborcontract( Laborcontract laborcontract, HttpServletRequest request, HttpServletResponse response, Model model) {
+		laborcontract.setDelFlag("2");
+		Page<Laborcontract> page = laborcontractService.findAuditDoneLaborcontract(new Page<Laborcontract>(request, response), laborcontract); 
+		
+		model.addAttribute("page", page);
+		return "modules/contract/laborVerifyList";
+	}
+	
+	@RequestMapping(value = "formVerify")
+	public String formVerify(Laborcontract laborcontract, Model model) {
+		//判断是否新记录
+		if(laborcontract.getIsNewRecord()){
+			String createId = IdGen.uuid();
+			laborcontract.setId(createId);
+		}else{
+			model.addAttribute("flag","edit");
+			
+			if(null != laborcontract.getAcceptScope()){
+				String[] acceptScope= laborcontract.getAcceptScope().split(",");
+				model.addAttribute("acceptScopeSelected", acceptScope);
+			}
+		}
+		
+		//合同与明细
+		Laboritems conLaboritems = new Laboritems();
+		conLaboritems.setContractId(laborcontract.getId());
+		laborcontract.setDetailList(laboritemsService.findList(conLaboritems));
+		
+		Qualityitem qualityitem = new Qualityitem();
+		//质保金条款
+		List<Qualityitem> qualitylist =qualityitemService.findList(qualityitem);
+		model.addAttribute("qualitylist", qualitylist);
+		
+		//施工班组		
+		List<Execution> cycList = executionService.findList(new Execution());
+		model.addAttribute("cycList", cycList);
+		
+		List<Laborcontract> list = laborcontractService.findListForParent(laborcontract.getId());
+		//转换为楼栋显示名称 许俊雄
+		for(Laborcontract l : list){
+			l.setBuildingsDisName(subProjectService
+					.getBuilDisplayNameStr(l.getProjectId(), l.getBuildings()));
+		}
+		laborcontract.setLabcontractList(list);
+		
+		//转化为显示名称，用来作为合同编号
+		laborcontract.setBuildingsDisName(subProjectService
+				.getBuilDisplayNameStr(laborcontract.getProjectId(), laborcontract.getBuildings()));
+		
+		model.addAttribute("laborcontract", laborcontract);
+		
+		//劳务价库
+		List<LaborItemsPrice> lipList = laborItemsPriceService.findList(new LaborItemsPrice());
+		model.addAttribute("lipList", lipList);
+		
+		/*//劳务需求
+		List<LaborDemand> demandList = laborDemandService.findList(new LaborDemand());
+		model.addAttribute("demandList", demandList);*/
+		
+		//项目
+		Project project = new Project();
+		project.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+		List<Project> projectList = projectService.findList(project);
+		model.addAttribute("projectList", projectList);
+		
+		//由合同id获取相关附件
+		Attachment attachment = new Attachment();
+		attachment.setType(laborcontract.getId());
+		List<Attachment> attachListVerify = attachService.findAttachType(attachment);
+		model.addAttribute("attachListVerify", attachListVerify);	
+		
+		//劳务变更日志
+		laborcontract.getExtraData().put("opertType", CommonStatus.UPDATE_LOG_CHANGE);
+		Page<Laborcontract> page = laborcontractBillService.findPage(new Page<Laborcontract>(), laborcontract);
+		if(page.getList().size()>0){
+			model.addAttribute("isChange", true);
+		}else{
+			model.addAttribute("isChange", false);
+		}
+		
+		if(StringUtils.isNotBlank(laborcontract.getBuildings())){
+			List<Subproject> listSub = subProjectService.getByBuildings(CommonUtils.stringToStringArray(laborcontract.getBuildings()), laborcontract.getProjectId());
+			model.addAttribute("listSub", listSub);	
+		}
+		return "modules/contract/laborVerifyForm";
+	}
+	
+	@RequestMapping(value = "saveVerify")
+	public String saveVerify(Laborcontract laborcontract, Model model, RedirectAttributes redirectAttributes, HttpServletRequest request) throws BusinessException {
+		String laborcontractId = laborcontract.getId();
+		if(null !=laborcontract.getHouse() && !StringUtils.equals("laborcontract.getHouse()", "") ){
+			String delId = request.getParameter("delIds");
+			String house = laborcontract.getHouse();
+			
+			//解析行列表
+			try {
+				house =  URLDecoder.decode(house, "utf-8");
+			
+				String json = "[" + house + "]";  
+				Object[] object = JSONArray.fromObject(json).toArray(); 
+				
+				//生成楼栋串
+				List<String> buildings = new ArrayList<String>();
+				//生成户型串
+				List<String> housetypes = new ArrayList<String>();
+				for( int i = 0 ; i <object.length ; i++ ){
+					JSONObject jsonObject = (JSONObject)object[i];
+					JSONObject jsonObject2 = jsonObject.getJSONObject("house");
+					
+					//生成户型串
+					if(!housetypes.contains(jsonObject2.optString("houseType"))){
+						housetypes.add(jsonObject2.optString("houseType"));
+					}
+					//生产楼栋串
+					if(!buildings.contains(jsonObject2.optString("building"))){
+						buildings.add(URLDecoder.decode(jsonObject2.optString("building"), "utf-8"));
+					}
+				}
+				
+				//生才成父合同（楼栋，户型都在一列的合同）为列表查询做准备
+			    laborcontract.setDelFlag("2");
+			    laborcontract.setHouse(StringUtils.join(housetypes.toArray(),","));
+			    laborcontract.setBuildings(StringUtils.join(buildings.toArray(),","));
+			    laborcontractService.save(laborcontract);
+				
+			    String parentid = laborcontract.getId();
+			    
+			    //保存楼栋拆分之后的数据
+				for( int i = 0 ; i <object.length ; i++ ){
+					JSONObject jsonObject = (JSONObject)object[i];
+					JSONObject jsonObject2 = jsonObject.getJSONObject("house");
+					laborcontract.setId(StringUtils.equals("", jsonObject2.optString("subid"))?IdGen.uuid():jsonObject2.optString("subid"));
+					laborcontract.setBuildings(URLDecoder.decode(jsonObject2.optString("building"), "utf-8"));
+					laborcontract.setHouse(jsonObject2.optString("houseType").trim());
+					laborcontract.setBoneArea(jsonObject2.optString("boneArea").trim());
+					laborcontract.setStoneArea(jsonObject2.optString("stoneArea").trim());
+					laborcontract.setOtherArea(jsonObject2.optString("otherArea").trim());
+					laborcontract.setStartdate(jsonObject2.optString("substartdate").trim());
+					laborcontract.setEnddate(jsonObject2.optString("subenddate").trim());
+					laborcontract.setDuration(jsonObject2.optString("subduration").trim());
+					laborcontract.setIsHurry(jsonObject2.optString("subisHurry").trim());
+					laborcontract.setContractPrice(jsonObject2.optString("subcontractPrice").trim());
+					laborcontract.setStandardPrice(jsonObject2.optString("substandardPrice").trim());
+					laborcontract.setBudgetPrice(jsonObject2.optString("subbudgetPrice").trim());
+					laborcontract.setParentid(parentid);
+					laborcontract.setDelFlag("0");
+//					laborcontract.setAgreementDate(DateUtils.getDateStrByPattern(new Date(), "yyyy-MM-dd"));
+					laborcontract.setWorkflowid(null);
+					laborcontract.setIsNewRecord(true);
+					
+					//插入新楼栋合同数据
+					laborcontractService.save(laborcontract);
+					accountService.createByLaborContract(laborcontract.getId());
+				}
+			
+			} catch (UnsupportedEncodingException e) {
+				throw new BusinessException("request.utils.utf82");
+			}
+			
+			//删除选中行数据
+			laborcontractService.delete(delId);
+			
+			addMessage(redirectAttributes, "保存劳务合同成功");
+		}
+//		return "modules/contract/laborVerifyList";
+		
+		return "redirect:"+Global.getAdminPath()+"/contract/laborcontract/formVerify?id="+laborcontractId;
+		
+//		return "redirect:"+Global.getAdminPath()+"/contract/laborcontract/formVerify";
+	}
+		
+	@RequestMapping(value = "deleteVerify")
+	public String deleteVerify(Laborcontract laborcontract, RedirectAttributes redirectAttributes, HttpServletRequest request) {
+		laborcontractService.delete(laborcontract);
+		addMessage(redirectAttributes, "删除劳务合同成功");
+		return "redirect:"+Global.getAdminPath()+"/contract/laborcontract/listVerify";
+	}
+
+	/**
+	 * 下载导入数据模板
+	 * @param response
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@RequiresPermissions("laborcontract:view")
+    @RequestMapping(value = "import/template")
+    public String importFileTemplate(HttpServletResponse response, RedirectAttributes redirectAttributes) {
+		try {
+            String fileName = "劳务合同明细导入模板.xlsx";
+    		List<Laboritems> list = Lists.newArrayList();
+    		new ExportExcel("劳务合同明细", Laboritems.class, 2).setDataList(list).write(response, fileName).dispose();
+    		return null;
+		} catch (Exception e) {
+			addMessage(redirectAttributes, "导入模板下载失败！失败信息：" + e.getMessage());
+		}
+		return "redirect:" + adminPath + "/contract/laborcontract/listVerify";
+    }
+	
+	/**
+	 * 导入明细,回显明细到页面
+	 * @param importFile
+	 * @param request
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping(value = "importDetail",method=RequestMethod.POST)
+    public List<Laboritems> importDetail(@RequestParam(value = "importFile") MultipartFile importFile, HttpServletRequest request) {
+		List<Laboritems> returnList = new ArrayList<Laboritems>();
+		try {
+			ImportExcel ei = new ImportExcel(importFile, 1, 0);
+			List<Laboritems> list = ei.getDataList(Laboritems.class);
+			returnList = list;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return returnList;
+    }
+	
+	/**
+	 * 上传附件
+	 * @param file
+	 * @param request
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping(value = "upload",method=RequestMethod.POST)
+	public String upload(@RequestParam(value = "file") MultipartFile file,String uploadContractId, HttpServletRequest request,RedirectAttributes redirectAttributes) {
+		//下载地址
+		String url = request.getRequestURL().toString();
+		url=url.substring(0,url.lastIndexOf("/"));
+		String fileName =file.getOriginalFilename();
+		if(StringUtils.isEmpty(fileName)){
+			fileName  = request.getParameter("file");
+		}
+		String type = fileName.substring(fileName.lastIndexOf(".")+1,fileName.length());
+		String basePath = "upload";
+		String dirName = "contract/laborContract";
+
+		//Fixme 为什么还有hardcode的代码, 并且字符串链接请用 StringBuilder
+		// 文件保存目录路径
+		String savePath = "D:/dm/"+ basePath + "/";
+		
+		// 创建文件夹
+		savePath += dirName + "/";
+		//saveUrl += dirName + "/";
+		File saveDirFile = new File(savePath);
+		if (!saveDirFile.exists()) {
+			saveDirFile.mkdirs();
+		}
+		// .../basePath/dirName/yyyyMMdd/
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		String ymd = sdf.format(new Date());
+		savePath += ymd + "/";
+		
+		UploadUtils utils = new UploadUtils();
+		String info =utils.uploadFile(request, file, savePath);
+		
+		Attachment attachment = new Attachment();
+		attachment.setId(IdGen.uuid());
+		attachment.setAttachAddress(savePath); 	//服务器存放地址
+		attachment.setName(fileName);
+		attachment.setAttachType(type);
+		attachment.setType(uploadContractId);
+		attachment.setAttachUrl(url);	//下载地址
+		attachService.save(attachment);
+		
+		if("true".equals(info)){
+			return file.getOriginalFilename();
+		}
+		return info;
+	}
+	
+	/**
+	 * 下载附件
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping(value="download")
+	public void download(HttpServletRequest request, HttpServletResponse response) {
+		String fileName = request.getParameter("fileName");
+		
+		response.setCharacterEncoding("utf-8");
+		response.setContentType("multipart/form-data");
+		response.setHeader("Content-Disposition", "attachment;fileName="
+				+ fileName);
+		String basePath = "upload";
+
+		String dirName = "contract/laborContract";
+		InputStream inputStream = null;
+		OutputStream os =null;
+		try {
+			String path = "D:/dm/" + basePath + "/" + dirName + "/";
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+			String ymd = sdf.format(new Date());
+			path += ymd + "/";
+			inputStream = new FileInputStream(new File(path + File.separator
+					+ fileName));
+			os = response.getOutputStream();
+			byte[] b = new byte[2048];
+			int length;
+			while ((length = inputStream.read(b)) > 0) {
+				os.write(b, 0, length);
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (null != inputStream) {
+				try {
+					inputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (null != os) {
+				try {
+					os.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	/**
+	 * 验证合同
+	 * @param ID
+	 * @return
+	 */
+	public String checkExist(String ID){
+		//检查编号是否为空,是否已存在
+		return "false";
+	}
+	
+	/**
+	 * 由合同ID获取需求
+	 * @param laborcontract
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping(value="getDemand")
+	public Laborcontract getDemand(Laborcontract laborcontract, HttpServletRequest request, HttpServletResponse response){
+		laborcontract.setId(request.getParameter("id"));
+		return laborcontractService.get(laborcontract);
+	}
+	
+
+	
+	@ResponseBody
+	@RequestMapping(value="getByProjectName")
+	public Project getByProjectName(Project project,HttpServletRequest request,HttpServletResponse response,Model model){
+		project.setName(request.getParameter("name"));
+		return projectService.getByProjectName(project);
+	}
+
+	@RequestMapping(value="getOneLaborContract/projectId/{projectId}/buildingNO/{buildingNO}")
+	public @ResponseBody
+	Laborcontract getOneLaborContract(@PathVariable String projectId, @PathVariable String buildingNO){
+		return laborcontractService.getOneByProIdAndBuild(projectId, buildingNO);
+	}
+	
+	@ResponseBody
+	@RequestMapping(value="getlaborArea")
+	public Laborcontract getlaborArea(@RequestBody Laborcontract contract,
+			HttpServletRequest request, HttpServletResponse response){
+		
+		//buildings
+		String buildings;
+		try {
+			buildings = URLDecoder.decode(contract.getBuildings(), "utf-8");
+			contract.setBuildings(buildings);
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		
+		List<Laborcontract> list = laborcontractService.getByProIdAndBuild(contract);
+		
+		//定义骨架面积
+		double boneArea = 0;
+		//定义石材面积
+		double stoneArea = 0;
+		//定义石材面积
+		double otherArea = 0;
+				
+		for(Laborcontract la : list){
+			boneArea = boneArea + Integer.parseInt(StringUtils.isBlank(la.getBoneArea())?"0":la.getBoneArea().replace(".00","").replace(".0",""));
+			stoneArea = stoneArea + Integer.parseInt(StringUtils.isBlank(la.getStoneArea())?"0":la.getStoneArea().replace(".00","").replace(".0",""));
+			otherArea = otherArea + Integer.parseInt(StringUtils.isBlank(la.getOtherArea())?"0":la.getOtherArea().replace(".00","").replace(".0",""));
+		}
+		
+		//去户型库查询户型下详细所有的信息
+		HouseType houseType = new HouseType();
+		houseType.setHouseType(contract.getHouse());
+		houseType = houseTypeService.getOneByHouseType(houseType);
+		
+			//写剩余面积
+		contract.setBoneArea(String.valueOf(houseType.getLaborArea()==null?0.0:houseType.getLaborArea() - boneArea));
+		contract.setStoneArea(String.valueOf(houseType.getLaborArea()==null?0.0:houseType.getLaborArea() - stoneArea));
+		contract.setOtherArea(String.valueOf(houseType.getLaborArea()==null?0.0:houseType.getLaborArea() - otherArea));
+		return contract;
+	}	
+	
+	
+	@ResponseBody
+	@RequestMapping(value="getBuildingbyhouse")
+	public Map<String,Object> getBuildingbyhouse(@RequestBody Laborcontract contract,
+			HttpServletRequest request, HttpServletResponse response){
+		List<Subproject> listSub = subProjectService.getByHouseTypes(contract.getHouse().split(","), contract.getProjectId());
+		List<String> buildings = subProjectService.getBuildingsBySubs(listSub);
+		
+		List<Laborcontract> building = new ArrayList<Laborcontract>();
+		for(String s : buildings){
+			Laborcontract laborcontract = new Laborcontract();
+			laborcontract.setId(IdGen.uuid());
+			laborcontract.setBuildings(s);
+			laborcontract.setBuildingsDisName(subProjectService.getBuilDisplayNameStr(contract.getProjectId(), s));
+			building.add(laborcontract);
+		}
+		Map<String,Object> map = new HashMap<String,Object>();
+		map.put("buildings", building);
+		return map;
+	}	
+	
+	@ResponseBody
+	@RequestMapping(value="changeForContractNo")
+	public Laborcontract changeForContractNo(@RequestBody Laborcontract contract,
+			HttpServletRequest request, HttpServletResponse response){
+//		String partyBCode = null;
+//		partyBCode = executionService.get(contract.getPartyBName()).getCode();
+//		contract.setPartyBCode(partyBCode);
+		String contractNo = laborcontractService.createSeriesnumber(contract);
+		String projectname = laborcontractService.createprojectname(contract);
+		contract.setContractNo(contractNo);
+		contract.setProName(projectname);
+		return contract;
+	}
+
+
+	/**
+	 * 已废弃 - 许俊雄 20160518
+	 * @param contractId
+	 * @return
+	 */
+	@RequestMapping(value = "startAuditFlow/{contractId}")
+	@Transactional(readOnly = false)
+	public @ResponseBody
+	WFOperationResult startAuditFlow(@PathVariable String contractId){
+		Laborcontract laborcontract = laborcontractService.get(contractId);
+		StringBuilder errorMessage = new StringBuilder();
+		Project project = projectService.get(laborcontract.getProjectId());
+		String costManager = project.getCostManagerBid();
+		if(StringUtils.isEmpty(costManager)){
+			errorMessage.append("项目信息中的成本负责人为空").append("\n");
+		}
+
+		String costTeamLeader = project.getCostOfficerBid();
+		if(StringUtils.isEmpty(costTeamLeader)) {
+			errorMessage.append("项目信息中的成本组长为空").append("\n");
+		}
+
+		String costDirector = project.getCostLeaderBid();
+		if(StringUtils.isEmpty(costDirector)){
+			errorMessage.append("项目信息中的成本主管为空").append("\n");
+		}
+
+		String projectResponsiblePerson = project.getProjectManagerBid();
+		if(StringUtils.isEmpty(projectResponsiblePerson)){
+			errorMessage.append("项目信息中的项目负责人为空").append("\n");
+		}
+
+		String areaManager = project.getRegionalManagerBid();
+		if(StringUtils.isEmpty(areaManager)){
+			errorMessage.append("项目信息中的区域经理为空").append("\n");
+		}
+
+		String administrationSpecialist = project.getAdminstaffbid();
+		if(StringUtils.isEmpty(administrationSpecialist)){
+			errorMessage.append("项目信息中的行政专员为空").append("\n");
+		}
+
+		if(errorMessage.length()>0){
+			return new WFOperationResult(errorMessage.toString(), WFOperationResult.FAIL);
+		}
+
+		Map<String, Object> variables = new HashMap<String, Object>();
+		variables.put(ActivitiConstants.PRIMARY_KEY, contractId);
+		variables.put(ActivitiConstants.PERSIST_BEAN_NAME, LaborcontractService.BEAN_NAME);
+		variables.put("cost_responsible_person", UserUtils.get(costManager).getLoginName());
+		variables.put("costing_leader", UserUtils.get(costTeamLeader).getLoginName());
+		variables.put("costing_director", UserUtils.get(costDirector).getLoginName());
+		variables.put("project_responsible_person", UserUtils.get(projectResponsiblePerson).getLoginName());
+		variables.put("area_manager", UserUtils.get(areaManager).getLoginName());
+		variables.put("administration_specialist", UserUtils.get(administrationSpecialist).getLoginName());
+		String instanceId = actTaskService.startProcess("workContractReviewFlow", "btg_con_laborcontract", contractId, "劳务合同评审流程", variables);
+		laborcontract.setWorkflowid(instanceId);
+		laborcontract.setWorkflowstatus(CommonStatus.WORK_FLOW_OPEN);
+		laborcontractService.update(laborcontract);
+		return new WFOperationResult("流程启动成功", WFOperationResult.SUCCESSFUL);
+	}
+	
+	
+	
+	@RequestMapping(value = "startProcess/{contractId}")
+	@Transactional(readOnly = false)
+	public @ResponseBody
+	WFOperationResult startProcess(@PathVariable String contractId) throws Exception{
+		
+		//FIXME 如果用户不保存提交，请先保存。 许俊雄20160517
+		Laborcontract laborcontract = laborcontractService.get(contractId);
+		Project project = projectService.get(laborcontract.getProjectId());
+	
+
+		Map<String, Object> variables = null;
+		String instanceId = "";
+		
+		//标准合同，不是我要hardcode，前端hardcode,进度赶懒得改
+		//FIXME 许俊雄
+		//标准合同
+		if(laborcontract != null && laborcontract.getIsStandardContract().equals("3")){
+			variables = new VariablesBuilder()
+			.putPrimaryKey(contractId)
+			.putPersistBeanName(LaborcontractService.BEAN_NAME)
+			.putPojectRespon(UserUtils.getNotNull(project.getProjectManagerBid()).getLoginName()
+					,project.getCode())
+			.putCostRespon(UserUtils.getNotNull(project.getCostManagerBid()).getLoginName()
+					,project.getCode())
+			.putCostLeader(UserUtils.getNotNull(project.getCostOfficerBid()).getLoginName()
+					,project.getCode())
+			.build();
+			instanceId = actTaskService.startProcess(ProcessDefinitionKeyEnum.PD_LARBOR_CONTACT_STANDARD.getName()
+					, "btg_con_laborcontract", contractId, "劳务合同评审(标准)流程", variables);
+		//非标准合同
+		}else if(laborcontract != null && laborcontract.getIsStandardContract().equals("4")){
+			variables = new VariablesBuilder()
+			.putPrimaryKey(contractId)
+			.putPersistBeanName(LaborcontractService.BEAN_NAME)
+			.putCostRespon(UserUtils.getNotNull(project.getCostManagerBid()).getLoginName()
+					, project.getCode())
+			.putCostLeader(UserUtils.getNotNull(project.getCostOfficerBid()).getLoginName()
+					, project.getCode())
+			.putCostDirector(UserUtils.getNotNull(project.getCostLeaderBid()).getLoginName()
+					, project.getCode())
+			.putPojectRespon(UserUtils.getNotNull(project.getProjectManagerBid()).getLoginName()
+					,project.getCode())
+			.build();
+			instanceId = actTaskService.startProcess(ProcessDefinitionKeyEnum.PD_LARBOR_CONTACT_OFFSTATNDAR.getName()
+					, "btg_con_laborcontract", contractId, "劳务合同评(非标准)审流程", variables);
+		}else{
+			logger.error("合同为空或者合同类型找不到！");
+			throw new BusinessException("");
+		}
+		
+		laborcontract.setWorkflowid(instanceId);
+		laborcontract.setWorkflowstatus(CommonStatus.WORK_FLOW_OPEN);
+		laborcontractService.update(laborcontract);
+		return new WFOperationResult("流程启动成功", WFOperationResult.SUCCESSFUL);
+	}
+
+	/**
+	 * 中止合同
+	 * @param laborcontract
+	 * @param redirectAttributes
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "stop")
+	public String stop(Laborcontract laborcontract, RedirectAttributes redirectAttributes, HttpServletRequest request, Model model) {
+		laborcontract.setConStatus(Laborcontract.CON_STATUS_STOP);
+		return this.changeStatus(laborcontract, redirectAttributes, model);
+	}
+	/**
+	 * 解除合同
+	 * @param laborcontract
+	 * @param redirectAttributes
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "relieve")
+	public String relieve(Laborcontract laborcontract, RedirectAttributes redirectAttributes, HttpServletRequest request, Model model) {
+		laborcontract.setConStatus(Laborcontract.CON_STATUS_RELIEVE);
+		return this.changeStatus(laborcontract, redirectAttributes, model);
+	}
+	/**
+	 * 取消中止
+	 * @param laborcontract
+	 * @param redirectAttributes
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "cancelStop")
+	public String cancelStop(Laborcontract laborcontract, RedirectAttributes redirectAttributes, HttpServletRequest request, Model model) {
+		laborcontract.setConStatus(Laborcontract.CON_STATUS_NORMAL);
+		return this.changeStatus(laborcontract, redirectAttributes, model);
+	}
+	
+	/**
+	 * 修改合同状态
+	 * @param laborcontract
+	 * @param redirectAttributes
+	 * @return
+	 */
+	public String changeStatus(Laborcontract laborcontract, RedirectAttributes redirectAttributes, Model model){
+		laborcontractService.save(laborcontract);
+		laborcontractService.updateForParentid(laborcontract);	//更新合同明细数据
+		addMessage(redirectAttributes, "修改劳务合同成功");
+		laborcontract = this.get(laborcontract.getId());
+		return this.formVerify(laborcontract, model);
+	}
+}

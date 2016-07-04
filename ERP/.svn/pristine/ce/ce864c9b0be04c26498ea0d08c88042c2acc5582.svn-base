@@ -1,0 +1,90 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.report.labor.service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bt.modules.report.labor.dao.LaborReportDao;
+import com.bt.modules.report.labor.entity.LaborReport;
+import com.bt.modules.report.weekly.mianly.entity.BuildingSchedule;
+import com.bt.modules.utils.CommonUtils;
+import com.bt.modules.utils.DateUtils;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+
+/**
+ * 劳务报表
+ * @author xiaocai
+ * @version 2016-4-28
+ */
+@Service
+@Transactional(readOnly = true)
+public class LaborReportService extends CrudService<LaborReportDao, LaborReport> {
+
+	@Autowired
+	private LaborReportDao laborReportDao;
+
+	
+	public Page<LaborReport> findPage(Page<LaborReport> page, LaborReport laborReport) {
+		this.yesOrNo(laborReport);
+		laborReport.setPage(page);
+//		page.setList(this.findList(laborReport));
+		List<LaborReport> list = this.findList(laborReport);
+		for(LaborReport l:list){
+			int expectDay = 0;	//预计工期
+			if(l.getBuildingSchedule()!=null && 
+					StringUtils.isNotBlank(l.getBuildingSchedule().getId())){	//如已发起周报，等于周报时间（完工日期减进场日期）
+				if(l.getBuildingSchedule().getPlanFinishDate()!=null && 
+						l.getBuildingSchedule().getPlanTransferDate()!=null){
+					expectDay = DateUtils.reduceDate(l.getBuildingSchedule().getPlanFinishDate(), l.getBuildingSchedule().getPlanTransferDate());
+					expectDay = expectDay==0?expectDay:(expectDay+=1);
+				}
+			}else{	//如未发起周报，取项目信息的进场以及完工时间
+				if(StringUtils.isNotBlank(l.getSubproject().getPlanEndDate())&&
+						StringUtils.isNotBlank(l.getSubproject().getPlanStartDate())){
+					expectDay = DateUtils.reduceDate(l.getSubproject().getPlanEndDate().replaceAll("/", "-"), 
+								l.getSubproject().getPlanStartDate().replaceAll("/", "-"));
+					expectDay = expectDay==0?expectDay:(expectDay+=1);
+				}
+				
+			}
+			l.getExtraData().put("expectDay", expectDay);
+		}
+		page.setList(list);
+		return page;
+	}
+	/**
+	 * 是或否处理
+	 * @param laborReport
+	 */
+	public void yesOrNo(LaborReport laborReport){
+		BuildingSchedule buildingSchedule = new BuildingSchedule();
+		if("是".equals(laborReport.getKeyWord())){
+			buildingSchedule.setHurry(CommonUtils.DICT_YES);
+			buildingSchedule.setSubsidy(CommonUtils.DICT_YES);
+		}else if("否".equals(laborReport.getKeyWord())){
+			buildingSchedule.setHurry(CommonUtils.DICT_NO);
+			buildingSchedule.setSubsidy(CommonUtils.DICT_NO);
+		}
+		laborReport.setBuildingSchedule(buildingSchedule);
+	}
+	/**
+	 * 查询列表数据
+	 */
+	public List<LaborReport> findList(LaborReport laborReport){
+		List<LaborReport> list = laborReportDao.findList(laborReport);
+		if(list==null){
+			list = new ArrayList<LaborReport>();
+		}
+		return list;
+	}
+	
+	
+}

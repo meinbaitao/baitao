@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.AccCarriageContractWayDetailDao">
+    
+	<sql id="accCarriageContractWayDetailColumns">
+		a.id AS "id",
+		a.contract_id AS "contractId",
+		a.start_area AS "startArea",
+		a.start_addr AS "startAddr",
+		a.good_type AS "goodType",
+		a.good_cover AS "goodCover",
+		a.end_name AS "endName",
+		a.end_addr AS "endAddr",
+		a.km_count AS "kmCount"
+	</sql>
+	
+	<sql id="accCarriageContractWayDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="AccCarriageContractWayDetail">
+		SELECT 
+			<include refid="accCarriageContractWayDetailColumns"/>
+		FROM btg_acc_carriage_contract_detail2 a
+		<include refid="accCarriageContractWayDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="AccCarriageContractWayDetail">
+		SELECT 
+			<include refid="accCarriageContractWayDetailColumns"/>
+		FROM btg_acc_carriage_contract_detail2 a
+		<include refid="accCarriageContractWayDetailJoins"/>
+		<where>
+			
+			<if test="contractId != null and contractId != ''">
+				AND a.contract_id = #{contractId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AccCarriageContractWayDetail">
+		SELECT 
+			<include refid="accCarriageContractWayDetailColumns"/>
+		FROM btg_acc_carriage_contract_detail2 a
+		<include refid="accCarriageContractWayDetailJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_acc_carriage_contract_detail2(
+			id,
+			contract_id,
+			start_area,
+			start_addr,
+			good_type,
+			good_cover,
+			end_name,
+			end_addr,
+			km_count
+		) VALUES (
+			#{id},
+			#{contractId},
+			#{startArea},
+			#{startAddr},
+			#{goodType},
+			#{goodCover},
+			#{endName},
+			#{endAddr},
+			#{kmCount}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_acc_carriage_contract_detail2 SET 	
+			start_area = #{startArea},
+			start_addr = #{startArea},
+			good_type = #{goodType},
+			good_cover = #{goodCover},
+			end_name = #{endName},
+			end_addr = #{endAddr},
+			km_count = #{kmCount}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_acc_carriage_contract_detail2
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.orbom.dao.OrderBomDetailDao">
+    
+	<sql id="orderBomDetailColumns">
+		a.id AS "id",
+		a.order_bom_id AS "orderBomId",
+		a.materiel_id AS "materielId",
+		a.outside_wall_orientation AS "outsideWallOrientation",
+		ifnull(a.box_no,"") AS "boxNo",
+		ifnull(a.materiel_no,"") AS "materielNo",
+		ifnull(a.materiel_name,"") AS "materielName",
+		a.materiel_type AS "materielType",
+		a.count AS "count",
+		ifnull(a.standard_desc,"") AS "standardDesc",
+		ifnull(a.standard_radius,"") AS "standardRadius",
+		ifnull(a.standard_long,"") AS "standardLong",
+		ifnull(a.standard_width,"") AS "standardWidth",
+		ifnull(a.standard_depth,"") AS "standardDepth",
+		ifnull(a.process_chart_no,"") AS "processChartNo",
+		ifnull(a.unit,"") AS "unit",
+		a.left_open_angle AS "leftOpenAngle",
+		a.right_open_angle AS "rightOpenAngle",
+		a.open_angle_m_one AS "openAngleMOne",
+		a.open_angle_m_two AS "openAngleMTwo",
+		a.open_slot_m AS "openSlotM",
+		a.open_light_m AS "openLightM",
+		a.assembly_diagram_no AS "assemblyDiagramNo",
+		a.has_water_slot AS "hasWaterSlot",
+		a.water_slot_m AS "waterSlotM",
+		a.has_back_cut AS "hasBackCut",
+		a.reversed_angle_count AS "reversedAngleCount",
+		a.line_density AS "lineDensity",
+		a.wdight AS "wdight",
+		a.unit_weight AS "unitWeight",
+		a.volume AS "volume",
+		a.area AS "area",
+		a.size AS "size",
+		a.reversed_angle_long AS "reversedAngleLong",
+		a.cut_turn_left AS "cutTurnLeft",
+		a.cut_turn_right AS "cutTurnRight",
+		a.cut_angle_count AS "cutAngleCount",
+		a.turn_angle_count AS "turnAngleCount",
+		ifnull(a.remark,"") AS "remark",
+		a.is_family_line AS "isFamilyLine",
+		a.waterproof_area AS "waterproofArea",
+		a.rohling_area AS "rohlingArea",
+		a.rohling_volume AS "rohlingVolume",
+		a.facing_area AS "facingArea",
+		a.materials AS "materials",
+		a.polish AS "polish",
+		a.back_cut_count AS "backCutCount",
+		a.del_flag AS "delFlag",
+		ifnull(a.rohling_long,"") AS "rohlingLong",
+		ifnull(a.rohling_width,"") AS "rohlingWidth",
+		ifnull(a.rohling_depth,"") AS "rohlingDepth",
+		ifnull(a.standard_l1,"") AS "standardL1",
+		ifnull(a.standard_l2,"") AS "standardL2",
+		SUBSTRING_INDEX(a.box_no,'-',2) as num1,
+		SUBSTRING_INDEX(a.box_no,'-',-1) as num2
+	</sql>
+	
+	<sql id="orderBomDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="OrderBomDetail">
+		SELECT 
+			<include refid="orderBomDetailColumns"/>
+		FROM btg_order_bom_detail a
+		<include refid="orderBomDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OrderBomDetail">
+		SELECT 
+			<include refid="orderBomDetailColumns"/>
+		FROM btg_order_bom_detail a
+		<include refid="orderBomDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="orderBomId != null and orderBomId != ''">
+				AND a.order_bom_id = #{orderBomId} 
+			</if>
+			<if test="materielNo != null and materielNo != ''">
+				AND a.materiel_no = #{materielNo} 
+			</if>
+			<if test="boxNo != null and boxNo != ''">
+				AND a.box_no = #{boxNo} 
+			</if>
+			<if test="outsideWallOrientation != null and outsideWallOrientation != ''">
+				AND a.outside_wall_orientation = #{outsideWallOrientation} 
+			</if>
+			<if test="boxNos !=null and boxNos.size > 0 ">
+				and a.box_no in
+					<foreach collection="boxNos" item="no" index="i"
+	           			 open="(" close=")" separator=",">
+	           		 			#{no}
+	        		</foreach>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<when test="boxNo != null and boxNo != ''">
+				order by a.materiel_no
+			</when>
+			<otherwise>
+				order by  num2,num1,a.box_no, a.outside_wall_orientation,a.materiel_no
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findBoxNo" resultType="OrderBomDetail">
+		SELECT 
+			<include refid="orderBomDetailColumns"/>
+		FROM btg_order_bom_detail a
+		<include refid="orderBomDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="orderBomId != null and orderBomId != ''">
+				AND a.order_bom_id = #{orderBomId} 
+			</if>
+		</where>
+			group by a.box_no 
+			order by a.box_no, a.materiel_no
+	</select>
+	
+	<select id="findAllList" resultType="OrderBomDetail">
+		SELECT 
+			<include refid="orderBomDetailColumns"/>
+		FROM btg_order_bom_detail a
+		<include refid="orderBomDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!-- 提供给采购-->
+	<select id="findListForPurchase" resultType="OrderBomDetail">
+		select obb.order_bom_no as "obb.orderBomNo",obb.Building as "obb.building",
+				obd.materiel_name as "materielName",obd.materiel_type as "materielType",obd.unit as "unit",
+				obd.count as "count",obd.id AS "id",
+				pro.name as "pro.name"
+ 		from btg_order_bom_detail obd 
+			join btg_order_bom_base obb on obb.id=obd.order_bom_id
+			left join btg_subproject sub on sub.id=obb.sub_proj_id
+			left join btg_project pro on pro.id=sub.project_id
+		where pro.del_flag = #{delFlag}
+			<if test="materielType != null and materielType != ''">
+				AND obd.materiel_type=#{materielType}
+			</if>
+	</select>
+	
+	
+	<insert id="insert">
+		INSERT INTO btg_order_bom_detail(
+			id,
+			order_bom_id,
+			materiel_id,
+			outside_wall_orientation,
+			box_no,
+			materiel_no,
+			materiel_name,
+			materiel_type,
+			count,
+			standard_desc,
+			standard_radius,
+			standard_long,
+			standard_width,
+			standard_depth,
+			left_open_angle,
+			right_open_angle,
+			open_angle_m_one,
+			open_angle_m_two,
+			open_slot_m,
+			open_light_m,
+			assembly_diagram_no,
+			process_chart_no,
+			has_water_slot,
+			water_slot_m,
+			has_back_cut,
+			reversed_angle_count,
+			line_density,
+			wdight,
+			unit_weight,
+			volume,
+			area,
+			unit,
+			size,
+			reversed_angle_long,
+			cut_turn_left,
+			cut_turn_right,
+			cut_angle_count,
+			turn_angle_count,
+			remark,
+			is_family_line,
+			waterproof_area,
+			rohling_area,
+			rohling_volume,
+			facing_area,
+			materials,
+			polish,
+			back_cut_count,
+			del_flag,
+			rohling_long,
+			rohling_width,
+			rohling_depth,
+			standard_l1,
+			standard_l2  
+		) VALUES (
+			#{id},
+			#{orderBomId},
+			#{materielId},
+			#{outsideWallOrientation},
+			#{boxNo},
+			#{materielNo},
+			#{materielName},
+			#{materielType},
+			#{count},
+			#{standardDesc},
+			#{standardRadius},
+			#{standardLong},
+			#{standardWidth},
+			#{standardDepth},
+			#{leftOpenAngle},
+			#{rightOpenAngle},
+			#{openAngleMOne},
+			#{openAngleMTwo},
+			#{openSlotM},
+			#{openLightM},
+			#{assemblyDiagramNo},
+			#{processChartNo},
+			#{hasWaterSlot},
+			#{waterSlotM},
+			#{hasBackCut},
+			#{reversedAngleCount},
+			#{lineDensity},
+			#{wdight},
+			#{unitWeight},
+			#{volume},
+			#{area},
+			#{unit},
+			#{size},
+			#{reversedAngleLong},
+			#{cutTurnLeft},
+			#{cutTurnRight},
+			#{cutAngleCount},
+			#{turnAngleCount},
+			#{remark},
+			#{isFamilyLine},
+			#{waterproofArea},
+			#{rohlingArea},
+			#{rohlingVolume},
+			#{facingArea},
+			#{materials},
+			#{polish},
+			#{backCutCount},
+			#{delFlag},
+			#{rohlingLong},
+			#{rohlingWidth},
+			#{rohlingDepth},
+			#{standardL1},
+			#{standardL2}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_order_bom_detail SET 	
+			order_bom_id = #{orderBomId},
+			materiel_id = #{materielId},
+			outside_wall_orientation = #{outsideWallOrientation},
+			box_no = #{boxNo},
+			materiel_no = #{materielNo},
+			materiel_name = #{materielName},
+			materiel_type = #{materielType},
+			count = #{count},
+			standard_desc = #{standardDesc},
+			standard_radius = #{standardRadius},
+			standard_long = #{standardLong},
+			standard_width = #{standardWidth},
+			standard_depth = #{standardDepth},
+			left_open_angle = #{leftOpenAngle},
+			right_open_angle = #{rightOpenAngle},
+			open_angle_m_one = #{openAngleMOne},
+			open_angle_m_two = #{openAngleMTwo},
+			open_slot_m = #{openSlotM},
+			open_light_m = #{openLightM},
+			assembly_diagram_no = #{assemblyDiagramNo},
+			process_chart_no = #{processChartNo},
+			has_water_slot = #{hasWaterSlot},
+			water_slot_m = #{waterSlotM},
+			has_back_cut = #{hasBackCut},
+			reversed_angle_count = #{reversedAngleCount},
+			line_density = #{lineDensity},
+			wdight = #{wdight},
+			unit_weight = #{unitWeight},
+			volume = #{volume},
+			area = #{area},
+			unit = #{unit},
+			size = #{size},
+			reversed_angle_long = #{reversedAngleLong},
+			cut_turn_left = #{cutTurnLeft},
+			cut_turn_right = #{cutTurnRight},
+			cut_angle_count = #{cutAngleCount},
+			turn_angle_count = #{turnAngleCount},
+			is_family_line = #{isFamilyLine},
+			waterproof_area = #{waterproofArea},
+			rohling_area = #{rohlingArea},
+			rohling_volume = #{rohlingVolume},
+			facing_area = #{facingArea},
+			materials = #{materials},
+			polish = #{polish},
+			back_cut_count = #{backCutCount},
+			remark = #{remark},
+			rohling_long = #{rohlingLong},
+			rohling_width = #{rohlingWidth},
+			rohling_depth = #{rohlingDepth},
+			standard_l1 = #{standardL1},
+			standard_l2 = #{standardL2}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_order_bom_detail SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	<update id="deleteByOId">
+		UPDATE btg_order_bom_detail SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE order_bom_id = #{orderBomId} 
+	</update>
+	
+	<select id="getOrderBomDetail" resultType="OrderBomDetail">
+		SELECT 
+			<include refid="orderBomDetailColumns"/>
+		FROM btg_order_bom_detail a
+		<include refid="orderBomDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="orderBomId != null and orderBomId != ''">
+				AND a.order_bom_id = #{orderBomId} 
+			</if>
+			<if test="materielNo != null and materielNo != ''">
+				AND a.materiel_no = #{materielNo} 
+			</if>
+			<if test="boxNo != null and boxNo != ''">
+				AND a.box_no = #{boxNo} 
+			</if>
+			<if test="materielName != null and materielName != ''">
+				AND a.materiel_name = #{materielName} 
+			</if>
+			<if test="standardDesc != null and standardDesc != ''">
+				AND a.standard_desc = #{standardDesc} 
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<when test="boxNo != null and boxNo != ''">
+				order by a.materiel_no
+			</when>
+			<otherwise>
+				order by a.box_no, a.materiel_no
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findBoxesByOrderId" resultType="String" >
+		select box_no from btg_order_bom_detail where order_bom_id = #{orderBomId} group by box_no
+	</select>
+	
+	<select id="getListToInventory" resultType="OrderBomDetail">
+		select 
+			 province.ProvinceName as "project.province",
+			 project.name as "project.name",
+			 project.id as "project.id",
+			 project.address as "project.address",
+			 sub.building as "sub.building",
+			 sub.id as "sub.id",
+			 obbase.id AS "orderBomBase.id",
+			 obbase.order_type AS "orderBomBase.orderType",
+			 obbase.uniform_materiel_type AS "orderBomBase.uniformMaterielType",
+			 sum(a.count) as "count",
+			 obbox.id as "orderBomBox.id",
+			 <include refid="orderBomDetailColumns"/>
+			from btg_order_bom_detail a
+				left join btg_order_bom_base obbase on obbase.id=a.order_bom_id
+				left join btg_order_bom_box obbox on a.order_bom_id=obbox.order_bom_id and a.box_no=obbox.box_no
+				left join btg_subproject sub on sub.id=obbase.sub_proj_id
+				left join btg_project project on project.id=sub.project_id
+				left join sys_province province on province.ProvinceID=project.province
+		where (1=1) and a.del_flag=#{DEL_FLAG_NORMAL} and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="lsgtVal !=null and lsgtVal != ''">
+				and obbase.order_type &lt;&gt; #{lsgtVal}
+			</if>
+			<if test="orderBomBase!=null and orderBomBase.orderType !=null and orderBomBase.orderType != ''">
+				and obbase.order_type = #{orderBomBase.orderType}
+			</if>
+			<if test="project !=null and project.id!=null and project.id != ''">
+				and project.id=#{project.id}
+			</if>
+			<if test="project !=null and project.name!=null and project.name != ''">
+				and project.name=#{project.name}
+			</if>
+			<if test="sub !=null and sub.building!=null and sub.building != ''">
+				and sub.building=#{sub.building} 
+			</if>
+			<if test="boxNo != null and boxNo != ''">
+				and a.box_No=#{boxNo} 
+			</if>
+			<if test="orderBomBase!=null and orderBomBase.uniformMaterielType !=null and orderBomBase.uniformMaterielType!=''">
+				and obbase.uniform_materiel_type = #{orderBomBase.uniformMaterielType}
+			</if>
+			
+			<if test="orderBomBase!=null and orderBomBase.gbStr !=null and orderBomBase.gbStr=='aid'">
+				group by <!--a.id -->a.box_no,a.materiel_no
+			</if>
+			<if test="orderBomBase!=null and orderBomBase.gbStr !=null and orderBomBase.gbStr=='boxNo'">
+				group by <!--a.order_bom_id,-->obbase.order_type,a.box_no 
+			</if>
+		
+	</select>
+	
+	<!-- 根据条件统计相应的下料总量 -->
+	<select id="countByCondition" resultType="int" >
+		select ifnull(sum(a.count),0) from (
+			select obdetail.count as count from btg_order_bom_detail obdetail 
+				left join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+				left join btg_subproject sub on sub.id=obbase.sub_proj_id
+				left join btg_project project on project.id=sub.project_id
+			where (1=1) and obbase.del_flag = #{DEL_FLAG_NORMAL}
+				<if test="project !=null and project.id!=null and project.id != ''">
+					and project.id=#{project.id}
+				</if>
+				<if test="project !=null and project.name!=null and project.name != ''">
+					and project.name=#{project.name}
+				</if>
+				<if test="sub !=null and sub.building!=null and sub.building != ''">
+					and sub.building=#{sub.building} 
+				</if>
+				<if test="materielNo != null and materielNo != ''">
+					AND obdetail.materiel_no = #{materielNo} 
+				</if>
+				<if test="boxNo != null and boxNo != ''">
+					AND obdetail.box_no = #{boxNo} 
+				</if>
+				<if test="materielName != null and materielName != ''">
+					AND obdetail.materiel_name = #{materielName} 
+				</if>
+			group by obdetail.id
+		) a
+	</select>
+	<select id="selectOutsideWallOrientation" resultType="String">
+		SELECT DISTINCT(outside_wall_orientation)
+		FROM btg_order_bom_detail
+		WHERE order_bom_id=#{orderBomId}
+	</select>
+</mapper>

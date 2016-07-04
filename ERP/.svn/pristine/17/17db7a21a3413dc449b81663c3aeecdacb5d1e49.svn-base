@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.finance.dao.LaborSettlementDao">
+    
+	<sql id="laborSettlementColumns">
+		a.id AS "id",
+		a.seriesnumber AS "seriesnumber",
+		a.labor_contract AS "laborContract",
+		a.house_type AS "houseType",
+		a.building AS "building",
+		a.jia_end_date AS "jiaEndDate",
+		a.start_date AS "startDate",
+		a.end_date AS "endDate",
+		a.duration AS "duration",
+		a.is_offline AS "isOffline",
+		a.contract_price AS "contractPrice",
+		a.price AS "price",
+		a.price_difference AS "priceDifference",
+		a.price_difference_ratio AS "priceDifferenceRatio",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.statue AS "statue",
+		a.payment_seriesnumber AS "paymentSeriesnumber",
+		a.payment_type AS "paymentType",
+		a.payment_date AS "paymentDate",
+		v.pro_name AS "projectName",
+		v.contract_no AS "contractNo",
+		b.name AS "partyBName"
+	</sql>
+	
+	<sql id="laborSettlementJoins">
+		left join btg_con_laborcontract as v on v.id = a.labor_contract
+		left join btg_con_execution as b on b.id = v.CType
+	</sql>
+    
+	<select id="get" resultType="LaborSettlement">
+		SELECT 
+			<include refid="laborSettlementColumns"/>
+		FROM btg_labor_settlement a
+		<include refid="laborSettlementJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="LaborSettlement">
+		SELECT 
+			<include refid="laborSettlementColumns"/>
+		FROM btg_labor_settlement a
+		<include refid="laborSettlementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="laborContract != null and laborContract != ''">
+				AND a.labor_contract = #{laborContract}
+			</if>
+			<if test="search != null and search != ''">
+				AND a.seriesnumber like concat('%',#{search},'%')
+				or v.contract_no like concat('%',#{search},'%')
+				or v.pro_name like concat('%',#{search},'%')
+				or a.building like concat('%',#{search},'%')
+				or a.payment_seriesnumber like concat('%',#{search},'%')
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="LaborSettlement">
+		SELECT 
+			<include refid="laborSettlementColumns"/>
+		FROM btg_labor_settlement a
+		<include refid="laborSettlementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_labor_settlement(
+			id,
+			seriesnumber,
+			labor_contract,
+			house_type,
+			building,
+			jia_end_date,
+			start_date,
+			end_date,
+			duration,
+			is_offline,
+			contract_price,
+			price,
+			price_difference,
+			price_difference_ratio,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			payment_seriesnumber,
+			payment_type,
+			payment_date
+		) VALUES (
+			#{id},
+			#{seriesnumber},
+			#{laborContract},
+			#{houseType},
+			#{building},
+			#{jiaEndDate},
+			#{startDate},
+			#{endDate},
+			#{duration},
+			#{isOffline},
+			#{contractPrice},
+			#{price},
+			#{priceDifference},
+			#{priceDifferenceRatio},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{paymentSeriesnumber},
+			#{paymentType},
+			#{paymentDate}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_labor_settlement SET 	
+			seriesnumber = #{seriesnumber},
+			labor_contract = #{laborContract},
+			house_type = #{houseType},
+			building = #{building},
+			jia_end_date = #{jiaEndDate},
+			start_date = #{startDate},
+			end_date = #{endDate},
+			duration = #{duration},
+			is_offline = #{isOffline},
+			contract_price = #{contractPrice},
+			price = #{price},
+			price_difference = #{priceDifference},
+			price_difference_ratio = #{priceDifferenceRatio},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			statue = #{statue},
+			payment_seriesnumber = #{paymentSeriesnumber},
+			payment_type = #{paymentType},
+			payment_date = #{paymentDate}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_labor_settlement SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<!--查询当天生成单数	-->
+	<select id="getTodayCount" parameterType="String" resultType="int">
+		SELECT
+			count(*)
+		FROM
+			btg_labor_settlement AS a
+		WHERE
+			a.seriesnumber LIKE concat('%',#{date},'%')
+	</select>
+	
+</mapper>

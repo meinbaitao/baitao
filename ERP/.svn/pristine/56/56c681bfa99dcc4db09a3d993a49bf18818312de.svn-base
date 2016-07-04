@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.project.dao.WeeklyDetailDao">
+    
+	<sql id="weeklyDetailColumns">
+		a.id AS "id",
+		a.weekly_id AS "weeklyId",
+		a.is_transfer AS "isTransfer",
+		a.building AS "building",
+		a.revenue AS "revenue",
+		a.visa_count AS "visaCount",
+		a.march_time AS "marchTime",
+		a.skelenton_plan_ratio AS "skelentonPlanRatio",
+		a.skeleton_comp_ratio AS "skeletonCompRatio",
+		a.stone_plan_ratio AS "stonePlanRatio",
+		a.stone_comp_ratio AS "stoneCompRatio",
+		a.next_week_stone_plan_ratio AS "nextWeekStonePlanRatio",
+		a.next_week_skeleton_comp_ratio AS "nextWeekSkeletonCompRatio",
+		a.amount_ratio AS "amountRatio",
+		a.labour_id AS "labourId",
+		a.const_personnel AS "constPersonnel",
+		a.const_problem AS "constProblem",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="weeklyDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="WeeklyDetail">
+		SELECT 
+			<include refid="weeklyDetailColumns"/>
+		FROM btg_weekly_detail a
+		<include refid="weeklyDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="WeeklyDetail">
+		SELECT 
+			<include refid="weeklyDetailColumns"/>
+		FROM btg_weekly_detail a
+		<include refid="weeklyDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="WeeklyDetail">
+		SELECT 
+			<include refid="weeklyDetailColumns"/>
+		FROM btg_weekly_detail a
+		<include refid="weeklyDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_weekly_detail(
+			id,
+			weekly_id,
+			is_transfer,
+			building,
+			revenue,
+			visa_count,
+			march_time,
+			skelenton_plan_ratio,
+			skeleton_comp_ratio,
+			stone_plan_ratio,
+			stone_comp_ratio,
+			next_week_stone_plan_ratio,
+			next_week_skeleton_comp_ratio,
+			amount_ratio,
+			labour_id,
+			const_personnel,
+			const_problem,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{weeklyId},
+			#{isTransfer},
+			#{building},
+			#{revenue},
+			#{visaCount},
+			#{marchTime},
+			#{skelentonPlanRatio},
+			#{skeletonCompRatio},
+			#{stonePlanRatio},
+			#{stoneCompRatio},
+			#{nextWeekStonePlanRatio},
+			#{nextWeekSkeletonCompRatio},
+			#{amountRatio},
+			#{labourId},
+			#{constPersonnel},
+			#{constProblem},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_weekly_detail SET 	
+			is_transfer = #{isTransfer},
+			revenue = #{revenue},
+			visa_count = #{visaCount},
+			march_time = #{marchTime},
+			skelenton_plan_ratio = #{skelentonPlanRatio},
+			skeleton_comp_ratio = #{skeletonCompRatio},
+			stone_plan_ratio = #{stonePlanRatio},
+			stone_comp_ratio = #{stoneCompRatio},
+			next_week_stone_plan_ratio = #{nextWeekStonePlanRatio},
+			next_week_skeleton_comp_ratio = #{nextWeekSkeletonCompRatio},
+			amount_ratio = #{amountRatio},
+			labour_id = #{labourId},
+			const_personnel = #{constPersonnel},
+			const_problem = #{constProblem},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_weekly_detail SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

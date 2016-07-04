@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.AccCarriageContractPriceDetailDao">
+    
+	<sql id="accCarriageContractPriceDetailColumns">
+		a.id AS "id",
+		a.contract_id AS "contractId",
+		a.km_count AS "kmCount",
+		a.under_5tons_price_carriage AS "under5tonsPriceCarriage",
+		a.under_5tons_price_deliver AS "under5tonsPriceDeliver",
+		a.upon_5tons_price_carriage AS "upon5tonsPriceCarriage",
+		a.upon_5tons_price_deliver AS "upon5tonsPriceDeliver"
+	</sql>
+	
+	<sql id="accCarriageContractPriceDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="AccCarriageContractPriceDetail">
+		SELECT 
+			<include refid="accCarriageContractPriceDetailColumns"/>
+		FROM btg_acc_carriage_contract_detail1 a
+		<include refid="accCarriageContractPriceDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="AccCarriageContractPriceDetail">
+		SELECT 
+			<include refid="accCarriageContractPriceDetailColumns"/>
+		FROM btg_acc_carriage_contract_detail1 a
+		<include refid="accCarriageContractPriceDetailJoins"/>
+		<where>
+			
+			<if test="contractId != null and contractId != ''">
+				AND a.contract_id = #{contractId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AccCarriageContractPriceDetail">
+		SELECT 
+			<include refid="accCarriageContractPriceDetailColumns"/>
+		FROM btg_acc_carriage_contract_detail1 a
+		<include refid="accCarriageContractPriceDetailJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_acc_carriage_contract_detail1(
+			id,
+			contract_id,
+			km_count,
+			under_5tons_price_carriage,
+			under_5tons_price_deliver,
+			upon_5tons_price_carriage,
+			upon_5tons_price_deliver
+		) VALUES (
+			#{id},
+			#{contractId},
+			#{kmCount},
+			#{under5tonsPriceCarriage},
+			#{under5tonsPriceDeliver},
+			#{upon5tonsPriceCarriage},
+			#{upon5tonsPriceDeliver}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_acc_carriage_contract_detail1 SET 	
+			km_count = #{kmCount},
+			under_5tons_price_carriage = #{under5tonsPriceCarriage},
+			under_5tons_price_deliver = #{under5tonsPriceDeliver},
+			upon_5tons_price_carriage = #{upon5tonsPriceCarriage},
+			upon_5tons_price_deliver = #{upon5tonsPriceDeliver}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_acc_carriage_contract_detail1
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

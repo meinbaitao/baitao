@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.LaborcontractAccountDao">
+    
+	<sql id="laborcontractAccountColumns">
+		a.id AS "id",
+		a.laborcontract_id AS "laborcontractId",
+		a.quality_pay_date_frist as "qualityPayDateFrist",
+		a.quality_pay_date_second as "qualityPayDateSecond",
+		a.quality_pay_frist as "qualityPayFrist",
+		a.quality_pay_second as "qualityPaySecond",
+		a.finish_date as "finishDate",
+		a.settlement_price AS "settlementPrice",
+		a.finish_ratio AS "finishRatio",
+		a.finish_price AS "finishPrice",
+		a.schedule_pay_should AS "schedulePayShould",
+		a.quality_pay_should AS "qualityPayShould",
+		a.quality_pay_not_yet AS "qualityPayNotYet",
+		a.labor_price_required AS "laborPriceRequired",
+		a.schedule_pay_required AS "schedulePayRequired",
+		a.quality_pay_required AS "qualityPayRequired",
+		a.hurry_compensation_required AS "hurryCompensationRequired",
+		a.settle_compensation_requered AS "settleCompensationRequered",
+		a.labor_price AS "laborPrice",
+		a.schedule_pay_already AS "schedulePayAlready",
+		a.quality_pay_already AS "qualityPayAlready",
+		a.hurry_compensation_already AS "hurryCompensationAlready",
+		a.settle_compensation_already AS "settleCompensationAlready",
+		a.schedule_pay_wait AS "schedulePayWait",
+		a.schedule_pay_required_wait AS "schedulePayRequiredWait",
+		a.schedule_pay_not_required AS "schedulePayNotRequired",
+		a.quality_pay_wait AS "qualityPayWait",
+		a.quality_pay_required_wait AS "qualityPayRequiredWait",
+		a.quality_pay_not_required AS "qualityPayNotRequired",
+		a.hurry_compensation_wait AS "hurryCompensationWait",
+		a.settle_compensation_wait AS "settleCompensationWait",
+		a.sum_price_wait AS "sumPriceWait",
+		b.contract_no as "contractNo",
+		b.LaborContract as "executionContract",
+		b.sign_date as "signDate",
+		b.con_status as "statue",
+		b.company_type as "companyType",
+		c.code as "projectCode",
+		d.name as "partyBName",
+		c.name as "projectName",
+		b.House as "houseType",
+		b.Buildings as "building",
+		b.ContractScopeAdjust as "executionType",
+		b.contract_price as "contractPrice",
+		b.exschedule_ratio as "exscheduleRatio",
+		b.account_ratio as "accountRatio",
+		b.quality_ratio_frist as "qualityRatioFrist",
+		b.quality_pay_date_frist as "qualityPayDateFristDuration",
+		b.quality_ratio_second as "qualityRatioSecond",
+		b.quality_pay_date_second as "qualityPayDateSecondDuration"
+	</sql>
+	
+	<sql id="laborcontractAccountJoins">
+		left join btg_con_laborcontract as b on b.id = a.laborcontract_id
+		left join btg_project as c on c.id = b.project_id
+		left join btg_con_execution as d on d.id = b.CType
+	</sql>
+    
+	<select id="get" resultType="LaborcontractAccount">
+		SELECT 
+			<include refid="laborcontractAccountColumns"/>
+		FROM btg_laborcontract_account a
+		<include refid="laborcontractAccountJoins"/>
+		WHERE a.id = #{id}
+	</select>
+    
+	<select id="getByLaborContractId" resultType="LaborcontractAccount">
+		SELECT 
+			<include refid="laborcontractAccountColumns"/>
+		FROM btg_laborcontract_account a
+		<include refid="laborcontractAccountJoins"/>
+		WHERE a.laborcontract_id = #{laborContractId}
+	</select>
+	
+	<select id="findList" resultType="LaborcontractAccount">
+		SELECT 
+			<include refid="laborcontractAccountColumns"/>
+		FROM btg_laborcontract_account a
+		<include refid="laborcontractAccountJoins"/>
+		<where>
+			<if test="laborcontractId != null and laborcontractId != ''">
+				AND a.laborcontract_id = #{laborcontractId}
+			</if>
+			<if test="search != null and search != ''">
+				and b.contract_no like concat('%',#{search},'%')
+				or b.LaborContract like concat('%',#{search},'%')
+				or b.Buildings like concat('%',#{search},'%')
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="LaborcontractAccount">
+		SELECT 
+			<include refid="laborcontractAccountColumns"/>
+		FROM btg_laborcontract_account a
+		<include refid="laborcontractAccountJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_laborcontract_account(
+			id,
+			laborcontract_id,
+			quality_pay_date_frist,
+			quality_pay_date_second,
+			quality_pay_frist,
+			quality_pay_second,
+			finish_date,
+			settlement_price,
+			finish_ratio,
+			finish_price,
+			schedule_pay_should,
+			quality_pay_should,
+			quality_pay_not_yet,
+			labor_price_required,
+			schedule_pay_required,
+			quality_pay_required,
+			hurry_compensation_required,
+			settle_compensation_requered,
+			labor_price,
+			schedule_pay_already,
+			quality_pay_already,
+			hurry_compensation_already,
+			settle_compensation_already,
+			schedule_pay_wait,
+			schedule_pay_required_wait,
+			schedule_pay_not_required,
+			quality_pay_wait,
+			quality_pay_required_wait,
+			quality_pay_not_required,
+			hurry_compensation_wait,
+			settle_compensation_wait,
+			sum_price_wait
+		) VALUES (
+			#{id},
+			#{laborcontractId},
+			#{qualityPayDateFrist},
+			#{qualityPayDateSecond},
+			#{qualityPayFrist},
+			#{qualityPaySecond},
+			#{finishDate},
+			#{settlementPrice},
+			#{finishRatio},
+			#{finishPrice},
+			#{schedulePayShould},
+			#{qualityPayShould},
+			#{qualityPayNotYet},
+			#{laborPriceRequired},
+			#{schedulePayRequired},
+			#{qualityPayRequired},
+			#{hurryCompensationRequired},
+			#{settleCompensationRequered},
+			#{laborPrice},
+			#{schedulePayAlready},
+			#{qualityPayAlready},
+			#{hurryCompensationAlready},
+			#{settleCompensationAlready},
+			#{schedulePayWait},
+			#{schedulePayRequiredWait},
+			#{schedulePayNotRequired},
+			#{qualityPayWait},
+			#{qualityPayRequiredWait},
+			#{qualityPayNotRequired},
+			#{hurryCompensationWait},
+			#{settleCompensationWait},
+			#{sumPriceWait}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_laborcontract_account SET 	
+			laborcontract_id = #{laborcontractId},
+			quality_pay_date_frist = #{qualityPayDateFrist},
+			quality_pay_date_second = #{qualityPayDateSecond},
+			quality_pay_frist = #{qualityPayFrist},
+			quality_pay_second = #{qualityPaySecond},
+			finish_date = #{finishDate},
+			settlement_price = #{settlementPrice},
+			finish_ratio = #{finishRatio},
+			finish_price = #{finishPrice},
+			schedule_pay_should = #{schedulePayShould},
+			quality_pay_should = #{qualityPayShould},
+			quality_pay_not_yet = #{qualityPayNotYet},
+			labor_price_required = #{laborPriceRequired},
+			schedule_pay_required = #{schedulePayRequired},
+			quality_pay_required = #{qualityPayRequired},
+			hurry_compensation_required = #{hurryCompensationRequired},
+			settle_compensation_requered = #{settleCompensationRequered},
+			labor_price = #{laborPrice},
+			schedule_pay_already = #{schedulePayAlready},
+			quality_pay_already = #{qualityPayAlready},
+			hurry_compensation_already = #{hurryCompensationAlready},
+			settle_compensation_already = #{settleCompensationAlready},
+			schedule_pay_wait = #{schedulePayWait},
+			schedule_pay_required_wait = #{schedulePayRequiredWait},
+			schedule_pay_not_required = #{schedulePayNotRequired},
+			quality_pay_wait = #{qualityPayWait},
+			quality_pay_required_wait = #{qualityPayRequiredWait},
+			quality_pay_not_required = #{qualityPayNotRequired},
+			hurry_compensation_wait = #{hurryCompensationWait},
+			settle_compensation_wait = #{settleCompensationWait},
+			sum_price_wait = #{sumPriceWait}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_laborcontract_account
+		WHERE id = #{id}
+	</update>
+	
+	<!--由劳务合同获取甲方合同楼栋信息 -->
+	<select id="getJiaContractByLaborContract" parameterType="Laborcontract" resultType="BtgConJiaContractDetail">
+		select
+			a.*
+		from btg_con_jia_contract_detail as a
+		join btg_con_jia_contract as b on b.id = a.contract_id
+		where 
+			b.project_id = #{projectId}
+		limit 0,1
+	</select>
+	
+	<!--由甲方合同获取劳务合同楼栋信息 -->
+	<select id="getLaborContractByJiaContract" parameterType="Laborcontract" resultType="Laborcontract">
+		select
+			a.id AS "id"
+		from btg_con_laborcontract as a 
+		where 
+			a.project_id = #{projectId}
+		and 
+			a.Buildings = #{buildings}
+		group by a.project_id,a.Buildings
+	</select>
+	
+	
+	
+</mapper>

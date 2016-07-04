@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.accident.dao.AccidentManageDetailDao">
+    
+	<sql id="accidentManageDetailColumns">
+		a.id AS "id",
+		a.accident_manage_id AS "accidentManageId",
+		a.box_no AS "boxNo",
+		a.order_bom_base_id AS "orderBomBaseId",
+		a.materiel_no AS "materielNo",
+		a.materiel_name AS "materielName",
+		a.materiel_type AS "materielType",
+		a.count AS "count",
+		a.area AS "area",
+		a.unit_price AS "unitPrice",
+		a.price AS "price",
+		a.standard_desc AS "standardDesc",
+		a.standard_radius AS "standardRadius",
+		a.standard_long AS "standardLong",
+		a.standard_width AS "standardWidth",
+		a.standard_depth AS "standardDepth",
+		a.accident_type_id AS "accidentTypeId",
+		a.problem_comment AS "problemComment",
+		a.attch_url AS "attchUrl",
+		a.solve_plan AS "solvePlan",
+		a.data_submit AS "dataSubmit",
+		a.order_bom_base_id AS "orderBomBaseId",
+		a.del_flag AS "delFlag",
+		a.purchase_id AS "purchaseId"
+	</sql>
+	
+	<sql id="accidentManageDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="AccidentManageDetail">
+		SELECT 
+			<include refid="accidentManageDetailColumns"/>
+		FROM btg_accident_manage_detail a
+		<include refid="accidentManageDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="AccidentManageDetail">
+		SELECT 
+			d.label AS "showtype",
+			<include refid="accidentManageDetailColumns"/>
+		FROM btg_accident_manage_detail a
+		LEFT JOIN sys_dict d ON d.value = a.accident_type_id
+		<include refid="accidentManageDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="accidentManageId != null and accidentManageId != ''">
+				AND a.accident_manage_id = #{accidentManageId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AccidentManageDetail">
+		SELECT 
+			<include refid="accidentManageDetailColumns"/>
+		FROM btg_accident_manage_detail a
+		<include refid="accidentManageDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findOnlyOne" parameterType="java.lang.String" resultType="AccidentManageDetail">
+		SELECT
+		<include refid="accidentManageDetailColumns"/>
+		FROM btg_accident_manage_detail a
+		where accident_manage_id = #{accidentManageId}
+		limit 1;
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_accident_manage_detail(
+			id,
+			accident_manage_id,
+			order_bom_base_id,
+			box_no,
+			materiel_no,
+			materiel_name,
+			materiel_type,
+			count,
+			area,
+			unit_price,
+			price,
+			standard_desc,
+			standard_radius,
+			standard_long,
+			standard_width,
+			standard_depth,
+			accident_type_id,
+			problem_comment,
+			attch_url,
+			solve_plan,
+			data_submit,
+			del_flag,
+			purchase_id
+		) VALUES (
+			#{id},
+			#{accidentManageId},
+			#{orderBomBaseId},
+			#{boxNo},
+			#{materielNo},
+			#{materielName},
+			#{materielType},
+			#{count},
+			#{area},
+			#{unitPrice},
+			#{price},
+			#{standardDesc},
+			#{standardRadius},
+			#{standardLong},
+			#{standardWidth},
+			#{standardDepth},
+			#{accidentTypeId},
+			#{problemComment},
+			#{attchUrl},
+			#{solvePlan},
+			#{dataSubmit},
+			#{delFlag},
+			#{purchaseId}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_accident_manage_detail SET 	
+			<if test="accidentManageId != null and accidentManageId != ''">
+				order_bom_base_id = #{orderBomBaseId},
+			</if>
+			<if test="boxNo != null and boxNo != ''">
+				box_no = #{boxNo},
+			</if>	
+			<if test="materielNo != null and materielNo != ''">
+				materiel_no = #{materielNo},
+			</if>
+			materiel_name = #{materielName},
+			materiel_type = #{materielType},
+			count = #{count},
+			area = #{area},
+			unit_price = #{unitPrice},
+			price = #{price},
+			standard_desc = #{standardDesc},
+			standard_radius = #{standardRadius},
+			standard_long = #{standardLong},
+			standard_width = #{standardWidth},
+			standard_depth = #{standardDepth},
+			accident_type_id = #{accidentTypeId},
+			problem_comment = #{problemComment},
+			attch_url = #{attchUrl},
+			solve_plan = #{solvePlan},
+		    order_bom_base_id = #{orderBomBaseId},
+			data_submit = #{dataSubmit},
+		    purchase_id = #{purchaseId}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_accident_manage_detail SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	<update id="deleteByamId">
+		UPDATE btg_accident_manage_detail SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE accident_manage_id = #{accidentManageId}
+	</update>
+	
+</mapper>

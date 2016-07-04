@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.PurchasingContractDetailDao">
+    
+	<sql id="purchasingContractDetailColumns">
+		a.id AS "id",
+		a.contract_id AS "contractId",
+		a.materiel_no AS "materielNo",
+		a.materiel_name AS "materielName",
+		a.materiel_type AS "materielType",
+		a.brand AS "brand",
+		a.stone_type AS "stoneType",
+		a.length AS "length",
+		a.width AS "width",
+		a.height AS "height",
+		a.model AS "model",
+		a.materiel_size AS "materielSize",
+		a.unit AS "unit",
+		a.price AS "price",
+		a.contract_price AS "contractPrice",
+		a.price_with_tax AS "priceWithTax",
+		a.price_difference AS "priceDifference",
+		a.remark AS "remark",
+		a.is_in_province AS "isInProvince"
+	</sql>
+	
+	<sql id="purchasingContractDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="PurchasingContractDetail">
+		SELECT 
+			<include refid="purchasingContractDetailColumns"/>
+		FROM btg_purchasing_contract_detail a
+		<include refid="purchasingContractDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="PurchasingContractDetail">
+		SELECT 
+			<include refid="purchasingContractDetailColumns"/>
+		FROM btg_purchasing_contract_detail a
+		<include refid="purchasingContractDetailJoins"/>
+		<where>
+			
+			<if test="contractId != null and contractId != ''">
+				AND a.contract_id = #{contractId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		order by a.materiel_no
+	</select>
+	
+	<select id="findAllList" resultType="PurchasingContractDetail">
+		SELECT 
+			<include refid="purchasingContractDetailColumns"/>
+		FROM btg_purchasing_contract_detail a
+		<include refid="purchasingContractDetailJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_purchasing_contract_detail(
+			id,
+			contract_id,
+			materiel_no,
+			materiel_name,
+			materiel_type,
+			brand,
+			stone_type,
+			length,
+			width,
+			height,
+			model,
+			materiel_size,
+			unit,
+			price,
+			contract_price,
+			price_with_tax,
+			price_difference,
+			remark,
+			is_in_province
+		) VALUES (
+			#{id},
+			#{contractId},
+			#{materielNo},
+			#{materielName},
+			#{materielType},
+			#{brand},
+			#{stoneType},
+			#{length},
+			#{width},
+			#{height},
+			#{model},
+			#{materielSize},
+			#{unit},
+			#{price},
+			#{contractPrice},
+			#{priceWithTax},
+			#{priceDifference},
+			#{remark},
+			#{isInProvince}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_purchasing_contract_detail SET 	
+			contract_id = #{contractId},
+			materiel_no = #{materielNo},
+			materiel_name = #{materielName},
+			materiel_type = #{materielType},
+			brand = #{brand},
+			stone_type = #{stoneType},
+			length = #{length},
+			width = #{width},
+			height = #{height},
+			model = #{model},
+			materiel_size = #{materielSize},
+			unit = #{unit},
+			price = #{price},
+			contract_price = #{contractPrice},
+			price_with_tax = #{priceWithTax},
+			price_difference = #{priceDifference},
+			remark = #{remark},
+			is_in_province = #{isInProvince}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_purchasing_contract_detail
+		WHERE id = #{id}
+	</update>
+	
+	<select id="getListByCondition" resultType="PurchasingContractDetail">
+		select 
+			<include refid="purchasingContractDetailColumns"/>
+		 from (
+				SELECT 
+					b.id,
+					b.contract_id,
+					b.materiel_no,
+					b.materiel_name,
+					b.materiel_type,
+					b.brand,
+					b.stone_type,
+					b.length,
+					b.width,
+					b.height,
+					b.model,
+					b.materiel_size,
+					b.unit,
+					b.price,
+					b.contract_price,
+					b.price_with_tax,
+					b.price_difference,
+					b.is_in_province AS "is_in_province",
+					b.remark
+				FROM btg_purchasing_contract_detail b 
+					left join btg_purchasing_contract_base pcb on pcb.id=b.contract_id
+				where (1=1)
+					<if test="purchasingContractBase.partyBName !=null and purchasingContractBase.partyBName != ''">
+						and pcb.Party_B_name = #{purchasingContractBase.partyBName}
+					</if>
+					<if test="isInProvince !=null and isInProvince != ''">
+						and b.is_in_province = #{isInProvince}
+					</if>
+					order by pcb.create_date desc
+			) a 
+			group by a.materiel_no
+	</select>
+	
+</mapper>

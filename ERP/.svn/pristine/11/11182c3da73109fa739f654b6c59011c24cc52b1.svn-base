@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.AccCarriageContractDetailDao">
+    
+	<sql id="accCarriageContractDetailColumns">
+		a.id AS "id",
+		a.contract_id AS "contractId",
+		a.seriesnumber AS "seriesnumber",
+		a.start_addr AS "startAddr",
+		a.province AS "province",
+		a.city AS "city",
+		a.one_to_five AS "oneToFive",
+		a.five_to_ten AS "fiveToTen",
+		a.ten_to_fifty AS "tenToFifty",
+		a.fifty_to_twenty AS "fiftyToTwenty",
+		a.twenty_to_twentyfive AS "twentyToTwentyfive",
+		a.twentyfive_to_thirty AS "twentyfiveToThirty",
+		a.thirty_to_thirtyfive AS "thirtyToThirtyfive",
+		a.thirtyfive_above AS "thirtyfiveAbove",
+		a.upload_price AS "uploadPrice",
+		a.fixed_price AS "fixedPrice",
+		a.duration AS "duration"
+	</sql>
+	
+	<sql id="accCarriageContractDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="AccCarriageContractDetail">
+		SELECT 
+			<include refid="accCarriageContractDetailColumns"/>
+		FROM btg_acc_carriage_contract_detail a
+		<include refid="accCarriageContractDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="AccCarriageContractDetail">
+		SELECT 
+			<include refid="accCarriageContractDetailColumns"/>
+		FROM btg_acc_carriage_contract_detail a
+		<include refid="accCarriageContractDetailJoins"/>
+		<where>
+			
+			<if test="contractId != null and contractId != ''">
+				AND a.contract_id = #{contractId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AccCarriageContractDetail">
+		SELECT 
+			<include refid="accCarriageContractDetailColumns"/>
+		FROM btg_acc_carriage_contract_detail a
+		<include refid="accCarriageContractDetailJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_acc_carriage_contract_detail(
+			id,
+			contract_id,
+			seriesnumber,
+			start_addr,
+			province,
+			city,
+			one_to_five,
+			five_to_ten,
+			ten_to_fifty,
+			fifty_to_twenty,
+			twenty_to_twentyfive,
+			twentyfive_to_thirty,
+			thirty_to_thirtyfive,
+			thirtyfive_above,
+			upload_price,
+			fixed_price,
+			duration
+		) VALUES (
+			#{id},
+			#{contractId},
+			#{seriesnumber},
+			#{startAddr},
+			#{province},
+			#{city},
+			#{oneToFive},
+			#{fiveToTen},
+			#{tenToFifty},
+			#{fiftyToTwenty},
+			#{twentyToTwentyfive},
+			#{twentyfiveToThirty},
+			#{thirtyToThirtyfive},
+			#{thirtyfiveAbove},
+			#{uploadPrice},
+			#{fixedPrice},
+			#{duration}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_acc_carriage_contract_detail SET 	
+			contract_id = #{contractId},
+			seriesnumber = #{seriesnumber},
+			start_addr = #{startAddr},
+			province = #{province},
+			city = #{city},
+			one_to_five = #{oneToFive},
+			five_to_ten = #{fiveToTen},
+			ten_to_fifty = #{tenToFifty},
+			fifty_to_twenty = #{fiftyToTwenty},
+			twenty_to_twentyfive = #{twentyToTwentyfive},
+			twentyfive_to_thirty = #{twentyfiveToThirty},
+			thirty_to_thirtyfive = #{thirtyToThirtyfive},
+			thirtyfive_above = #{thirtyfiveAbove},
+			upload_price = #{uploadPrice},
+			fixed_price = #{fixedPrice},
+			duration = #{duration}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_acc_carriage_contract_detail
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

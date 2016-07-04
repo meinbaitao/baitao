@@ -1,0 +1,69 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.production.dao;
+
+import java.util.List;
+
+import com.bt.modules.production.entity.Production;
+import com.thinkgem.jeesite.common.persistence.CrudDao;
+import com.thinkgem.jeesite.common.persistence.annotation.MyBatisDao;
+
+/**
+ * 生产单DAO接口
+ * @author xiaocai
+ * @version 2015-09-21
+ */
+@MyBatisDao
+public interface ProductionDao extends CrudDao<Production> {
+	/**
+	 * 获取相应的数据
+	 * @param ids
+	 * @return
+	 */
+//	public List<Production> getByIDs(List<String> ids);
+	/**
+	 * 根据已有的生产单显示相关的项目列表数据
+	 * @param production
+	 * @return
+	 */
+	public List<Production> getListForProject(Production production);
+	/**
+	 * 根据已有的生产单显示相关的数据
+	 * (根据条件获取相关数据)
+	 * getListByCondition
+	 * @param production
+	 * @return
+	 */
+	public List<Production> getListByProduction(Production production);
+	/**
+	 * 楼栋和项目为模糊查询
+	 * @param production
+	 * @return
+	 */
+	public List<Production> getListForStoneScheduleToSub(Production production);
+	/**
+	 * 根据条件统计箱数
+	 * @param production
+	 * @return
+	 */
+	public int countOrderBomBoxByCondition(Production production);
+	/**
+	 * group by box
+	 * @param production
+	 * @return
+	 */
+	public List<Production> getDetail(Production production);
+	/**
+	 * 根据下料单ID直接修改全部相关数据的状态以及相关字段
+	 * @param production
+	 */
+	public void updateStatusByOBBaseIDs(Production production);
+	/**
+	 * 根据下料单ids返回相应的加工单
+	 * @param production
+	 * @return
+	 */
+	public List<Production> getIdsByObbIds(Production production);
+	
+}

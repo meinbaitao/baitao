@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.LaborItemsPriceDao">
+    
+	<sql id="laborItemsPriceColumns">
+		a.id AS "id",
+		ifnull(a.type,"") AS "type",
+		ifnull(a.seriesnumber,"") AS "seriesnumber",
+		ifnull(a.name,"") AS "name",
+		ifnull(a.picturepath,"") AS "picturepath",
+		ifnull(a.speclength,"") AS "speclength",
+		ifnull(a.specwidth,"") AS "specwidth",
+		ifnull(a.spechigth,"") AS "spechigth",
+		ifnull(a.cost_budget,"") AS "costBudget",
+		ifnull(a.floating_ratio_one,"") AS "floatingRatioOne",
+		ifnull(a.contract_quantity,"") AS "contractQuantity",
+		ifnull(a.unit,"") AS "unit",
+		ifnull(a.standard_unit_price,"") AS "standardUnitPrice",
+		ifnull(a.standard_skeleton,"") AS "standardSkeleton",
+		ifnull(a.standard_stone,"") AS "standardStone",
+		ifnull(a.floating_ratio_two,"") AS "floatingRatioTwo",
+		ifnull(a.contract_unit_price,"") AS "contractUnitPrice",
+		ifnull(a.contract_skeleton,"") AS "contractSkeleton",
+		ifnull(a.contract_stone,"") AS "contractStone",
+		ifnull(a.standard_total,"") AS "standardTotal",
+		ifnull(a.contract_total,"") AS "contractTotal",
+		ifnull(a.cost_budget_total,"") AS "costBudgetTotal",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		ifnull(a.remarks,"") AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="laborItemsPriceJoins">
+	</sql>
+    
+	<select id="get" resultType="LaborItemsPrice">
+		SELECT 
+			<include refid="laborItemsPriceColumns"/>
+		FROM btg_labor_items_price a
+		<include refid="laborItemsPriceJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getByCondition" resultType="LaborItemsPrice">
+		SELECT 
+			<include refid="laborItemsPriceColumns"/>
+		FROM btg_labor_items_price a
+		<include refid="laborItemsPriceJoins"/>
+		WHERE (1=1)
+			<if test="name!=null and name!=''">
+				and a.name=#{name}
+			</if>
+			<if test="type!=null and type!=''">
+				and a.type=#{type}
+			</if>
+	</select>
+	
+	<select id="findList" resultType="LaborItemsPrice">
+		SELECT 
+			<include refid="laborItemsPriceColumns"/>
+		FROM btg_labor_items_price a
+		<include refid="laborItemsPriceJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="LaborItemsPrice">
+		SELECT 
+			<include refid="laborItemsPriceColumns"/>
+		FROM btg_labor_items_price a
+		<include refid="laborItemsPriceJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_labor_items_price(
+			id,
+			type,
+			seriesnumber,
+			name,
+			picturepath,
+			speclength,
+			specwidth,
+			spechigth,
+			cost_budget,
+			floating_ratio_one,
+			contract_quantity,
+			unit,
+			standard_unit_price,
+			standard_skeleton,
+			standard_stone,
+			floating_ratio_two,
+			contract_unit_price,
+			contract_skeleton,
+			contract_stone,
+			standard_total,
+			contract_total,
+			cost_budget_total,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{type},
+			#{seriesnumber},
+			#{name},
+			#{picturepath},
+			#{speclength},
+			#{specwidth},
+			#{spechigth},
+			#{costBudget},
+			#{floatingRatioOne},
+			#{contractQuantity},
+			#{unit},
+			#{standardUnitPrice},
+			#{standardSkeleton},
+			#{standardStone},
+			#{floatingRatioTwo},
+			#{contractUnitPrice},
+			#{contractSkeleton},
+			#{contractStone},
+			#{standardTotal},
+			#{contractTotal},
+			#{costBudgetTotal},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_labor_items_price SET 	
+			type = #{type},
+			seriesnumber = #{seriesnumber},
+			name = #{name},
+			picturepath = #{picturepath},
+			speclength = #{speclength},
+			specwidth = #{specwidth},
+			spechigth = #{spechigth},
+			cost_budget = #{costBudget},
+			floating_ratio_one = #{floatingRatioOne},
+			contract_quantity = #{contractQuantity},
+			unit = #{unit},
+			standard_unit_price = #{standardUnitPrice},
+			standard_skeleton = #{standardSkeleton},
+			standard_stone = #{standardStone},
+			floating_ratio_two = #{floatingRatioTwo},
+			contract_unit_price = #{contractUnitPrice},
+			contract_skeleton = #{contractSkeleton},
+			contract_stone = #{contractStone},
+			standard_total = #{standardTotal},
+			contract_total = #{contractTotal},
+			cost_budget_total = #{costBudgetTotal},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_labor_items_price SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,228 @@
+package com.bt.modules.activiti.support;
+
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.bt.common.exceptions.BusinessException;
+import com.bt.modules.activiti.constants.ActivitiConstants;
+import com.bt.modules.activiti.constants.VariablesRoleEnum;
+import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 流程变量构造器
+ * 
+ * @author 许俊雄
+ * 
+ *         用来构造统一的流程变量
+ * 
+ *         链式编程的简单实现
+ *
+ */
+public class VariablesBuilder {
+	private Map<String, Object> variables = Maps.newHashMap();
+
+	private static Logger logger = LoggerFactory
+			.getLogger(VariablesBuilder.class);
+
+	// 流程标题
+	public static final String PROC_TITLE = "title";
+
+	public VariablesBuilder() {
+	}
+
+	/**
+	 * 构造方法，用于接收外部的流程变量用来追加
+	 * 
+	 * @param variables
+	 */
+	public VariablesBuilder(Map<String, Object> variables) {
+		this.variables = variables;
+	}
+
+	/**
+	 * 设置流程标题
+	 * 
+	 * @param title
+	 * @return
+	 */
+	public VariablesBuilder putProcTitle(String title) {
+
+		variables.put(PROC_TITLE, title);
+
+		return this;
+	}
+
+	/**
+	 * 设置主键
+	 * 
+	 * @param primaryId主键id
+	 * @return
+	 * @throws BusinessException
+	 */
+	public VariablesBuilder putPrimaryKey(String primaryId)
+			throws BusinessException {
+
+		if (Strings.isNullOrEmpty(primaryId)) {
+			throw new BusinessException("process.flow.primarykey.isEmpty");
+		}
+		variables.put(ActivitiConstants.PRIMARY_KEY, primaryId);
+
+		return this;
+	}
+
+	/**
+	 * 设置实现流程结束回调接口的 服务层
+	 * 
+	 * @param beanName
+	 * @see com.bt.modules.activiti.interfaces.ProcessDataHandler
+	 * @return
+	 */
+	public VariablesBuilder putPersistBeanName(String beanName) {
+
+		variables.put(ActivitiConstants.PERSIST_BEAN_NAME, beanName);
+
+		return this;
+	}
+
+	/**
+	 * 项目负责人
+	 * 
+	 * @param userLoginName
+	 * @return
+	 * @throws BusinessException
+	 */
+	public VariablesBuilder putPojectRespon(String userLoginName,
+			String projName) throws BusinessException {
+		if (Strings.isNullOrEmpty(userLoginName)) {
+			throw new BusinessException("process.flow.ProjectRespon.isEmpty",
+					projName);
+		}
+		variables.put(VariablesRoleEnum.VAR_PROJECT_RESPON.getName(),
+				userLoginName);
+
+		return this;
+	}
+
+	/**
+	 * 区域经理
+	 * 
+	 * @param userLoginName
+	 * @param ProjName
+	 *            -项目名称
+	 * @return
+	 * @throws BusinessException
+	 */
+	public VariablesBuilder putAreaManager(String userLoginName, String projName)
+			throws BusinessException {
+
+		if (Strings.isNullOrEmpty(userLoginName)) {
+			throw new BusinessException("process.flow.areaMannager.isEmpty",
+					projName);
+		}
+		variables.put(VariablesRoleEnum.VAR_AREA_MANAGER.getName(),
+				userLoginName);
+
+		return this;
+	}
+
+	/**
+	 * 通过项目编号获取质安人员
+	 * 
+	 * @param userLoginName
+	 * @return
+	 * @throws BusinessException
+	 */
+	public VariablesBuilder putQuanlitySecure(String projId)
+			throws BusinessException {
+		// 获取质安人员登录名称
+		if (Strings.isNullOrEmpty(projId)) {
+			throw new BusinessException("process.flow.project.isEmpty");
+		}
+		if (UserUtils.getUserByProjectId(projId) == null) {
+			throw new BusinessException("process.flow.getbyProjectId.isEmpty");
+		} else {
+			String userName = UserUtils.getUserByProjectId(projId)
+					.getLoginName();
+
+			if (Strings.isNullOrEmpty(userName)) {
+				logger.error("通过项目id:{}获取质安员失败!", projId);
+				throw new BusinessException(
+						"process.flow.getbyProjectId.isEmpty", projId);
+
+			}
+			variables.put(VariablesRoleEnum.VAR_QUANLITY_SECUR.getName(),
+					userName);
+		}
+
+		return this;
+	}
+
+	/**
+	 * 成本负责人
+	 * 
+	 * @param userLoginName
+	 * @return
+	 * @throws BusinessException 
+	 */
+	public VariablesBuilder putCostRespon(String userLoginName, String projName) throws BusinessException {
+
+		if (Strings.isNullOrEmpty(userLoginName)) {
+			throw new BusinessException("process.flow.costRespon.isEmpty",projName);
+		}
+		variables.put(VariablesRoleEnum.VAR_COST_RESPON.getName(),
+				userLoginName);
+
+		return this;
+	}
+
+	/**
+	 * 成本组长
+	 * 
+	 * @param userLoginName
+	 * @return
+	 * @throws BusinessException 
+	 */
+	public VariablesBuilder putCostLeader(String userLoginName, String projName) throws BusinessException {
+
+		if (Strings.isNullOrEmpty(userLoginName)) {
+			throw new BusinessException("process.flow.costLeader.isEmpty",projName);
+		}
+		variables.put(VariablesRoleEnum.VAR_COST_LEADER.getName(),
+				userLoginName);
+
+		return this;
+	}
+	
+	/**
+	 * 成本主管
+	 * 
+	 * @param userLoginName
+	 * @return
+	 * @throws BusinessException 
+	 */
+	public VariablesBuilder putCostDirector(String userLoginName, String projName) throws BusinessException {
+
+		if (Strings.isNullOrEmpty(userLoginName)) {
+			throw new BusinessException("process.flow.costDirector.isEmpty",projName);
+		}
+		variables.put(VariablesRoleEnum.VAR_COST_DIRECTOR.getName(),
+				userLoginName);
+
+		return this;
+	}
+
+	/**
+	 * 构建流程变量Map
+	 * 
+	 * @return
+	 */
+	public Map<String, Object> build() {
+		logger.debug("本次构建的流程变量为：{}", variables);
+		return variables;
+	}
+
+}

@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.purchase.dao.PurchaseDemandDao">
+    
+	<sql id="purchaseDemandColumns">
+		a.id AS "id",
+		a.seriesnumber AS "seriesnumber",
+		a.type AS "type",
+		a.mtype AS "mtype",
+		a.count AS "count",
+		a.status AS "status",
+		a.assignto AS "assignto.id",
+		a.create_date AS "createDate",
+		a.create_by AS "createBy.id",
+		a.update_date AS "updateDate",
+		a.update_by AS "updateBy.id",
+		a.del_flag AS "delFlag",
+		a.workflow_id as "workflowid",
+		a.workflow_status as "workflowstatus"
+	</sql>
+	
+	
+	<sql id="purchaseDemandJoins">
+		left join sys_user suser on suser.id=a.assignto
+		left join sys_user cuser on cuser.id=a.create_by
+	</sql>
+     
+    <select id="getBySeriesNumber" parameterType="String" resultType="PurchaseDemand">
+		SELECT 
+			<include refid="purchaseDemandColumns"/>
+		FROM btg_purchase_demand a
+		<include refid="purchaseDemandJoins"/>
+		WHERE a.seriesnumber = #{seriesnumber}
+	</select>
+	
+	<select id="get" resultType="PurchaseDemand">
+		SELECT 
+			<include refid="purchaseDemandColumns"/>
+		FROM btg_purchase_demand a
+		<include refid="purchaseDemandJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="PurchaseDemand">
+		SELECT 
+				suser.name as "assignto.name",
+				cuser.name as "createBy.name",
+				<if test="type == '钢材' or type == '辅料'">
+					obbase.order_bom_no as "orderBomBase.orderBomNo",
+					obbase.Building as "orderBomBase.building",
+					obdetail.materiel_name as "orderBomDetail.materielName",
+					obdetail.materiel_type as "orderBomDetail.materielType",
+					obdetail.unit as "orderBomDetail.unit",
+					obdetail.count as "orderBomDetail.count",
+					obdetail.id AS "orderBomDetail.id",
+					project.name as "project.name",
+				</if>
+				<include refid="purchaseDemandColumns"/>
+		FROM btg_purchase_demand a
+			<if test="type == '钢材' or type == '辅料'">
+				left join btg_purchase_demand_order_bom_detail_mapping pdobd on pdobd.purchase_demand_id=a.id
+				left join btg_order_bom_detail obdetail on obdetail.id=pdobd.order_bom_detail_id
+				join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+				left join btg_subproject sub on sub.id=obbase.sub_proj_id
+				left join btg_project project on project.id=sub.project_id
+			</if>
+		<include refid="purchaseDemandJoins"/>
+		<where>
+			and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="assignto != null and assignto != ''">
+				AND a.assignto = #{assignto.id}
+			</if>
+			<if test="createBy != null and createBy != ''">
+				AND a.create_by = #{createBy.id}
+			</if>
+			<if test="type != null and type != ''">
+				and a.type = #{type}
+			</if>
+			<if test="seriesnumber != null and seriesnumber != ''">
+				and a.seriesnumber like CONCAT('%', #{seriesnumber}, '%')
+			</if>
+			<if test="workflowstatus != null and workflowstatus != ''">
+				and a.workflow_status = #{workflowstatus}
+			</if>
+		</where>
+		<if test="glfpGB != null and glfpGB != '' and glfpGB=='seriesnumber'">
+			group by a.seriesnumber
+		</if>
+		order by (a.workflow_status+0) asc,a.update_date desc
+	</select>
+	
+	<select id="findAllList" resultType="PurchaseDemand">
+		SELECT 
+			<include refid="purchaseDemandColumns"/>
+		FROM btg_purchase_demand a
+		<include refid="purchaseDemandJoins"/>
+		<where>
+			<if test="seriesnumber != null and seriesnumber != ''">
+				and a.seriesnumber like CONCAT('%', #{seriesnumber}, '%')
+			</if>
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_purchase_demand(
+			id,
+			seriesnumber,
+			mtype,
+			type,
+			count,
+			status,
+			sort,
+			<!-- assignto, -->
+			create_date,
+			create_by,
+			update_date,
+			update_by,
+			workflow_id,
+			workflow_status,
+			del_flag
+		) VALUES (
+			#{id},
+			#{seriesnumber},
+			#{mtype},
+			#{type},
+			#{count},
+			#{status},
+			#{sort},
+			<!-- #{assignto.id}, -->
+			#{createDate},
+			#{createBy.id},
+			#{updateDate},
+			#{updateBy.id},
+			#{workflowid},
+			#{workflowstatus},
+			#{DEL_FLAG_NORMAL}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_purchase_demand SET 	
+			update_date = #{updateDate}
+			<if test="seriesnumber != null and seriesnumber != ''">
+				,seriesnumber = #{seriesnumber}
+			</if>
+			<if test="mtype != null and mtype != ''">
+				,mtype = #{mtype}
+			</if>
+			<if test="type != null and type != ''">
+				,type = #{type}
+			</if>
+			<if test="count != null and count != ''">
+				,count = #{count}
+			</if>
+			<if test="status != null and status != ''">
+				,status = #{status}
+			</if>
+			<if test="assignto != null and assignto != ''">
+				<if test="assignto.id != null and assignto.id != ''">
+					,assignto = #{assignto.id}
+				</if>
+			</if>
+			<if test="updateBy != null and updateBy != ''">
+				,update_by = #{updateBy.id}
+			</if>
+			<if test="workflowid != null and workflowid != ''">
+				,workflow_id = #{workflowid}
+			</if>
+			<if test="workflowstatus != null and workflowstatus != ''">
+				,workflow_status = #{workflowstatus}
+			</if>
+		WHERE id = #{id}
+			<if test="ltVal != null and ltVal != ''">
+				and status &lt; #{ltVal}
+			</if>
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_purchase_demand SET 	
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<select id="groupByTypeToIDs" parameterType="map" resultType="PurchaseDemand">
+		select 
+			sum(a.count) as "sumCount",
+		<include refid="purchaseDemandColumns"/>
+			from btg_purchase_demand a 
+		where a.assignTo=#{pd.assignto.id} 
+				<if test="ids.size()>0">
+					and a.id in
+						<foreach collection="ids" item="id" index="i"
+		           			 open="(" close=")" separator=",">
+		           		 			#{id}
+		        		</foreach>
+				</if>
+		GROUP BY a.Type		
+	</select>
+	<!-- 根据IDS获取相应的列表数据 -->
+	<select id="getByIDs" parameterType="java.util.ArrayList" resultType="PurchaseDemand">
+		select 
+		<include refid="purchaseDemandColumns"/>
+			from btg_purchase_demand a 
+		where 	a.id in
+				<foreach collection="list" item="id" index="i"
+           			 open="(" close=")" separator=",">
+           		 			#{id}
+        		</foreach>
+	</select>
+	<select id="getToDaysCount" parameterType="Date" resultType="int">
+		select count(b.seriesnumber) from (select a.seriesnumber from btg_purchase_demand a 
+			where 
+ 				TO_DAYS(a.create_date) = TO_DAYS(#{date})
+		GROUP BY a.seriesnumber) b
+	</select>
+	
+	<select id="groupByType" resultType="map">
+		select a.type as "type"
+			from btg_purchase_demand a 
+		GROUP BY a.type		
+	</select>
+	
+	<select id="sumTotal" resultType="int" parameterType="map">
+		select ifnull(sum(p.count),0) from btg_purchase p 
+			left join btg_purchase_demand pd on pd.id=p.purchase_demand_id
+		where pd.id=#{pdid} and p.mtype=#{mtype}
+	</select>
+	<!-- 根据申购编号删除对应的数据列表 （此处特殊，所以需要进行删除数据） -->
+	<delete id="delBySeriesnumber" parameterType="String">
+		delete from btg_purchase_demand where seriesnumber=#{seriesnumber}
+	</delete>
+	
+	<select id="getListForDatatrack" resultType="PurchaseDemand">
+		SELECT
+				ifnull(assigntoUser. NAME, "") AS "assignto.name",
+				obbase.order_bom_no AS "orderBomBase.orderBomNo",
+				obbase.order_type AS "orderBomBase.orderType",
+				obbase.id AS "orderBomBase.id",
+				obbase.uniform_materiel_type AS "orderBomBase.uniformMaterielType",
+				obdetail.materiel_name AS "orderBomDetail.materielName",
+				obdetail.materiel_no AS "orderBomDetail.materielNo",
+				ifnull(obdetail.materials, "") AS "orderBomDetail.materials",
+				ifnull(obdetail.standard_desc, "") AS "orderBomDetail.standardDesc",
+				obdetail.id AS "orderBomDetail.id",
+				obdetail.box_no AS "orderBomDetail.boxNo",
+				dict.label AS "orderBomBase.stoneColorName",
+				project.id AS "project.id",
+				project. NAME AS "project.name",
+				sub.stone_expect_date AS "sub.stoneExpectDate",
+				sub.skeleton_expect_date AS "sub.skeletonExpectDate",
+				sub.pendant_expect_date AS "sub.pendantExpectDate",
+				a.id AS "id",
+				a.seriesnumber AS "seriesnumber",
+				a.type AS "type",
+				a.mtype AS "mtype",
+				a.count AS "count",
+				ifnull(ifnull(purchase.STATUS,assign.STATUS),a.STATUS) AS "status",
+				a.assignto AS "assignto.id",
+				a.create_date AS "createDate",
+				a.create_by AS "createBy.id",
+				a.update_date AS "updateDate",
+				a.update_by AS "updateBy.id",
+				a.del_flag AS "delFlag",
+				a.workflow_id AS "workflowid",
+				a.workflow_status AS "workflowstatus"
+			FROM
+			btg_purchase_demand a
+			LEFT join btg_purchase_demand_assign assign on a.id = assign.purchase_demand_id
+			LEFT join btg_purchase purchase on a.id = purchase.purchase_demand_id
+			LEFT JOIN sys_user assigntoUser ON assigntoUser.id = a.assignto
+			JOIN btg_purchase_demand_order_bom_detail_mapping pdobd ON pdobd.purchase_demand_id = a.id
+			JOIN btg_order_bom_detail obdetail ON obdetail.id = pdobd.order_bom_detail_id
+			JOIN btg_order_bom_base obbase ON obbase.id = obdetail.order_bom_id
+			LEFT JOIN sys_dict dict ON dict.
+			VALUE
+				= obbase.stone_color_name
+			JOIN btg_subproject sub ON sub.id = obbase.sub_proj_id
+			JOIN btg_project project ON project.id = sub.project_id
+			<where>
+				project.del_flag = 0 and obbase.del_flag = 0
+				<if test="orderBomBase !=null and orderBomBase.id != null and orderBomBase.id != ''">
+					and obbase.id = #{orderBomBase.id}
+				</if>
+			</where>
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='obdetail'">
+				GROUP BY a.id
+				order by ifnull(purchase.STATUS, a.STATUS) DESC
+			</if>
+	</select>
+	
+	<!-- 根据已有的生产单显示相关的项目列表数据 -->
+	<select id="getListForProject" resultType="PurchaseDemand">
+		SELECT 
+			   ifnull(assigntoUser.name,"") as "assignto.name",
+			   obbase.order_bom_no as "orderBomBase.orderBomNo",
+			   obbase.order_type as "orderBomBase.orderType",
+			   obbase.id as "orderBomBase.id",
+			   obbase.uniform_materiel_type as "orderBomBase.uniformMaterielType",
+			   obdetail.materiel_name as "orderBomDetail.materielName",
+			   obdetail.materiel_no as "orderBomDetail.materielNo",
+			   ifnull(obdetail.materials,"") as "orderBomDetail.materials",
+			   ifnull(obdetail.standard_desc,"") as "orderBomDetail.standardDesc",
+			   obdetail.id as "orderBomDetail.id",
+			   obdetail.box_no as "orderBomDetail.boxNo",
+			   dict.label as "orderBomBase.stoneColorName",
+			   project.id as "project.id",
+			   project.name as "project.name",
+			   sub.stone_expect_date as "sub.stoneExpectDate",
+			   sub.skeleton_expect_date as "sub.skeletonExpectDate",
+			   sub.pendant_expect_date as "sub.pendantExpectDate",
+			<include refid="purchaseDemandColumns"/>
+		FROM btg_purchase_demand a
+			left join sys_user assigntoUser on assigntoUser.id=a.assignto
+			join btg_purchase_demand_order_bom_detail_mapping pdobd on pdobd.purchase_demand_id=a.id
+			join btg_order_bom_detail obdetail on obdetail.id=pdobd.order_bom_detail_id
+			join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+			left join sys_dict dict on dict.value = obbase.stone_color_name
+	 		join btg_subproject sub on sub.id=obbase.sub_proj_id
+	 		join btg_project project on project.id=sub.project_id
+		<where>
+			project.del_flag = #{DEL_FLAG_NORMAL} and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="project !=null and project.id != null and project.id != ''">
+				and project.id = #{project.id}
+			</if>
+			<if test="status !=null and status != ''">
+				and a.status = #{status}
+			</if>
+			<if test="assignto !=null and assignto.id != null and assignto.id != ''">
+				and a.assignto = #{assignto.id}
+			</if>
+			<if test="orderBomBase !=null and orderBomBase.id != null and orderBomBase.id != ''">
+				and obbase.id = #{orderBomBase.id}
+			</if>
+			<if test="orderBomBase !=null and orderBomBase.ids != null and orderBomBase.ids != ''">
+				and obbase.id in
+				<foreach collection="orderBomBase.ids" item="id" index="i"
+           			 open="(" close=")" separator=",">
+           		 			#{id}
+        		</foreach>
+			</if>
+			<if test="ids != null and ids != ''">
+				and a.id in
+				<foreach collection="ids" item="id" index="i"
+           			 open="(" close=")" separator=",">
+           		 			#{id}
+        		</foreach>
+			</if>
+			<if test="types != null and types != ''">
+				and a.type in
+				<foreach collection="types" item="type" index="i"
+           			 open="(" close=")" separator=",">
+           		 			#{type}
+        		</foreach>
+			</if>
+			
+		</where>
+			
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='proName'">
+				group by project.name
+			</if>
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='obbase'">
+				group by obbase.id
+				order by obbase.building
+			</if>
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='obdetail'">
+				group by obdetail.id
+				order by a.create_date
+			</if>
+		
+		<!-- ORDER BY (a.status+0) asc,a.update_date DESC -->
+	</select>
+	<!-- 根据ID统计总量 -->
+	<select id="getAssignCount" resultType="map" parameterType="map">
+			select 
+				sum(pda.count) as count,
+				obbase.id as obbaseID
+			from btg_purchase_demand pd 
+				left join btg_purchase_demand_assign pda on pda.purchase_demand_id=pd.id
+				join btg_purchase_demand_order_bom_detail_mapping pdobd on pdobd.purchase_demand_id=pd.id
+				left join btg_order_bom_detail obdetail on obdetail.id=pdobd.order_bom_detail_id
+				left join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+			where (1=1) and obbase.del_flag = #{DEL_FLAG_NORMAL}
+				<if test="gtVal !=null and gtVal != ''">
+					and pda.status &gt; #{gtVal}
+				</if>
+				<if test="gtEqVal !=null and gtEqVal != ''">
+					and pda.status &gt;= #{gtEqVal}
+				</if>
+				<if test="status !=null and status != ''">
+					and pda.status = #{status}
+				</if>
+				<if test="ids != null and ids != ''">
+					and obbase.id in
+					<foreach collection="ids" item="id" index="i"
+	           			 open="(" close=")" separator=",">
+	           		 			#{id}
+	        		</foreach>
+				</if>
+			group by obbase.id
+	</select>
+	<!-- 根据ID统计下单量 -->
+	<select id="getObbCount" resultType="map" parameterType="map">
+		select ifnull(sum(pd.count),0) as count,
+				obbase.id as obbaseID 
+			from 
+				btg_purchase_demand pd 
+					join btg_purchase_demand_order_bom_detail_mapping pdobd on pdobd.purchase_demand_id=pd.id
+					left join btg_order_bom_detail obdetail on obdetail.id=pdobd.order_bom_detail_id
+					left join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+		where (1=1) and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="ids != null and ids != ''">
+				and obbase.id in
+				<foreach collection="ids" item="id" index="i"
+           			 open="(" close=")" separator=",">
+           		 			#{id}
+        		</foreach>
+			</if>
+		group by obbase.id
+	</select>
+	
+	<update id="updateExpectDateByIds">
+		update btg_purchase_demand pd 
+			left join btg_purchase_demand_order_bom_detail_mapping pdobdm on pdobdm.purchase_demand_id=pd.id
+			left join btg_order_bom_detail obDetail on obDetail.id=pdobdm.order_bom_detail_id
+			left join btg_order_bom_base obbase on obbase.id=obDetail.order_bom_id
+			left join btg_subproject sub on sub.id=obbase.sub_proj_id
+		set pd.update_date=now()
+			<if test="sub!=null and sub.skeletonExpectDate !=null and sub.skeletonExpectDate != ''">
+				,sub.skeleton_expect_date=#{sub.skeletonExpectDate}
+			</if>
+			<if test="sub!=null and sub.pendantExpectDate !=null and sub.pendantExpectDate != ''">
+				,sub.pendant_expect_date=#{sub.pendantExpectDate}
+			</if>
+		where obbase.id = #{orderBomBase.id}
+	</update>
+</mapper>

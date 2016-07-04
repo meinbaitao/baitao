@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.BtgConJiaContractDetailDao">
+    
+	<sql id="btgConJiaContractDetailColumns">
+		a.id AS "id",
+		a.contract_id AS "contractId",
+		a.subproject_id AS "subprojectId",
+		a.start_date AS "startDate",
+		a.end_date AS "endDate",
+		a.cost_price AS "costPrice"
+	</sql>
+	
+	<sql id="btgConJiaContractDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="BtgConJiaContractDetail">
+		SELECT 
+			<include refid="btgConJiaContractDetailColumns"/>
+		FROM btg_con_jia_contract_detail a
+		<include refid="btgConJiaContractDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="BtgConJiaContractDetail">
+		SELECT 
+			<include refid="btgConJiaContractDetailColumns"/>
+		FROM btg_con_jia_contract_detail a
+		<include refid="btgConJiaContractDetailJoins"/>
+		<where>
+			<if test="contractId != null and contractId != ''">
+				AND a.contract_id = #{contractId} 
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="BtgConJiaContractDetail">
+		SELECT 
+			<include refid="btgConJiaContractDetailColumns"/>
+		FROM btg_con_jia_contract_detail a
+		<include refid="btgConJiaContractDetailJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_con_jia_contract_detail(
+			id,
+			contract_id,
+			subproject_id,
+			start_date,
+			end_date,
+			cost_price
+		) VALUES (
+			#{id},
+			#{contractId},
+			#{subprojectId},
+			#{startDate},
+			#{endDate},
+			#{costPrice}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_con_jia_contract_detail SET
+			contract_id = #{contractId},
+			subproject_id = #{subprojectId},
+			start_date = #{startDate},
+			end_date = #{endDate},
+			cost_price = #{costPrice}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_con_jia_contract_detail
+		WHERE id = #{id}
+	</update>
+	
+	<!--由劳务合同id获取甲方合同明细 -->
+	<select id="getByLaborContractId" parameterType="String" resultType="BtgConJiaContractDetail">
+		select
+		<include refid="btgConJiaContractDetailColumns"/>
+		from btg_con_jia_contract_detail a
+		join btg_con_jia_contract b on a.contract_id= b.id
+		join btg_con_laborcontract c on c.project_id = b.project_id and c.Buildings = a.subproject_id
+		where c.id=#{laborContractId}
+	</select>
+	
+</mapper>

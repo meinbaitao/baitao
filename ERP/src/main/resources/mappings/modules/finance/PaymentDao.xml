@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.finance.dao.PaymentDao">
+    
+	<sql id="paymentColumns">
+		a.id AS "id",
+		a.payment_number AS "paymentNumber",
+		a.sort AS "sort",
+		a.required_part AS "requiredPart",
+		a.required_date AS "requiredDate",
+		a.payment_object AS "paymentObject",
+		a.payment_type AS "paymentType",
+		a.required_price AS "requiredPrice",
+		a.punish AS "punish",
+		a.punish_type AS "punishType",
+		a.punish_price AS "punishPrice",
+		a.payment_price AS "paymentPrice",
+		a.verify_part AS "verifyPart",
+		a.verify_person AS "verifyPerson",
+		a.verify_content AS "verifyContent",
+		a.verify_date AS "verifyDate",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="paymentJoins">
+	</sql>
+    
+	<select id="get" resultType="Payment">
+		SELECT 
+			<include refid="paymentColumns"/>
+		FROM btg_payment a
+		<include refid="paymentJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Payment">
+		SELECT 
+			<include refid="paymentColumns"/>
+		FROM btg_payment a
+		<include refid="paymentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="paymentNumber != null and paymentNumber != ''">
+				AND a.payment_number = #{paymentNumber}
+			</if>
+			<if test="requiredPart != null and requiredPart != ''">
+				AND a.required_part = #{requiredPart}
+			</if>
+			<if test="paymentObject != null and paymentObject != ''">
+				AND a.payment_object = #{paymentObject}
+			</if>
+			<if test="verifyPart != null and verifyPart != ''">
+				AND a.verify_part = #{verifyPart}
+			</if>
+			<if test="sort != null and sort != ''">
+				AND a.sort = #{sort}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Payment">
+		SELECT 
+			<include refid="paymentColumns"/>
+		FROM btg_payment a
+		<include refid="paymentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_payment(
+			id,
+			payment_number,
+			sort,
+			required_part,
+			required_date,
+			payment_object,
+			payment_type,
+			required_price,
+			punish,
+			punish_type,
+			punish_price,
+			payment_price,
+			verify_part,
+			verify_person,
+			verify_content,
+			verify_date,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{paymentNumber},
+			#{sort},
+			#{requiredPart},
+			#{requiredDate},
+			#{paymentObject},
+			#{paymentType},
+			#{requiredPrice},
+			#{punish},
+			#{punishType},
+			#{punishPrice},
+			#{paymentPrice},
+			#{verifyPart},
+			#{verifyPerson},
+			#{verifyContent},
+			#{verifyDate},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_payment SET 	
+			payment_number = #{paymentNumber},
+			sort = #{sort},
+			required_part = #{requiredPart},
+			required_date = #{requiredDate},
+			payment_object = #{paymentObject},
+			payment_type = #{paymentType},
+			required_price = #{requiredPrice},
+			punish = #{punish},
+			punish_type = #{punishType},
+			punish_price = #{punishPrice},
+			payment_price = #{paymentPrice},
+			verify_part = #{verifyPart},
+			verify_person = #{verifyPerson},
+			verify_content = #{verifyContent},
+			verify_date = #{verifyDate},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_payment SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	
+	<!--查询所有走完流程的运费登记 
+	<select id="findAllTransportationSettlement" parameterType="String" resultType="Map">
+		SELECT 
+			a.logistic_send AS "seriesnumber"
+		FROM
+			btg_transportation_settlement AS a
+		WHERE
+			a.workflow_status = 4
+		AND
+			a.del_flag = #{DEL_FLAG_NORMAL}
+	</select>-->
+	
+	<!--查询运费结算中待结算承运方-->
+	<select id="findSuppliersWaitSettle" parameterType="String" resultType="Map">
+		SELECT DISTINCT
+			a.carriage_contract AS "carriageContract",
+			supplier.name AS "supplierName"
+		FROM 
+			btg_transportation_settlement AS a
+		JOIN 
+			btg_stone_carriage_contract_base AS contract ON contract.id = a.carriage_contract
+		JOIN
+			btg_supplier AS supplier ON supplier.id = contract.Party_B_name
+		WHERE
+			a.workflow_status = 4
+		AND
+			a.statue = 1
+		AND
+			a.del_flag = 0
+	</select>
+		
+	<!--由发货通知单号获取运费结算对象 
+	<select id="getTransportationSettlement" parameterType="String" resultType="TransportationSettlement">
+		SELECT
+			a.id AS "id",
+			a.logistic_send AS "logisticSend",
+			a.transportation_num AS "transportationNum",
+			a.settle_weight AS "settleWeight",
+			a.load_price AS "loadPrice",
+			a.unload_total_price AS "unloadTotalPrice",
+			a.contract_price AS "contractPrice",
+			a.sum_price AS "sumPrice",
+			a.adjust_price AS "adjustPrice",
+			a.start_area AS "startArea",
+			a.area AS "area",
+			a.real_weight AS "realWeight"
+		FROM
+			btg_transportation_settlement AS a
+		WHERE
+			a.logistic_send = #{logisticSend}
+	</select>-->
+	
+	<!--查询当天生成单数	-->
+	<select id="getTodayCount" parameterType="String" resultType="int">
+		SELECT
+			count(*)
+		FROM
+			btg_payment AS a
+		WHERE
+			a.payment_number LIKE concat('%',#{date},'%')
+	</select>
+	
+	<!--由付款单id查询所有关联运费结算单-->
+	<select id="findTransportationSettlement" parameterType="String" resultType="TransportationSettlement">
+		SELECT
+			b.id AS "mappingId",
+			a.id AS "id",
+			a.logistic_send AS "logisticSend",
+			a.transportation_num AS "transportationNum",
+			a.settle_weight AS "settleWeight",
+			a.load_price AS "loadPrice",
+			a.unload_total_price AS "unloadTotalPrice",
+			a.contract_price AS "contractPrice",
+			a.sum_price AS "sumPrice",
+			a.adjust_price AS "adjustPrice",
+			a.start_area AS "startArea",
+			a.area AS "area",
+			a.real_weight AS "realWeight"
+		FROM
+			btg_transportation_settlement AS a
+		JOIN
+			btg_transportation_payment_mapping AS b ON b.settlement_id = a.id
+		WHERE
+			b.payment_id = #{paymentId}
+	</select>
+	
+	
+	
+</mapper>

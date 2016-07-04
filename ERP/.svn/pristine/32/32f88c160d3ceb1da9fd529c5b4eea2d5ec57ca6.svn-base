@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.purchase.dao.PurchaseDemandAssignDao">
+    
+	<sql id="purchaseDemandAssignColumns">
+		a.id AS "id",
+		a.seriesnumber AS "seriesnumber",
+		a.purchase_demand_id AS "purchaseDemandId",
+		a.count AS "count",
+		a.status AS "status",
+		a.assign_date AS "assignDate",
+		a.require_date AS "requireDate",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		ifnull(a.remarks,"") AS "remarks",
+		a.del_flag AS "delFlag",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus"
+	</sql>
+	
+	<sql id="purchaseDemandAssignJoins">
+	</sql>
+    
+    <select id="getListCount" parameterType="list" resultType="map">
+		SELECT 
+			a.purchase_demand_id as pdID,
+			ifnull(sum(a.count),0) as sumCount,
+			ifnull(count(a.id),0) as idCount
+		FROM btg_purchase_demand_assign a
+		where a.purchase_demand_id in
+				<foreach collection="list" item="id" index="i"
+           			 open="(" close=")" separator=",">
+           		 			#{id}
+        		</foreach>
+        	group by a.purchase_demand_id
+	</select>
+	
+    <select id="getListByCondition" resultType="PurchaseDemandAssign">
+		SELECT 
+			a.id AS "id",
+			a.seriesnumber AS "seriesnumber",
+			a.purchase_demand_id AS "purchaseDemandId",
+			a.count AS "count",
+			a.status AS "status",
+			a.assign_date AS "assignDate",
+			a.require_date AS "requireDate",
+			ifnull(a.remarks,"无") AS "remarks",
+			ifnull(sum(a.count),0) as "sumCount",
+			ifnull(count(a.id),0) as "idCount"
+		FROM btg_purchase_demand_assign a
+		<include refid="purchaseDemandAssignJoins"/>
+		WHERE (1=1)
+			<if test="demandIDs !=null and demandIDs.size > 0 ">
+				and a.purchase_demand_id in
+						<foreach collection="demandIDs" item="id" index="i"
+		           			 open="(" close=")" separator=",">
+		           		 			#{id}
+		        		</foreach>
+			</if>
+			<choose>
+				<when test="status=='-1'">
+					
+				</when>
+				<when test="gtEqVal !=null and gtEqVal != ''">
+					and a.status &gt;= #{gtEqVal}
+				</when>
+				<when test="status !=null and status != ''">
+					and a.status = #{status}
+				</when>
+				<otherwise>
+					and (a.status+0) &gt; 0
+				</otherwise>
+			</choose>
+			
+			<if test="gbStr !=null and gbStr != '' and gbStr == 'purchaseDemandId'">
+				group by a.purchase_demand_id
+			</if>
+			<if test="gbStr !=null and gbStr != '' and gbStr == 'id'">
+				group by a.id
+			</if>
+			<if test="gbStr !=null and gbStr != '' and gbStr == 'updateDate'">
+				group by a.purchase_demand_id,convert(a.update_date,DATETIME)
+			</if>
+			order by a.assign_date
+	</select>
+    <update id="updateStatusByDemandIDs">
+		UPDATE btg_purchase_demand_assign SET 
+			status = #{status}
+			<if test="remarks !=null and remarks != ''">
+					,remarks = #{remarks}
+			</if>
+		WHERE  purchase_demand_id in
+					<foreach collection="demandIDs" item="id" index="i"
+	           			 open="(" close=")" separator=",">
+	           		 			#{id}
+	        		</foreach>
+			<if test="originStatus !=null and originStatus != ''">
+					and status = #{originStatus}
+			</if>
+	</update>
+    
+    
+    
+	<select id="get" resultType="PurchaseDemandAssign">
+		SELECT 
+			<include refid="purchaseDemandAssignColumns"/>
+		FROM btg_purchase_demand_assign a
+		<include refid="purchaseDemandAssignJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="PurchaseDemandAssign">
+		SELECT 
+			<include refid="purchaseDemandAssignColumns"/>
+		FROM btg_purchase_demand_assign a
+		<include refid="purchaseDemandAssignJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="PurchaseDemandAssign">
+		SELECT 
+			<include refid="purchaseDemandAssignColumns"/>
+		FROM btg_purchase_demand_assign a
+		<include refid="purchaseDemandAssignJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_purchase_demand_assign(
+			id,
+			seriesnumber,
+			purchase_demand_id,
+			count,
+			status,
+			assign_date,
+			require_date,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			workflow_id,
+			workflow_status
+		) VALUES (
+			#{id},
+			#{seriesnumber},
+			#{purchaseDemandId},
+			#{count},
+			#{status},
+			#{assignDate},
+			#{requireDate},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{workflowid},
+			#{workflowstatus}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_purchase_demand_assign SET 	
+			seriesnumber = #{seriesnumber},
+			purchase_demand_id = #{purchaseDemandId},
+			count = #{count},
+			status = #{status},
+			assign_date = #{assignDate},
+			require_date = #{requireDate},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			workflow_id = #{workflowid},
+			workflow_status = #{workflowstatus}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_purchase_demand_assign SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.logistics.dao.LogisticsDetailDao">
+    
+	<sql id="logisticsDetailColumns">
+		a.id AS "id",
+		a.logistics_id AS "logisticsId",
+		a.box_id AS "boxId", 
+		box.box_no AS "boxNo",
+		a.material_no AS "materialNo",
+		a.material_type AS "materialType",
+		a.length AS "length",
+		a.width AS "width",
+		a.height AS "height",
+		a.unit AS "unit",
+		a.amount AS "amount",
+		a.ware_amount AS "wareAmount",
+		a.logistics_amount AS "logisticsAmount",
+		a.area AS "area",
+		a.volume AS "volume",
+		a.quality AS "quality",
+		a.angle_left AS "angleLeft",
+		a.angle_right AS "angleRight",
+		a.angel_meter AS "angelMeter",
+		a.carve_slot_meter AS "carveSlotMeter",
+		a.water_slot_meter AS "waterSlotMeter",
+		a.cut_angle_count AS "cutAngleCount",
+		a.turn_angle_count AS "turnAngleCount",
+		a.is_arc_line AS "isArcLine",
+		a.water_proof_area AS "waterProofArea",
+		a.raw_area AS "rawArea",
+		a.raw_volume AS "rawVolume",
+		a.decorate_area AS "decorateArea",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.orientation AS "orientation",
+		a.back_cut_meter AS "backCutMeter",
+		a.reversed_angle AS "reversedAngle",
+		a.angle_ab AS "angleAB",
+		a.angle_cd AS "angleCD",
+		a.settlement_type as "settlementType"
+	</sql>
+	
+	<sql id="logisticsDetailJoins">
+		JOIN btg_order_bom_box AS box ON box.id = a.box
+	</sql>
+    
+	<select id="get" resultType="LogisticsDetail">
+		SELECT 
+			<include refid="logisticsDetailColumns"/>
+		FROM btg_logistics_detail a
+		<include refid="logisticsDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="LogisticsDetail">
+		SELECT 
+			<include refid="logisticsDetailColumns"/>
+		FROM btg_logistics_detail a
+		<include refid="logisticsDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="LogisticsDetail">
+		SELECT 
+			<include refid="logisticsDetailColumns"/>
+		FROM btg_logistics_detail a
+		<include refid="logisticsDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_logistics_detail(
+			id,
+			logistics_id,
+			box_id,
+			material_no,
+			material_type,
+			length,
+			width,
+			height,
+			unit,
+			amount,
+			ware_amount,
+			logistics_amount,
+			area,
+			volume,
+			quality,
+			angle_left,
+			angle_right,
+			angel_meter,
+			carve_slot_meter,
+			water_slot_meter,
+			cut_angle_count,
+			turn_angle_count,
+			is_arc_line,
+			water_proof_area,
+			raw_area,
+			raw_volume,
+			decorate_area,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			orientation,
+			back_cut_meter,
+			reversed_angle,
+			angle_ab,
+			angle_cd,
+			settlement_type
+		) VALUES (
+			#{id},
+			#{logisticsId},
+			#{boxId},
+			#{materialNo},
+			#{materialType},
+			#{length},
+			#{width},
+			#{height},
+			#{unit},
+			#{amount},
+			#{wareAmount},
+			#{logisticsAmount},
+			#{area},
+			#{volume},
+			#{quality},
+			#{angleLeft},
+			#{angleRight},
+			#{angelMeter},
+			#{carveSlotMeter},
+			#{waterSlotMeter},
+			#{cutAngleCount},
+			#{turnAngleCount},
+			#{isArcLine},
+			#{waterProofArea},
+			#{rawArea},
+			#{rawVolume},
+			#{decorateArea},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{orientation},
+			#{backCutMeter},
+			#{reversedAngle},
+			#{angleAB},
+			#{angleCD},
+			#{settlementType}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_logistics_detail SET 	
+			logistics_id = #{logisticsId},
+			box_id = #{boxId},
+			material_no = #{materialNo},
+			material_type = #{materialType},
+			length = #{length},
+			width = #{width},
+			height = #{height},
+			unit = #{unit},
+			amount = #{amount},
+			ware_amount = #{wareAmount},
+			logistics_amount = #{logisticsAmount},
+			area = #{area},
+			volume = #{volume},
+			quality = #{quality},
+			angle_left = #{angleLeft},
+			angle_right = #{angleRight},
+			angel_meter = #{angelMeter},
+			carve_slot_meter = #{carveSlotMeter},
+			water_slot_meter = #{waterSlotMeter},
+			cut_angle_count = #{cutAngleCount},
+			turn_angle_count = #{turnAngleCount},
+			is_arc_line = #{isArcLine},
+			water_proof_area = #{waterProofArea},
+			raw_area = #{rawArea},
+			raw_volume = #{rawVolume},
+			decorate_area = #{decorateArea},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			orientation = #{orientation},
+			back_cut_meter = #{backCutMeter},
+			reversed_angle = #{reversedAngle},
+			angle_ab = #{angleAB},
+			angle_cd = #{angelCD},
+			settlement_type = #{settlementType}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_logistics_detail SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	
+	<!--由箱id获取发货详情-->
+	<select id="findMaterialsByBoxId" parameterType="String" resultType="LogisticsDetail">
+		SELECT
+			a.id AS "boxId",
+			b.order_type as"orderType",
+			b.stone_color_name as "stoneTypeId",
+			b.facing_process as "faceProcess",		
+			c.materiel_no AS "materialNo",		
+			c.materiel_type AS "materialType",		
+			c.standard_long AS "length",		
+			c.standard_width AS "width",		
+			c.standard_depth AS "height",		
+			c.unit AS "unit",		
+			c.count AS "amount",		
+			c.count AS "wareAmount",		
+			c.count AS "logisticsAmount",		
+			c.area AS "area",		
+			c.volume AS "volume",		
+			c.wdight AS "quality",		
+			c.left_open_angle AS "angleLeft",		
+			c.right_open_angle AS "angleRight",		
+			c.open_angle_m AS "angelMeter",		
+			c.open_slot_m AS "carveSlotMeter",		
+			c.water_slot_m AS "waterSlotMeter",		
+			c.cut_angle_count AS "cutAngleCount",		
+			c.turn_angle_count AS "turnAngleCount",		
+			c.is_family_line AS "isArcLine",		
+			c.waterproof_area AS "waterProofArea",		
+			c.rohling_area AS "rawArea",
+			c.rohling_volume AS "rawVolume",		
+			c.facing_area AS "decorateArea",
+			c.outside_wall_orientation AS "orientation",
+			c.back_cut_count AS "backCutMeter",
+			c.reversed_angle_long AS "reversedAngle",
+			c.open_angle_m_one AS "angleAB",
+			c.open_angle_m_two AS "angleCD",
+			v.logistics_send_id as "logisticsId"
+		FROM btg_order_bom_box AS a
+			LEFT JOIN btg_order_bom_base AS b ON b.id = a.order_bom_id
+			LEFT JOIN btg_order_bom_detail AS c ON c.order_bom_id = b.id AND c.box_no = a.box_no
+			left join btg_logistics_send_box as v on v.order_bom_box_id = a.id
+		WHERE
+			a.id = #{orderBomBoxId}
+	</select>
+	
+</mapper>

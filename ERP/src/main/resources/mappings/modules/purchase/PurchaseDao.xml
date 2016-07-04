@@ -1,0 +1,631 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.purchase.dao.PurchaseDao">
+    
+	<sql id="purchaseColumns">
+		a.id AS "id",
+		a.seriesnumber AS "seriesnumber",
+		a.type AS "type",
+		a.mtype AS "mtype",
+		a.status AS "status",
+		a.purchaseby AS "purchaseby.id",
+		a.count AS "count",
+		a.price AS "price",
+		a.remarks AS "remarks",
+		a.suppID AS "supp.id",
+		a.saddress AS "supp2.id",
+		a.requireDate as "requireDate",
+		a.contract_id as "purchasingContractBase.id",
+		a.create_date AS "createDate",
+		a.create_by AS "createBy.id",
+		a.update_date AS "updateDate",
+		a.update_by AS "updateBy.id",
+		a.del_flag AS "delFlag",
+		a.is_province AS "isProvince",
+		a.workflow_id as "workflowid",
+		a.workflow_status as "workflowstatus"
+	</sql>
+	
+	<sql id="purchaseJoins">
+	</sql>
+	<!--项目关联  许俊雄 20160511-->
+	<sql id="purProjectJoins">
+		left join btg_purchase_demand pd on pd.id=a.purchase_demand_id
+		left join btg_purchase_demand_order_bom_detail_mapping pdobd on pdobd.purchase_demand_id=pd.id
+		left join btg_order_bom_detail obdetail on obdetail.id=pdobd.order_bom_detail_id
+		join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+		left join btg_subproject sub on sub.id=obbase.sub_proj_id
+		left join btg_project project on project.id=sub.project_id
+	</sql>
+	
+    <!-- 根据需求的ids查看已经采购的数量 -->
+    <select id="getPurchaseCountByDemandIds" parameterType="list" resultType="Purchase">
+		SELECT 
+			a.purchase_demand_id as "purchaseDemand.id",
+			sum(a.count) as "count",
+			a.id as "id"
+		FROM btg_purchase a
+		WHERE a.purchase_demand_id in
+				<foreach collection="list" item="id" index="i"
+           			 open="(" close=")" separator=",">
+           		 			#{id}
+        		</foreach>
+        	group by a.purchase_demand_id
+	</select>
+	
+	
+	 <!-- 根据需求的ids查看已经收发的数量 -->
+    <select id="getSFCountByDemandIds" parameterType="list" resultType="Purchase">
+    	SELECT
+    		purchase.purchase_demand_id as "purchaseDemand.id",
+			SUM(detail.fcount) as "purchaseSFDetail.fcount",
+	  		SUM(detail.scount) as "purchaseSFDetail.scount"
+		FROM
+			btg_purchase_sf_detail detail
+			LEFT JOIN btg_purchase purchase ON detail.purchase_id = purchase.id
+	    WHERE purchase.purchase_demand_id in
+				<foreach collection="list" item="id" index="i"
+           			 open="(" close=")" separator=",">
+           		 			#{id}
+        		</foreach>
+        	group by purchase.purchase_demand_id	
+	</select>
+	
+    <select id="getPageData" resultType="Purchase">
+		SELECT 
+			ifnull(sum(psd.fcount),0) as "sendCount",
+			ifnull(sum(a.count),0) as "sumCount",
+			supp.Name as "supp.name",
+			supp.business_preson as "supp.businessPreson",
+			supp.business_tel as "supp.businessTel",
+			project.name as "purchaseDemand.project.name",
+			pcb.contract_no as "purchasingContractBase.contractNo",
+			min(psd.create_date) as "purchaseSFDetail.createDate",
+			<include refid="purchaseColumns"/>
+		FROM btg_purchase a
+			left join btg_purchasing_contract_base pcb on pcb.id=a.contract_id
+			left join btg_supplier supp on supp.id=a.suppID
+			left join btg_purchase_demand pd on pd.id=a.purchase_demand_id
+			left join btg_purchase_demand_order_bom_detail_mapping pdobd on pdobd.purchase_demand_id=pd.id
+			left join btg_order_bom_detail obdetail on obdetail.id=pdobd.order_bom_detail_id
+			join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+			left join btg_subproject sub on sub.id=obbase.sub_proj_id
+			left join btg_project project on project.id=sub.project_id
+			left join btg_purchase_sf_detail psd on psd.purchase_id=a.id
+		<include refid="purchaseJoins"/>
+		<where> and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="type != null and type != ''">
+				and a.type = #{type}
+			</if>
+			<if test="seriesnumber != null and seriesnumber != ''">
+				and a.seriesnumber like CONCAT('%', #{seriesnumber}, '%')
+			</if>
+			<if test="status != null and status != ''">
+				and a.status = #{status}
+			</if>
+			<if test="gtEqVal != null and gtEqVal != ''">
+				and (a.status+0) &gt;= #{gtEqVal}
+			</if>
+			<if test="isStatus != null and isStatus != ''">
+				and (a.status+0) &gt;= #{isStatus}
+			</if>
+			<if test="workflowstatus != null and workflowstatus != ''">
+				and a.workflow_status &gt;= #{workflowstatus}
+			</if>
+			<if test="purchaseby !=null and purchaseby.id != null and purchaseby.id != ''">
+				and a.purchaseby = #{purchaseby.id}
+			</if>
+			<if test="supp !=null and supp.businessPreson != null and supp.businessPreson != ''">
+				and supp.business_preson = #{supp.businessPreson}
+			</if>
+			<if test="purchaseDemand !=null and purchaseDemand.project != null and purchaseDemand.project.materialStaffBid != ''and purchaseDemand.project.materialStaffBid != null">
+				and project.material_staff_bid = #{purchaseDemand.project.materialStaffBid}
+			</if>
+			<if test="psdType != null and psdType != ''">
+				and psd.type = #{psdType}
+			</if>
+			<if test="types != null and types != ''">
+				and a.type in
+				<foreach collection="types" item="type" index="i"
+           			 open="(" close=")" separator=",">
+           		 			#{type}
+        		</foreach>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		<if test="glfpGB != null and glfpGB != '' and glfpGB=='seriesnumber'">
+			group by a.seriesnumber
+		</if>
+		<if test="glfpGB != null and glfpGB != '' and glfpGB=='purchaseId'">
+			group by a.id
+		</if>
+		order by (a.workflow_status+0) asc,a.update_date desc
+	</select>
+    <update id="updateBySeriesNumbers">
+		UPDATE btg_purchase SET 
+			update_date = now()
+				<if test="status != null and status != ''">
+					,status = #{status}
+				</if>
+				<if test="count != null and count != ''">
+					,count = #{count}
+				</if>
+				<if test="price != null and price != ''">
+					,price = #{price}
+				</if>
+				<if test="remarks != null and remarks != ''">
+					,remarks = #{remarks}
+				</if>
+				<if test="updateBy != null and updateBy != ''">
+					,update_by = #{updateBy.id}
+				</if>
+				<if test="workflowid != null and workflowid != ''">
+					,workflow_id = #{workflowid}
+				</if>
+				<if test="workflowstatus != null and workflowstatus != ''">
+					,workflow_status = #{workflowstatus}
+				</if>
+				<if test="isProvince != null and isProvince != ''">
+					,is_province = #{isProvince}
+				</if>
+		WHERE seriesnumber in 
+				<foreach collection="seriesNumbers" item="s" index="i"
+           			 open="(" close=")" separator=",">
+           		 			#{s}
+        		</foreach>
+	</update>
+    <select id="getDetailByCondition" resultType="Purchase">
+		SELECT 
+			cuser.name as "createBy.name",
+			project.address as "supp2.businessAddress",
+			project.name as "supp2.name",
+			msb.name as "supp2.businessPreson",
+			msb.mobile as "supp2.businessTel",
+			supp.Name as "supp.name",
+			suppUser.name as "supp.businessPreson",
+			supp.business_tel as "supp.businessTel",
+			sub.pendant_order_date as "purchaseDemand.sub.pendantOrderDate",
+			sub.building as "purchaseDemand.sub.building",
+			sub.building_display_name as "purchaseDemand.sub.buildingDisplayName",
+			sub.id as "purchaseDemand.sub.id",
+			project.name as "purchaseDemand.project.name",
+			project.id as "purchaseDemand.project.id",
+			obbase.order_bom_no as "purchaseDemand.orderBomBase.orderBomNo",
+			obdetail.id as "purchaseDemand.orderBomDetail.id",
+			obdetail.materiel_no as "purchaseDemand.orderBomDetail.materielNo",
+			obdetail.materiel_name as "purchaseDemand.orderBomDetail.materielName",
+			obdetail.materiel_type as "purchaseDemand.orderBomDetail.materielType",
+			obdetail.unit as "purchaseDemand.orderBomDetail.unit",
+			obdetail.standard_desc as "purchaseDemand.orderBomDetail.size",
+			purchasingContractBase.id as "purchasingContractBase.name",
+			purchasingContractBase.contract_no as "purchasingContractBase.contractNo",
+			ifnull(sum(psd.fcount),0) as "purchaseSFDetail.fcount",
+			ifnull(sum(psd.scount),0) as "purchaseSFDetail.scount",
+			<include refid="purchaseColumns"/>
+		FROM btg_purchase a
+				left join sys_user cuser on cuser.id=a.create_by
+				left join btg_purchase_demand pd on pd.id=a.purchase_demand_id
+				left join btg_purchase_demand_order_bom_detail_mapping pdobd on pdobd.purchase_demand_id=pd.id
+				left join btg_order_bom_detail obdetail on obdetail.id=pdobd.order_bom_detail_id
+				join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+				left join btg_subproject sub on sub.id=obbase.sub_proj_id
+				left join btg_project project on project.id=sub.project_id
+				left join sys_user msb on msb.id=project.material_staff_bid
+				left join btg_supplier supp on supp.id=a.suppID
+				left join sys_user suppUser on suppUser.id=supp.business_preson
+				left join btg_purchasing_contract_base purchasingContractBase on purchasingContractBase.id=a.contract_id
+				left join btg_purchase_sf_detail psd on psd.purchase_id=a.id
+		<include refid="purchaseJoins"/>
+		<where>
+			<if test="type != null and type != ''">
+				and a.type = #{type}
+			</if>
+			<if test="seriesnumber != null and seriesnumber != ''">
+				and a.seriesnumber like CONCAT('%', #{seriesnumber}, '%')
+			</if>
+			<if test="status != null and status != ''">
+				and a.status = #{status}
+			</if>
+			<if test="workflowstatus != null and workflowstatus != ''">
+				and a.workflow_status = #{workflowstatus}
+			</if>
+			<if test="ids != null and ids != ''">
+				and a.id in
+					<foreach collection="ids" item="id" index="i"
+	           			 open="(" close=")" separator=",">
+	           		 			#{id}
+	        		</foreach>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		<if test="glfpGB != null and glfpGB != '' and glfpGB=='seriesnumber'">
+			group by a.seriesnumber
+		</if>
+		<if test="glfpGB != null and glfpGB != '' and glfpGB=='purchaseId'">
+			group by a.id
+		</if>
+		<if test="glfpGB != null and glfpGB != '' and glfpGB=='inv'">
+			group by project.id,sub.id
+		</if>
+		order by (a.workflow_status+0) asc,a.update_date desc
+	</select>
+    
+    
+    <select id="getTodoInfo" resultType="Purchase">
+		SELECT 
+		a.id AS "id",
+		a.seriesnumber seriesnumber,
+		a.seriesnumber as "todoTask.entryName",
+		a.workflow_id as "todoTask.processInstanceId",
+		project.code as "todoTask.projectShortName"
+		FROM btg_purchase a
+		<include refid="purProjectJoins"/>
+		<!--由于引擎传入描述的是一组数据，待办却是一个 -->
+		WHERE a.seriesnumber = #{id} group by seriesnumber
+	</select>
+    
+    <!-- ****2015年11月9日***** -->
+    
+	<select id="get" resultType="Purchase">
+		SELECT 
+			<include refid="purchaseColumns"/>
+		FROM btg_purchase a
+		<include refid="purchaseJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	<!-- 查看获取详情 -->
+	<select id="getDetail" resultType="Purchase">
+		SELECT a.suppid AS "supp.id",
+				supp.name as "supp.name",
+			<include refid="purchaseColumns"/>
+		FROM btg_purchase a
+		left join btg_supplier supp on supp.id=a.suppid
+		<include refid="purchaseJoins"/>
+		WHERE a.id = #{id}
+		limit 0,1
+	</select>
+	
+	<select id="findList" resultType="Purchase">
+		SELECT 
+			cuser.name as "createBy.name",
+			supp.Name as "supp.name",supp.business_preson as "supp.businessPreson",supp.business_tel as "supp.businessTel",
+			supp2.Name as "supp2.name",supp2.business_preson as "supp2.businessPreson",supp2.business_tel as "supp2.businessTel",
+			<include refid="purchaseColumns"/>
+		FROM btg_purchase a
+		left join sys_user cuser on cuser.id=a.create_by
+		left join btg_supplier supp on supp.id=a.suppID
+		left join btg_supplier supp2 on supp2.id=a.saddress
+		<include refid="purchaseJoins"/>
+		<where>
+			<if test="type != null and type != ''">
+				and a.type = #{type}
+			</if>
+			<if test="seriesnumber != null and seriesnumber != ''">
+				and a.seriesnumber like CONCAT('%', #{seriesnumber}, '%')
+			</if>
+			<if test="status != null and status != ''">
+				and a.status = #{status}
+			</if>
+			<if test="workflowstatus != null and workflowstatus != ''">
+				and a.workflow_status = #{workflowstatus}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		<if test="glfpGB != null and glfpGB != '' and glfpGB=='seriesnumber'">
+			group by a.seriesnumber
+		</if>
+		<if test="glfpGB != null and glfpGB != '' and glfpGB=='purchaseId'">
+			group by a.id
+		</if>
+		order by (a.workflow_status+0) asc,a.update_date desc
+	</select>
+	
+	<select id="findAllList" resultType="Purchase">
+		SELECT 
+			<include refid="purchaseColumns"/>
+		FROM btg_purchase a
+		<include refid="purchaseJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_purchase(
+			id,
+			purchase_demand_id,
+			seriesnumber,
+			type,
+			mtype,
+			status,
+			purchaseby,
+			count,
+			price,
+			suppID,
+			remarks,
+			is_province,
+			create_date,
+			create_by,
+			update_date,
+			update_by
+		) VALUES (
+			#{id},
+			#{purchaseDemand.id},
+			#{seriesnumber},
+			#{type},
+			#{mtype},
+			#{status},
+			#{purchaseby.id},
+			#{count},
+			#{price},
+			#{supp.id},
+			#{remarks},
+			#{isProvince},
+			#{createDate},
+			#{createBy.id},
+			#{updateDate},
+			#{updateBy.id}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_purchase SET 
+			update_date = now()
+				<if test="status != null and status != ''">
+					,status = #{status}
+				</if>
+				<if test="count != null and count != ''">
+					,count = #{count}
+				</if>
+				<if test="price != null and price != ''">
+					,price = #{price}
+				</if>
+				<if test="remarks != null and remarks != ''">
+					,remarks = #{remarks}
+				</if>
+				<if test="updateBy != null and updateBy != ''">
+					,update_by = #{updateBy.id}
+				</if>
+				<if test="workflowid != null and workflowid != ''">
+					,workflow_id = #{workflowid}
+				</if>
+				<if test="workflowstatus != null and workflowstatus != ''">
+					,workflow_status = #{workflowstatus}
+				</if>
+				<if test="isProvince != null and isProvince != ''">
+					,is_province = #{isProvince}
+				</if>
+		WHERE seriesnumber = #{seriesnumber}
+	</update>
+	<update id="updateByID">
+		UPDATE btg_purchase SET 
+			update_date = now()
+				<if test="status != null and status != ''">
+					,status = #{status}
+				</if>
+				<if test="seriesnumber != null and seriesnumber != ''">
+					,seriesnumber = #{seriesnumber}
+				</if>
+				<if test="supp != null and supp.id != null and supp.id != ''">
+					,suppID = #{supp.id}
+				</if>
+				<if test="purchasingContractBase != null and purchasingContractBase.id != null and purchasingContractBase.id != ''">
+					,contract_id = #{purchasingContractBase.id}
+				</if>
+				<if test="supp2 != null and supp2.id != null and supp2.id != ''">
+					,saddress = #{supp2.id}
+				</if>
+				<if test="count != null and count != ''">
+					,count = #{count}
+				</if>
+				<if test="price != null and price != ''">
+					,price = #{price}
+				</if>
+				<if test="remarks != null and remarks != ''">
+					,remarks = #{remarks}
+				</if>
+				<if test="updateBy != null and updateBy != ''">
+					,update_by = #{updateBy.id}
+				</if>
+				<if test="workflowid != null and workflowid != ''">
+					,workflow_id = #{workflowid}
+				</if>
+				<if test="requireDate != null and requireDate != ''">
+					,requireDate = #{requireDate}
+				</if>
+				<if test="workflowstatus != null and workflowstatus != ''">
+					,workflow_status = #{workflowstatus}
+				</if>
+				<if test="isProvince != null and isProvince != ''">
+					,is_province = #{isProvince}
+				</if>
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_purchase SET 	
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	<select id="getToDaysCount" parameterType="Date" resultType="int">
+		select count(*) from (select b.id,b.create_date from btg_purchase b group by b.seriesnumber) a 
+			where 
+		TO_DAYS(a.create_date) = TO_DAYS(#{date})
+	</select>
+	<!-- 根据IDS获取相应的列表数据 -->
+	<select id="getByIDs" parameterType="java.util.ArrayList" resultType="Purchase">
+		select 
+		<include refid="purchaseColumns"/>
+			from btg_purchase a 
+		where 	a.id in
+				<foreach collection="list" item="id" index="i"
+           			 open="(" close=")" separator=",">
+           		 			#{id}
+        		</foreach>
+	</select>
+	
+	
+	<!-- 获取列表数据给到事故单界面 -->
+	<select id="getListToAccident" resultType="Purchase">
+		SELECT 
+			<include refid="purchaseColumns"/>
+		FROM btg_purchase a
+		<include refid="purchaseJoins"/>
+		<where>
+			<if test="status != null and status != ''">
+				and a.status = #{status}
+			</if>
+		</where>
+	</select>
+
+	<select id="getUniqueIdentifies" parameterType="String" resultType="String">
+		select seriesnumber from btg_purchase where status=#{status} group by seriesnumber
+	</select>
+
+	<select id="getOrderDetailByPurchaseNO" parameterType="String" resultType="com.bt.modules.accident.entity.OrderBomAndPurchase" >
+		select obd.materiel_name AS "materielName",obd.standard_desc AS "standardDesc",obd.order_bom_id AS "orderBomId",
+             pc.id AS "purchaseId",obd.materiel_no AS "materielNo"
+            from btg_purchase pc join btg_purchase_demand pd on pc.purchase_demand_id = pd.id
+		  join btg_purchase_demand_order_bom_detail_mapping pdom on pdom.purchase_demand_id=pd.id
+		  join btg_order_bom_detail obd on obd.id = pdom.order_bom_detail_id
+		  where pc.seriesnumber=#{seriesNumber}
+	</select>
+
+	<select id="getOnePurchaseByOrderId" resultType="Purchase" >
+		SELECT
+		<include refid="purchaseColumns"/>
+		  from btg_purchase a join btg_purchase_demand_order_bom_detail_mapping pdod on a.purchase_demand_id=pdod.purchase_demand_id
+		  join btg_order_bom_detail obd on obd.id = pdod.order_bom_detail_id
+		  join btg_order_bom_base obb on obb.id= obd.order_bom_id
+		 where obb.id = #{orderBomId} limit 1
+	</select>
+
+	<select id="getOnePurchaseBySeriesNumber" resultType="Purchase">
+		select
+		<include refid="purchaseColumns"/>
+		 from btg_purchase a where a.seriesnumber=#{seriesNumber} limit 1
+	</select>
+	
+	<!-- 筛选条件数据 -->
+	<sql id="findColumns">
+		ifnull(sum(psd.fcount),0) as "sendCount",
+		ifnull(sum(a.count),0) as "sumCount",
+		supp.Name as "supp.name",
+		supp.business_preson as "supp.businessPreson",
+		supp.business_tel as "supp.businessTel",
+		project.name as "purchaseDemand.project.name",
+		pcb.contract_no as "purchasingContractBase.contractNo",
+		min(psd.create_date) as "purchaseSFDetail.createDate",
+		a.id AS "id",
+		a.seriesnumber AS "seriesnumber",
+		a.type AS "type",
+		a.mtype AS "mtype",
+		a.status AS "status",
+		a.purchaseby AS "purchaseby.id",
+		a.count AS "count",
+		a.price AS "price",
+		a.remarks AS "remarks",
+		a.suppID AS "supp.id",
+		a.saddress AS "supp2.id",
+		a.requireDate as "requireDate",
+		a.contract_id as "purchasingContractBase.id",
+		a.create_date AS "createDate",
+		a.create_by AS "createBy.id",
+		a.update_date AS "updateDate",
+		a.update_by AS "updateBy.id",
+		a.del_flag AS "delFlag",
+		a.workflow_id as "workflowid",
+		a.is_province as "isProvince",
+		a.workflow_status as "workflowstatus"
+	</sql>
+	<sql id="findJoins">
+		left join btg_purchasing_contract_base pcb on pcb.id=a.contract_id
+		left join btg_supplier supp on supp.id=a.suppID
+		left join btg_purchase_demand pd on pd.id=a.purchase_demand_id
+		left join btg_purchase_demand_order_bom_detail_mapping pdobd on pdobd.purchase_demand_id=pd.id
+		left join btg_order_bom_detail obdetail on obdetail.id=pdobd.order_bom_detail_id
+		join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+		left join btg_subproject sub on sub.id=obbase.sub_proj_id
+		left join btg_project project on project.id=sub.project_id
+		left join btg_purchase_sf_detail psd on psd.purchase_id=a.id
+	</sql>
+	
+	<select id="findMyPurchase" resultType="Purchase">
+		SELECT 
+			<include refid="findColumns"/>
+		FROM btg_purchase a
+			<include refid="findJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="seriesnumber != null and seriesnumber != ''">
+				and a.seriesnumber like CONCAT('%', #{seriesnumber}, '%')
+			</if>
+			<if test="purchaseby !=null and purchaseby.id != null and purchaseby.id != ''">
+				and a.purchaseby = #{purchaseby.id}
+			</if>
+		</where>
+		group by a.seriesnumber
+		order by (a.workflow_status+0) asc,a.update_date desc
+	</select>
+	<select id="findUnAuditPurchase" resultType="Purchase">
+		SELECT 
+			<include refid="findColumns"/>
+		FROM btg_purchase a
+			<include refid="findJoins"/>
+			join btg_act_current_task act on act.entry_id=a.seriesnumber
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="seriesnumber != null and seriesnumber != ''">
+				and a.seriesnumber like CONCAT('%', #{seriesnumber}, '%')
+			</if>
+			<if test="purchaseby !=null and purchaseby.id != null and purchaseby.id != ''">
+				and act.user_id = #{purchaseby.id}
+			</if>
+		</where>
+		group by a.seriesnumber
+		order by (a.workflow_status+0) asc,a.update_date desc
+	</select>
+	<select id="findAuditDonePurchase" resultType="Purchase">
+		SELECT 
+			<include refid="findColumns"/>
+		FROM btg_purchase a
+			<include refid="findJoins"/>
+			left join btg_act_done_task adt on adt.entry_id=a.seriesnumber
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="seriesnumber != null and seriesnumber != ''">
+				and a.seriesnumber like CONCAT('%', #{seriesnumber}, '%')
+			</if>
+			<if test="purchaseby !=null and purchaseby.id != null and purchaseby.id != ''">
+				and (a.purchaseby = #{purchaseby.id} or adt.user_id = #{currentUser.id})
+			</if>
+		</where>
+		group by a.seriesnumber
+		order by (a.workflow_status+0) asc,a.update_date desc
+	</select>
+</mapper>

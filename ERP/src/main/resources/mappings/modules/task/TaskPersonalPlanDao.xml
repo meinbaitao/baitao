@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.task.dao.TaskPersonalPlanDao">
+    
+	<sql id="taskPersonalPlanColumns">
+		a.id AS "id",
+		a.stage AS "stage",
+		a.subsection AS "subsection",
+		a.fine AS "fine",
+		a.parent_id AS "parentId",
+		a.key_desc AS "keyDesc",
+		a.milepost AS "milepost",
+		a.front_task AS "frontTask",
+		a.standard_day AS "standardDay",
+		a.finish_time AS "finishTime",
+		a.is_finish AS "isFinish",
+		a.confirm_ompletion AS "confirmOmpletion",
+		a.responsible_person AS "responsiblePerson",
+		a.status AS "status",
+		a.summary_remarks AS "summaryRemarks",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="taskPersonalPlanJoins">
+	</sql>
+    
+	<select id="get" resultType="TaskPersonalPlan">
+		SELECT 
+			<include refid="taskPersonalPlanColumns"/>
+		FROM btg_task_personal_plan a
+		<include refid="taskPersonalPlanJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="TaskPersonalPlan">
+		SELECT 
+			<include refid="taskPersonalPlanColumns"/>
+		FROM btg_task_personal_plan a
+		<include refid="taskPersonalPlanJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="keyDesc != null and keyDesc != ''">
+				AND a.key_desc LIKE 
+					<if test="dbName == 'oracle'">'%'||#{keyDesc}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{keyDesc}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{keyDesc},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="TaskPersonalPlan">
+		SELECT 
+			<include refid="taskPersonalPlanColumns"/>
+		FROM btg_task_personal_plan a
+		<include refid="taskPersonalPlanJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_task_personal_plan(
+			id,
+			stage,
+			subsection,
+			fine,
+			parent_id,
+			key_desc,
+			milepost,
+			front_task,
+			standard_day,
+			finish_time,
+			is_finish,
+			confirm_ompletion,
+			responsible_person,
+			status,
+			summary_remarks,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{stage},
+			#{subsection},
+			#{fine},
+			#{parentId},
+			#{keyDesc},
+			#{milepost},
+			#{frontTask},
+			#{standardDay},
+			#{finishTime},
+			#{isFinish},
+			#{confirmOmpletion},
+			#{responsiblePerson},
+			#{status},
+			#{summaryRemarks},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_task_personal_plan SET 	
+			stage = #{stage},
+			subsection = #{subsection},
+			fine = #{fine},
+			parent_id = #{parentId},
+			key_desc = #{keyDesc},
+			milepost = #{milepost},
+			front_task = #{frontTask},
+			standard_day = #{standardDay},
+			finish_time = #{finishTime},
+			is_finish = #{isFinish},
+			confirm_ompletion = #{confirmOmpletion},
+			responsible_person = #{responsiblePerson},
+			status = #{status},
+			summary_remarks = #{summaryRemarks},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_task_personal_plan SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

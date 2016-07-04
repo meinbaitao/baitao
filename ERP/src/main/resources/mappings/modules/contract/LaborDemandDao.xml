@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.LaborDemandDao">
+    
+	<sql id="laborDemandColumns">
+		a.id AS "id",
+		a.contract_jiafang AS "contractJiafang",
+		a.pro_name AS "proName",
+		a.laborcontract AS "laborcontract",
+		a.address AS "address",
+		a.exetype AS "exetype",
+		a.subsidy AS "subsidy",
+		a.ishurry as "isHurry",
+		a.ctype AS "ctype",
+		a.house AS "house",
+		a.settleterm AS "settleterm",
+		a.laborprice AS "laborprice",
+		a.buildings AS "buildings",
+		a.hurrybuildings AS "hurrybuildings",
+		a.startdate AS "startdate",
+		a.enddate AS "enddate",
+		a.duration AS "duration",
+		a.projectlead_bid AS "projectleadBid",
+		a.projectlead_bidtel AS "projectleadBidtel",
+		a.projectmanager_aid AS "projectmanagerAid",
+		a.projectmanager_aidtel AS "projectmanagerAidtel",
+		a.mfloatratio AS "mfloatratio",
+		a.contractscopeadjust AS "contractscopeadjust",
+		a.rightrespadjust AS "rightrespadjust",
+		a.qualityreqadjust AS "qualityreqadjust",
+		a.warrantyadjust AS "warrantyadjust",
+		a.settletermadjust AS "settletermadjust",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus",
+		a.party_b_code AS "partyBCode",
+		a.project_id AS "projectId",
+		v.name AS "partyBName"
+	</sql>
+	
+	<sql id="laborDemandJoins">
+		left JOIN btg_con_execution as v on v.id = a.ctype
+	</sql>
+    
+	<select id="get" resultType="LaborDemand">
+		SELECT 
+			<include refid="laborDemandColumns"/>
+		FROM btg_con_labor_demand a
+		<include refid="laborDemandJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	    
+	<select id="getByNum" resultType="LaborDemand">
+		SELECT 
+			<include refid="laborDemandColumns"/>
+		FROM btg_con_labor_demand a
+		<include refid="laborDemandJoins"/>
+		WHERE a.laborcontract = #{laborcontract}
+	</select>
+	
+	<select id="findList" resultType="LaborDemand">
+		SELECT 
+			<include refid="laborDemandColumns"/>
+		FROM btg_con_labor_demand a
+		<include refid="laborDemandJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="search != null and search != ''">
+				and a.pro_name LIKE concat('%',#{search},'%')
+				OR v.name LIKE concat('%',#{search},'%')
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.workflow_status ASC, a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="LaborDemand">
+		SELECT 
+			<include refid="laborDemandColumns"/>
+		FROM btg_con_labor_demand a
+		<include refid="laborDemandJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_con_labor_demand(
+			id,
+			contract_jiafang,
+			pro_name,
+			laborcontract,
+			address,
+			exetype,
+			subsidy,
+			ishurry,
+			ctype,
+			house,
+			buildings,
+			hurrybuildings,
+			startdate,
+			enddate,
+			duration,
+			projectlead_bid,
+			projectlead_bidtel,
+			projectmanager_aid,
+			projectmanager_aidtel,
+			mfloatratio,
+			contractscopeadjust,
+			rightrespadjust,
+			qualityreqadjust,
+			warrantyadjust,
+			settletermadjust,
+			settleterm,
+			laborprice,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			workflow_id,
+			workflow_status,
+			project_id,
+			party_b_code
+		) VALUES (
+			#{id},
+			#{contractJiafang},
+			#{proName},
+			#{laborcontract},
+			#{address},
+			#{exetype},
+			#{subsidy},
+			#{isHurry},
+			#{ctype},
+			#{house},
+			#{buildings},
+			#{hurrybuildings},
+			#{startdate},
+			#{enddate},
+			#{duration},
+			#{projectleadBid},
+			#{projectleadBidtel},
+			#{projectmanagerAid},
+			#{projectmanagerAidtel},
+			#{mfloatratio},
+			#{contractscopeadjust},
+			#{rightrespadjust},
+			#{qualityreqadjust},
+			#{warrantyadjust},
+			#{settletermadjust},
+			#{settleterm},
+			#{laborprice},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{workflowid},
+			#{workflowstatus},
+			#{projectId},
+			#{partyBCode}
+			
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_con_labor_demand SET 
+			contract_jiafang = #{contractJiafang},	
+			pro_name = #{proName},
+			laborcontract = #{laborcontract},
+			address = #{address},
+			exetype = #{exetype},
+			subsidy = #{subsidy},
+			ishurry = #{isHurry},
+			ctype = #{ctype},
+			house = #{house},
+			buildings = #{buildings},
+			hurrybuildings = #{hurrybuildings},
+			startdate = #{startdate},
+			enddate = #{enddate},
+			duration = #{duration},
+			projectlead_bid = #{projectleadBid},
+			projectlead_bidtel = #{projectleadBidtel},
+			projectmanager_aid = #{projectmanagerAid},
+			projectmanager_aidtel = #{projectmanagerAidtel},
+			mfloatratio = #{mfloatratio},
+			contractscopeadjust = #{contractscopeadjust},
+			rightrespadjust = #{rightrespadjust},
+			qualityreqadjust = #{qualityreqadjust},
+			warrantyadjust = #{warrantyadjust},
+			settletermadjust = #{settletermadjust},
+			settleterm = #{settleterm},
+			laborprice = #{laborprice},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			workflow_id = #{workflowid},
+			workflow_status = #{workflowstatus},
+			project_id = #{projectId},
+			party_b_code = #{partyBCode}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_con_labor_demand SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<!--由项目id获取劳务需求信息-->
+	<select id="getProjecctById" parameterType="String" resultType="Project">
+		SELECT 
+		    a.name AS "name",
+			u.name AS "generalManagerAid",
+			a.general_manager_mobile AS "generalManagerMobile",
+			projectManagerUser.name AS "projectManager.name",
+			projectManagerUser.mobile AS "projectManager.mobile",
+			a.address AS "address"
+		FROM 
+			btg_project a
+			left join sys_user u on u.id = a.general_manager_aid
+			left join sys_user projectManagerUser on projectManagerUser.id=a.project_manager_bid
+		WHERE 
+			a.id = #{projectId}
+	</select>
+	
+	
+	<!-- 根据项目信息获取对应的劳务合同 -->
+	<select id="getByProject" resultType="LaborDemand">
+		SELECT 
+			<include refid="laborDemandColumns"/>
+		FROM btg_con_labor_demand a
+		<include refid="laborDemandJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} 
+			and a.workflow_status=#{workflowstatus}
+			<if test="proName !=null and proName != ''">
+				and a.pro_name = #{proName}
+			</if>
+			<if test="buildings !=null and buildings != ''">
+				and a.Buildings like CONCAT('%', #{buildings}, '%')
+			</if>
+		</where>		
+	</select>
+	
+	<select id="getSubProjectByBuilding" resultType="String">
+		SELECT
+			a.house_type
+		FROM btg_subproject a 
+		LEFT JOIN btg_project b ON b.id=a.project_id
+		WHERE a.building=#{buildings}
+		AND b.id = #{projectId}
+		GROUP BY b.id
+	</select>
+	
+	<select id="findMyLaborDemand" resultType="LaborDemand">
+		SELECT 
+			<include refid="laborDemandColumns"/>
+		FROM btg_con_labor_demand a
+		<include refid="laborDemandJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="createBy != null and createBy.id!=null and createBy.id != ''">
+				and a.create_by = #{createBy.id}
+			</if>
+			<if test="search != null and search != ''">
+				and (a.pro_name LIKE concat('%',#{search},'%')
+				OR v.name LIKE concat('%',#{search},'%'))
+			</if>
+		</where>
+		order by (a.workflow_status+0) asc,a.update_by desc
+	</select>
+	<select id="findUnAuditLaborDemand" resultType="LaborDemand">
+		SELECT 
+			<include refid="laborDemandColumns"/>
+		FROM btg_con_labor_demand a
+			<include refid="laborDemandJoins"/>
+			join btg_act_current_task act on act.entry_id=a.id
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="createBy != null and createBy.id!=null and createBy.id != ''">
+				and act.user_id = #{currentUser.id}
+			</if>
+			<if test="search != null and search != ''">
+				and (a.pro_name LIKE concat('%',#{search},'%')
+				OR v.name LIKE concat('%',#{search},'%'))
+			</if>
+		</where>
+		order by (a.workflow_status+0) asc,a.update_by desc
+	</select>
+	<select id="findAuditDoneLaborDemand" resultType="LaborDemand">
+		SELECT 
+			<include refid="laborDemandColumns"/>
+		FROM btg_con_labor_demand a
+			<include refid="laborDemandJoins"/>
+			left join btg_act_done_task adt on adt.entry_id=a.id
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="createBy != null and createBy.id!=null and createBy.id != ''">
+				and (a.create_by = #{createBy.id} or adt.user_id = #{currentUser.id})
+			</if>
+			<if test="search != null and search != ''">
+				and (a.pro_name LIKE concat('%',#{search},'%')
+				OR v.name LIKE concat('%',#{search},'%'))
+			</if>
+		</where>
+		order by (a.workflow_status+0) asc,a.update_by desc
+	</select>
+	
+</mapper>

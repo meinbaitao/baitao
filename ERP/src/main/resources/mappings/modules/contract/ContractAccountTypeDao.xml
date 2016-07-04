@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.ContractAccountTypeDao">
+    
+	<sql id="contractAccountTypeColumns">
+		a.id AS "id",
+		a.name AS "name",
+		a.code AS "code",
+		a.url AS "url",
+		a.level AS "level",
+		a.parent_id AS "parentId",
+		a.view_flag AS "viewFlag",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="contractAccountTypeJoins">
+	</sql>
+    
+	<select id="get" resultType="ContractAccountType">
+		SELECT 
+			<include refid="contractAccountTypeColumns"/>
+		FROM btg_contract_account_type a
+		<include refid="contractAccountTypeJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="ContractAccountType">
+		SELECT 
+			<include refid="contractAccountTypeColumns"/>
+		FROM btg_contract_account_type a
+		<include refid="contractAccountTypeJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="parentId != null and parentId != ''">
+				AND a.parent_id = #{parentId}
+			</if>
+			<if test="viewFlag != null and viewFlag != ''">
+				AND a.view_flag = #{viewFlag}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.level 
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ContractAccountType">
+		SELECT 
+			<include refid="contractAccountTypeColumns"/>
+		FROM btg_contract_account_type a
+		<include refid="contractAccountTypeJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_contract_account_type(
+			id,
+			name,
+			code,
+			url,
+			level,
+			parent_id,
+			view_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{name},
+			#{code},
+			#{url},
+			#{level},
+			#{parentId},
+			#{viewFlag},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_contract_account_type SET 	
+			name = #{name},
+			code = #{code},
+			url = #{url},
+			level = #{level},
+			parent_id = #{parentId},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_contract_account_type SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<!--由上级id获取分类列表-->
+	<select id="findTypeByParentId" parameterType="String" resultType="ContractAccountType">
+		SELECT 
+			<include refid="contractAccountTypeColumns"/>
+		FROM btg_contract_account_type a
+			<include refid="contractAccountTypeJoins"/>
+		where
+			a.parent_id = #{parentId}
+	</select>
+</mapper>

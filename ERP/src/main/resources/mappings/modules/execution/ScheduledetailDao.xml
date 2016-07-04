@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.execution.dao.ScheduledetailDao">
+    
+	<sql id="scheduledetailColumns">
+		a.id AS "id",
+		a.subproject_id AS "subprojectId",
+		a.location AS "location",
+		a.projectupdate_id AS "projectupdateId",
+		a.skeletonlabor AS "skeletonlabor",
+		a.stonelabor AS "stonelabor",
+		a.skeletonlaborcount AS "skeletonlaborcount",
+		a.stonelaborcount AS "stonelaborcount",
+		a.skelentonplanratio AS "skelentonplanratio",
+		a.stoneplanratio AS "stoneplanratio",
+		a.stonecompratio AS "stonecompratio",
+		a.skeletoncompratio AS "skeletoncompratio",
+		a.next_skelentonplanratio AS "nextSkelentonplanratio",
+		a.next_stoneplanratio AS "nextStoneplanratio",
+		a.revenue AS "revenue",
+		a.revenueratio AS "revenueratio",
+		a.visaCount AS "visaCount",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="scheduledetailJoins">
+	</sql>
+    
+	<select id="get" resultType="Scheduledetail">
+		SELECT 
+			<include refid="scheduledetailColumns"/>
+		FROM btg_exe_scheduledetail a
+		<include refid="scheduledetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Scheduledetail">
+		SELECT 
+			<include refid="scheduledetailColumns"/>
+		FROM btg_exe_scheduledetail a
+		<include refid="scheduledetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Scheduledetail">
+		SELECT 
+			<include refid="scheduledetailColumns"/>
+		FROM btg_exe_scheduledetail a
+		<include refid="scheduledetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_exe_scheduledetail(
+			id,
+			subproject_id,
+			location,
+			projectupdate_id,
+			skeletonlabor,
+			stonelabor,
+			skeletonlaborcount,
+			stonelaborcount,
+			skelentonplanratio,
+			stoneplanratio,
+			stonecompratio,
+			skeletoncompratio,
+			next_skelentonplanratio,
+			next_stoneplanratio,
+			revenue,
+			revenueratio,
+			visaCount,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{subprojectId},
+			#{location},
+			#{projectupdateId},
+			#{skeletonlabor},
+			#{stonelabor},
+			#{skeletonlaborcount},
+			#{stonelaborcount},
+			#{skelentonplanratio},
+			#{stoneplanratio},
+			#{stonecompratio},
+			#{skeletoncompratio},
+			#{nextSkelentonplanratio},
+			#{nextStoneplanratio},
+			#{revenue},
+			#{revenueratio},
+			#{visaCount},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_exe_scheduledetail SET 	
+			subproject_id = #{subprojectId},
+			location = #{location},
+			projectupdate_id = #{projectupdateId},
+			skeletonlabor = #{skeletonlabor},
+			stonelabor = #{stonelabor},
+			skeletonlaborcount = #{skeletonlaborcount},
+			stonelaborcount = #{stonelaborcount},
+			skelentonplanratio = #{skelentonplanratio},
+			stoneplanratio = #{stoneplanratio},
+			stonecompratio = #{stonecompratio},
+			skeletoncompratio = #{skeletoncompratio},
+			next_skelentonplanratio = #{nextSkelentonplanratio},
+			next_stoneplanratio = #{nextStoneplanratio},
+			revenue = #{revenue},
+			revenueratio = #{revenueratio},
+			visaCount =#{visaCount},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_exe_scheduledetail SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="updateMap" parameterType="java.util.Map">
+		UPDATE btg_project_mapping set 
+			schedule_id=#{scheduleId},
+			scheduleDetail_id=#{scheduleDetailId},
+			scheduleimage_id=#{scheduleimageId} 
+		WHERE subproject_id=#{subprojectId};
+	</update>
+
+</mapper>

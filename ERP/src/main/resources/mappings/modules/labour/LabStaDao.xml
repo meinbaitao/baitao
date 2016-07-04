@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.labour.dao.LabStaDao">
+    
+	<sql id="labStaColumns">
+		a.lab_sta_id AS "labStaId",
+		a.seriesnumber AS "seriesnumber",
+		a.name AS "name",
+		a.type AS "type",
+		a.length AS "length",
+		a.width AS "width",
+		a.height AS "height",
+		a.unit AS "unit",
+		a.count AS "count",
+		a.pictureth AS "pictureth",
+		a.comment AS "comment",
+		a.isdeleted AS "isdeleted",
+		a.createts AS "createts",
+		a.updatets AS "updatets",
+		a.updateby AS "updateby"
+	</sql>
+	
+	<sql id="labStaJoins">
+	</sql>
+    
+	<select id="get" resultType="LabSta">
+		SELECT 
+			<include refid="labStaColumns"/>
+		FROM btg_lab_sta a
+		<include refid="labStaJoins"/>
+		WHERE a.lab_sta_id = #{labStaId}
+	</select>
+	
+	<select id="findList" resultType="LabSta">
+		SELECT 
+			<include refid="labStaColumns"/>
+		FROM btg_lab_sta a
+		<include refid="labStaJoins"/>
+		<where>
+			
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="LabSta">
+		SELECT 
+			<include refid="labStaColumns"/>
+		FROM btg_lab_sta a
+		<include refid="labStaJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_lab_sta(
+			lab_sta_id,
+			seriesnumber,
+			name,
+			type,
+			length,
+			width,
+			height,
+			unit,
+			count,
+			pictureth,
+			comment,
+			isdeleted,
+			createts,
+			updatets,
+			updateby
+		) VALUES (
+			#{labStaId},
+			#{seriesnumber},
+			#{name},
+			#{type},
+			#{length},
+			#{width},
+			#{height},
+			#{unit},
+			#{count},
+			#{pictureth},
+			#{comment},
+			#{isdeleted},
+			#{createts},
+			#{updatets},
+			#{updateby}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_lab_sta SET 	
+			seriesnumber = #{seriesnumber},
+			name = #{name},
+			type = #{type},
+			length = #{length},
+			width = #{width},
+			height = #{height},
+			unit = #{unit},
+			count = #{count},
+			pictureth = #{pictureth},
+			comment = #{comment},
+			isdeleted = #{isdeleted},
+			createts = #{createts},
+			updatets = #{updatets},
+			updateby = #{updateby}
+		WHERE lab_sta_id = #{labStaId}
+	</update>
+	
+	<update id="delete">
+		<!-- DELETE FROM btg_lab_sta
+		WHERE lab_sta_id = #{labStaId} -->
+		UPDATE btg_lab_sta SET 	
+			del_falg = #{DEL_FLAG_DELETE}
+		WHERE lab_sta_id = #{labStaId}
+	</update>
+	
+</mapper>

@@ -1,0 +1,75 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.contract.dao;
+
+import java.util.List;
+
+import com.bt.modules.contract.entity.Laborcontract;
+import com.thinkgem.jeesite.common.persistence.annotation.MyBatisDao;
+
+/**
+ * 劳务合同DAO接口
+ * @author yhh
+ * @version 2015-08-05
+ */
+@MyBatisDao
+public interface LaborcontractDao extends ConContainDetailDao<Laborcontract> {
+
+    /**
+     * 通过 项目ID 和 楼栋号查询一条劳务合同
+     * @param laborcontract
+     * @return
+     */
+    public Laborcontract getOneByProIdAndBuild(Laborcontract laborcontract);
+    
+    
+    /**
+     * 通过 项目ID 和 楼栋号查询一条劳务合同
+     * @param laborcontract
+     * @return
+     */
+    public List<Laborcontract> getByProIdAndBuild(Laborcontract laborcontract);
+    
+    /**
+     * 产值为100的劳务合同
+     * @return
+     */
+    public List<Laborcontract> findFinishBuildilgs(); 	
+    
+	/**
+	 * 更新数据
+	 * @param entity
+	 * @return
+	 */
+	public int updateForParentid(Laborcontract laborcontract);
+	
+	/**
+	 * 删除数据
+	 * @param entity
+	 * @return
+	 */
+	public int deleteForParentid(Laborcontract laborcontract);
+	
+	
+	/**
+	 * 删除数据
+	*/
+	public void deleteByProjectBuilding(Laborcontract laborcontract);
+	 
+	/**
+	 * 查看待审核
+	 * @param laborcontract
+	 * @param entity
+	 * @return
+	 * @return
+	 */
+	public List<Laborcontract> findUnAuditLaborcontract(Laborcontract laborcontract);
+	/**
+	 * 查看我经手的数据
+	 * @param laborcontract
+	 * @return
+	 */
+	public List<Laborcontract> findAuditDoneLaborcontract(Laborcontract laborcontract);
+	
+}

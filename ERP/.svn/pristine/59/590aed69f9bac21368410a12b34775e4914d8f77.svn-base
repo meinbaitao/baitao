@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.project2area.dao.Project2areaDao">
+    	
+	<sql id="project2areaColumns">
+	    a.id as id ,
+		a.pro_code as proCode ,
+		a.area_no as areaNo  ,
+		a.area_name as areaName
+	</sql>
+    	
+	<select id="findList" resultType="Project2area">
+		SELECT 
+			 <include refid="project2areaColumns"/>
+		FROM btg_project_area_mapping a
+		<where>
+			<if test="proCode != null and proCode != ''">
+				 a.pro_code LIKE 
+				<if test="dbName == 'oracle'">'%'||#{proCode}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{proCode}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{proCode},'%')</if>
+				or a.area_name LIKE
+				<if test="dbName == 'oracle'">'%'||#{proCode}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{proCode}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{proCode},'%')</if>
+				or a.area_no LIKE
+				<if test="dbName == 'oracle'">'%'||#{proCode}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{proCode}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{proCode},'%')</if>
+			</if>
+		</where>
+	</select>
+	
+	
+	<insert id="insert">
+		INSERT INTO btg_project_area_mapping(
+			id        ,
+			pro_code  ,
+			area_no   ,
+			area_name 
+		) VALUES (
+			#{id},
+			#{proCode},
+			#{areaNo},
+			#{areaName}
+		)
+	</insert>
+	
+	
+	<update id="update">
+		UPDATE btg_project_area_mapping SET 	
+			 pro_code=#{proCode},
+			 area_no=#{areaNo},
+			 area_name=#{areaName}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		delete from btg_project_area_mapping
+		WHERE id =#{id}
+	</update>
+	
+	<select id="get" resultType="Project2area">
+		SELECT 
+		<include refid="project2areaColumns"/>
+		FROM btg_project_area_mapping a
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getArea" parameterType="String"  resultType="com.thinkgem.jeesite.modules.sys.entity.Area">
+		SELECT 
+			a.code,
+			a.name,
+			a.type
+		FROM sys_area a
+		WHERE a.code = #{code}
+	</select>
+	
+</mapper>

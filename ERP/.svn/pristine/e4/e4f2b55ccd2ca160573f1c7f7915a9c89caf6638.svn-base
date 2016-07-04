@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.StoneCarriageContractBaseDao">
+    
+	<sql id="stoneCarriageContractBaseColumns">
+		a.id AS "id",
+		a.contract_jiafang AS "contractJiafang",
+		a.contract_type AS "contractType",
+		a.contract_no AS "contractNo",
+		a.party_b_name AS "partyBName",
+		a.party_b_phone AS "partyBPhone",
+		a.party_b_tel AS "partyBTel",
+		a.party_b_email AS "partyBEmail",
+		a.party_b_fax AS "partyBFax",
+		a.party_b_legal_person AS "partyBLegalPerson",
+		a.party_b_entrusted_agent AS "partyBEntrustedAgent",
+		a.party_b_address AS "partyBAddress",
+		a.party_b_account_name AS "partyBAccountName",
+		a.party_b_account_bank AS "partyBAccountBank",
+		a.party_b_account_no AS "partyBAccountNo",
+		a.party_b_strength AS "partyBStrength",
+		a.settlement_type AS "settlementType",
+		a.payment_type AS "paymentType",
+		a.cooperation_notice AS "cooperationNotice",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.date_signature AS "dateSignature",
+		a.date_break AS "dateBreak",
+		a.tax_rate AS "taxRate",
+		a.invoice_type AS "invoiceType",
+		a.statue AS "statue",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus",
+		a.department AS "department",
+		a.frist_type AS "fristType",
+		a.second_type AS "secondType",
+		a.is_standard_contract AS "isStandardContract",
+		a.standard_type AS "standardType",
+		a.party_b_code AS "partyBCode",
+		a.is_include_carriage AS "isIncludeCarriage",
+		a.contract_price AS "contractPrice",
+		a.payment_progress AS "paymentProgress",
+		a.quality_guarantee_price AS "qualityGuaranteePrice",
+		a.execute_guarantee_price AS "executeGuaranteePrice",
+		a.is_include_quality AS "isIncludeQuality",
+		a.quality_guarantee_way AS "qualityGuaranteeWay",
+		a.quality_return_way AS "qualityReturnWay",
+		a.is_include_execute AS "isIncludeExecute",
+		a.execute_guarantee_way AS "executeGuaranteeWay",
+		a.execute_return_way AS "executeReturnWay"
+	</sql>
+	
+	<sql id="stoneCarriageContractBaseJoins">
+	</sql>
+    
+	<select id="get" resultType="StoneCarriageContractBase">
+		SELECT 
+			<include refid="stoneCarriageContractBaseColumns"/>
+		FROM btg_stone_carriage_contract_base a
+		<include refid="stoneCarriageContractBaseJoins"/>
+		WHERE a.id = #{id}
+	</select>
+    
+	<select id="getByContractId" resultType="StoneCarriageContractBase">
+		SELECT 
+			<include refid="stoneCarriageContractBaseColumns"/>
+		FROM btg_stone_carriage_contract_base a
+		<include refid="stoneCarriageContractBaseJoins"/>
+		WHERE a.contract_no = #{contractNo}
+	</select>
+	
+	<select id="findList" resultType="StoneCarriageContractBase">
+		SELECT 
+			<include refid="stoneCarriageContractBaseColumns"/>
+		FROM btg_stone_carriage_contract_base a
+		<include refid="stoneCarriageContractBaseJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="search != null and search != ''">
+				AND a.contract_type LIKE concat('%',#{search},'%')
+				or a.contract_no LIKE concat('%',#{search},'%')
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="StoneCarriageContractBase">
+		SELECT 
+			<include refid="stoneCarriageContractBaseColumns"/>
+		FROM btg_stone_carriage_contract_base a
+		<include refid="stoneCarriageContractBaseJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_stone_carriage_contract_base(
+			id,
+			contract_jiafang,
+			contract_type,
+			contract_no,
+			party_b_name,
+			party_b_phone,
+			party_b_tel,
+		    party_b_email,
+			party_b_fax,
+			party_b_legal_person,
+			party_b_entrusted_agent,
+			party_b_address,
+			party_b_account_name,
+			party_b_account_bank,
+			party_b_account_no,
+			party_b_strength,
+			settlement_type,
+			payment_type,
+			cooperation_notice,
+			start_time,
+			end_time,
+			date_signature,
+			date_break,
+			tax_rate,
+			invoice_type,
+			statue,
+			workflow_id,
+			workflow_status,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			department,
+			frist_type,
+			second_type,
+			is_standard_contract,
+			standard_type,
+			party_b_code,
+			is_include_carriage,
+			contract_price,
+			payment_progress,
+			quality_guarantee_price,
+			execute_guarantee_price,
+			is_include_quality,
+			quality_guarantee_way,
+			quality_return_way,
+			is_include_execute,
+			execute_guarantee_way,
+			execute_return_way
+		) VALUES (
+			#{id},
+			#{contractJiafang},
+			#{contractType},
+			#{contractNo},
+			#{partyBName},
+			#{partyBPhone},
+			#{partyBTel},
+			#{partyBEmail},
+			#{partyBFax},
+			#{partyBLegalPerson},
+			#{partyBEntrustedAgent},
+			#{partyBAddress},
+			#{partyBAccountName},
+			#{partyBAccountBank},
+			#{partyBAccountNo},
+			#{partyBStrength},
+			#{settlementType},
+			#{paymentType},
+			#{cooperationNotice},
+			#{startTime},
+			#{endTime},
+			#{dateSignature},
+			#{dateBreak},
+			#{taxRate},
+			#{invoiceType},
+			#{statue},
+			#{workflowid},
+			#{workflowstatus},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{department},
+			#{fristType},
+			#{secondType},
+			#{isStandardContract},
+			#{standardType},
+			#{partyBCode},
+			#{isIncludeCarriage},
+			#{contractPrice},
+			#{paymentProgress},
+			#{qualityGuaranteePrice},
+			#{executeGuaranteePrice},
+			#{isIncludeQuality},
+			#{qualityGuaranteeWay},
+			#{qualityReturnWay},
+			#{isIncludeExecute},
+			#{executeGuaranteeWay},
+			#{executeReturnWay}
+		
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_stone_carriage_contract_base SET 	
+			contract_jiafang = #{contractJiafang},
+			contract_type = #{contractType},
+			contract_no = #{contractNo},
+			party_b_name = #{partyBName},
+			party_b_phone = #{partyBPhone},
+			party_b_tel = #{partyBTel},
+			party_b_email = #{partyBEmail},
+			party_b_fax = #{partyBFax},
+			party_b_legal_person = #{partyBLegalPerson},
+			party_b_entrusted_agent = #{partyBEntrustedAgent},
+			party_b_address = #{partyBAddress},
+			party_b_account_name = #{partyBAccountName},
+			party_b_account_bank = #{partyBAccountBank},
+			party_b_account_no = #{partyBAccountNo},
+			party_b_strength = #{partyBStrength},
+			settlement_type = #{settlementType},
+			payment_type = #{paymentType},
+			cooperation_notice = #{cooperationNotice},
+			start_time = #{startTime},
+			end_time = #{endTime},
+			date_signature = #{dateSignature},
+			date_break = #{dateBreak},
+			tax_rate = #{taxRate},
+			invoice_type = #{invoiceType},
+			statue = #{statue},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			workflow_id = #{workflowid},
+			workflow_status = #{workflowstatus},
+			department = #{department},
+			frist_type = #{fristType},
+			second_type = #{secondType},
+			is_standard_contract = #{isStandardContract},
+			standard_type = #{standardType},
+			party_b_code = #{partyBCode},
+			is_include_carriage = #{isIncludeCarriage},
+			contract_price = #{contractPrice},
+			payment_progress = #{paymentProgress},
+			quality_guarantee_price = #{qualityGuaranteePrice},
+			execute_guarantee_price = #{executeGuaranteePrice},
+			is_include_quality = #{isIncludeQuality},
+			quality_guarantee_way = #{qualityGuaranteeWay},
+			quality_return_way = #{qualityReturnWay},
+			is_include_execute = #{isIncludeExecute},
+			execute_guarantee_way = #{executeGuaranteeWay},
+			execute_return_way = #{executeReturnWay}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_stone_carriage_contract_base
+		WHERE id = #{id}
+	</update>
+	
+	<!--查询当天生成单数	-->
+	<select id="getTodayCount" parameterType="String" resultType="int">
+		SELECT
+			count(*)
+		FROM
+			btg_stone_carriage_contract_base AS a
+		WHERE
+			a.contract_no LIKE concat('%',#{date},'%')
+	</select>
+	
+	
+	<!--获取合同中供应商列表	-->
+	<select id="findSuppliersInContract" resultType="Map">
+		SELECT
+			a.Party_B_name AS "suppliersName"
+		FROM
+			btg_stone_carriage_contract_base AS a
+		WHERE
+			a.workflow_status = 4
+	</select>
+	
+	<!--由供应商名获取付款信息	-->
+	<select id="getSupplierByName" parameterType="String" resultType="Map">
+		SELECT
+			a.party_b_account_name AS "partyBAccountName",
+			a.party_b_account_bank AS "partyBAccountBank",
+			a.party_b_account_no AS "partyBAccountNo"
+		FROM
+			btg_stone_carriage_contract_base a
+		WHERE
+			a.party_b_name = #{supplierName}
+		GROUP BY 
+			a.party_b_name
+	</select>
+	
+	
+	<!-- *******生产加工查看运输合同*********** -->
+	<sql id="stoneCarriageContractBaseColumnsSC">
+			a.id AS "id",
+			a.contract_no AS "contractNo",
+			a.settlement_type AS "settlementType",
+			supp.name AS "partyBName"
+	</sql>
+	<select id="getByPBName" parameterType="String" resultType="StoneCarriageContractBase">
+		SELECT 
+			<include refid="stoneCarriageContractBaseColumnsSC"/>
+		FROM 
+			btg_stone_carriage_contract_base a
+			left join btg_supplier supp on supp.id=a.party_b_name
+		WHERE supp.name = #{supp.name}
+			 and to_days(a.start_time) &lt;= to_days(now())
+			 and to_days(a.end_time)   &gt;= to_days(now())
+			 	<if test="workflowstatus !=null and workflowstatus != ''">
+					and a.workflow_status=#{workflowstatus}
+				</if>
+	</select>
+	
+	<select id="groupByPBName" resultType="StoneCarriageContractBase">
+		SELECT 
+			<include refid="stoneCarriageContractBaseColumnsSC"/>
+		FROM btg_stone_carriage_contract_base a
+			left join btg_supplier supp on supp.id=a.party_b_name
+		where 	to_days(a.start_time) &lt;= to_days(now())
+			and to_days(a.end_time)   &gt;= to_days(now())
+				<if test="workflowstatus !=null and workflowstatus != ''">
+					and a.workflow_status=#{workflowstatus}
+				</if>
+		group by a.party_b_name
+	</select>
+
+	
+	<select id="findMyStoneCarriageContractBase" resultType="StoneCarriageContractBase">
+		SELECT 
+			<include refid="stoneCarriageContractBaseColumns"/>
+		FROM btg_stone_carriage_contract_base a
+			<include refid="stoneCarriageContractBaseJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="createBy != null and createBy.id!=null and createBy.id != ''">
+				and a.create_by = #{createBy.id}
+			</if>
+			<if test="search != null and search != ''">
+				AND (a.contract_type LIKE concat('%',#{search},'%')
+				or a.contract_no LIKE concat('%',#{search},'%'))
+			</if>
+		</where>
+		order by (a.workflow_status+0) asc,a.update_by desc
+	</select>
+	<select id="findUnAuditStoneCarriageContractBase" resultType="StoneCarriageContractBase">
+		SELECT 
+			<include refid="stoneCarriageContractBaseColumns"/>
+		FROM btg_stone_carriage_contract_base a
+			<include refid="stoneCarriageContractBaseJoins"/>
+			join btg_act_current_task act on act.entry_id=a.id
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="createBy != null and createBy.id!=null and createBy.id != ''">
+				and act.user_id = #{currentUser.id}
+			</if>
+			<if test="search != null and search != ''">
+				AND (a.contract_type LIKE concat('%',#{search},'%')
+				or a.contract_no LIKE concat('%',#{search},'%'))
+			</if>
+		</where>
+		order by (a.workflow_status+0) asc,a.update_by desc
+	</select>
+	<select id="findAuditDoneStoneCarriageContractBase" resultType="StoneCarriageContractBase">
+		SELECT 
+			<include refid="stoneCarriageContractBaseColumns"/>
+		FROM btg_stone_carriage_contract_base a
+			<include refid="stoneCarriageContractBaseJoins"/>
+			left join btg_act_done_task adt on adt.entry_id=a.id
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="createBy != null and createBy.id!=null and createBy.id != ''">
+				and (a.create_by = #{createBy.id} or adt.user_id = #{currentUser.id})
+			</if>
+			<if test="search != null and search != ''">
+				AND (a.contract_type LIKE concat('%',#{search},'%')
+				or a.contract_no LIKE concat('%',#{search},'%'))
+			</if>
+		</where>
+		order by (a.workflow_status+0) asc,a.update_by desc
+	</select>
+	
+	
+</mapper>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.material.dao.SettlementMaterialDao">
+	
+	<sql id="settlementMaterialColumns">
+		a.id AS "id",
+		a.material_name AS "materialName",
+		a.settlement_type AS "settlementType",
+		a.material_no AS "materialNo"
+	</sql>
+	
+	<sql id="settlementMaterialJoins">
+	</sql>
+	
+	<select id="findList" resultType="SettlementMaterial">
+		SELECT 
+			<include refid="settlementMaterialColumns"/>
+		FROM btg_manuf_settlement_material a
+		<include refid="settlementMaterialJoins"/>
+		<where>
+			<if test="materialNo != null and materialNo != ''">
+				 a.material_no LIKE 
+				<if test="dbName == 'oracle'">'%'||#{materialNo}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{materialNo}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{materialNo},'%')</if>
+			</if>
+			AND a.del_flag = #{DEL_FLAG_NORMAL}
+			AND a.settlement_type!='DH'
+			AND a.settlement_type!='DHB'
+		</where>
+		ORDER BY a.settlement_type,a.material_no
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_manuf_settlement_material(
+			 id,
+			 material_name,
+			 settlement_type,
+			 material_no
+		) VALUES (
+			#{id},
+			#{materialName},
+			#{settlementType},
+			#{materialNo}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_manuf_settlement_material SET 	
+			 material_name=#{materialName},
+			 settlement_type=#{settlementType},
+			 material_no=#{materialNo}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_manuf_settlement_material SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<select id="get" resultType="SettlementMaterial">
+		SELECT 
+			<include refid="settlementMaterialColumns"/>
+		FROM btg_manuf_settlement_material a
+		<include refid="settlementMaterialJoins"/>
+		WHERE a.id = #{id} 
+		AND a.del_flag = #{DEL_FLAG_NORMAL}
+	</select>
+	
+	<!-- 查询加工类别 -->
+	<select id="selectSettlementType" resultType="String">
+		SELECT DISTINCT(settlement_type)
+		FROM btg_manuf_settlement_material
+		WHERE settlement_type!='DH'
+		AND settlement_type!='DHB'
+	</select>
+	
+	<!-- 获取单个对象 -->
+	<select id="getOne" resultType="SettlementMaterial">
+		SELECT 
+			<include refid="settlementMaterialColumns"/>
+		FROM btg_manuf_settlement_material a
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="materialNo!=null and materialNo!=''">
+				and a.material_no = #{materialNo}
+			</if>
+		limit 0,1
+	</select>
+</mapper>

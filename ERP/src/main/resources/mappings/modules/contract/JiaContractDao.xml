@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.JiaContractDao">
+    
+	<sql id="jiaContractColumns">
+		a.id AS "id",
+		a.cid AS "cid",
+		a.name AS "name",
+		a.project_id AS "projectId",
+		a.buildings AS "buildings",
+		a.status AS "status",
+		a.cost AS "cost",
+		a.areaofstone AS "areaofstone",
+		a.estimatedcost AS "estimatedcost",
+		a.estimatedarea AS "estimatedarea",
+		a.prepayratio AS "prepayratio",
+		a.signedcounterparty AS "signedcounterparty",
+		a.operationunit AS "operationunit",
+		a.attachfeeratio AS "attachfeeratio",
+		a.signeddate AS "signeddate",
+		a.completiondate AS "completiondate",
+		a.paycollectionratio AS "paycollectionratio",
+		a.qualityratio AS "qualityratio",
+		a.settlearea AS "settlearea",
+		a.settleamount AS "settleamount",
+		a.settledate AS "settledate",
+		a.stamptaxapplied AS "stamptaxapplied",
+		a.certapplied AS "certapplied",
+		a.certexpirydate AS "certexpirydate",
+		a.taxratio AS "taxratio",
+		a.attachunit AS "attachunit",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus",
+		p.name AS "projectName"
+	</sql>
+	
+	<sql id="jiaContractJoins">
+		left JOIN btg_project AS p ON p.id = a.project_id
+	</sql>
+    
+	<select id="get" resultType="JiaContract">
+		SELECT 
+			<include refid="jiaContractColumns"/>
+		FROM btg_con_jia_contract a
+		<include refid="jiaContractJoins"/>
+		WHERE a.id = #{id}
+	</select>
+    
+    <!--由合同编号获取 -->
+<!--	<select id="getByContractId" resultType="JiaContract" parameterType="String">	-->
+	<select id="getByContractId" resultType="JiaContract" >
+		SELECT 
+			<include refid="jiaContractColumns"/>
+		FROM btg_con_jia_contract a
+		<include refid="jiaContractJoins"/>
+		WHERE a.cid = #{cid}
+	</select>
+	
+	<select id="findList" resultType="JiaContract">
+		SELECT 
+			<include refid="jiaContractColumns"/>
+		FROM btg_con_jia_contract a
+		<include refid="jiaContractJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="cid != null and cid != ''">
+				AND a.cid LIKE 
+					<if test="dbName == 'oracle'">'%'||#{cid}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{cid}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{cid},'%')</if>
+			</if>
+			<if test="projectId != null and projectId != ''">
+				AND a.project_id = #{projectId}
+			</if>
+			<if test="search != null and search != ''">
+				and p.name LIKE concat('%',#{search},'%')
+				OR a.cid LIKE concat('%',#{search},'%')
+				OR a.name LIKE concat('%',#{search},'%')
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC,a.cid asc
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="JiaContract">
+		SELECT 
+			<include refid="jiaContractColumns"/>
+		FROM btg_con_jia_contract a
+		<include refid="jiaContractJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_con_jia_contract(
+			id,
+			cid,
+			project_id,
+			buildings,
+			name,
+			status,
+			cost,
+			areaofstone,
+			estimatedcost,
+			estimatedarea,
+			prepayratio,
+			signedcounterparty,
+			operationunit,
+			attachfeeratio,
+			signeddate,
+			completiondate,
+			paycollectionratio,
+			qualityratio,
+			settlearea,
+			settleamount,
+			settledate,
+			stamptaxapplied,
+			certapplied,
+			certexpirydate,
+			taxratio,
+			attachunit,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{cid},
+			#{projectId},
+			#{buildings},
+			#{name},
+			#{status},
+			#{cost},
+			#{areaofstone},
+			#{estimatedcost},
+			#{estimatedarea},
+			#{prepayratio},
+			#{signedcounterparty},
+			#{operationunit},
+			#{attachfeeratio},
+			#{signeddate},
+			#{completiondate},
+			#{paycollectionratio},
+			#{qualityratio},
+			#{settlearea},
+			#{settleamount},
+			#{settledate},
+			#{stamptaxapplied},
+			#{certapplied},
+			#{certexpirydate},
+			#{taxratio},
+			#{attachunit},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_con_jia_contract SET 	
+			cid = #{cid},
+			project_id = #{projectId},
+			buildings = #{buildings},
+			name = #{name},
+			status = #{status},
+			cost = #{cost},
+			areaofstone = #{areaofstone},
+			estimatedcost = #{estimatedcost},
+			estimatedarea = #{estimatedarea},
+			prepayratio = #{prepayratio},
+			signedcounterparty = #{signedcounterparty},
+			operationunit = #{operationunit},
+			attachfeeratio = #{attachfeeratio},
+			signeddate = #{signeddate},
+			completiondate = #{completiondate},
+			paycollectionratio = #{paycollectionratio},
+			qualityratio = #{qualityratio},
+			settlearea = #{settlearea},
+			settleamount = #{settleamount},
+			settledate = #{settledate},
+			stamptaxapplied = #{stamptaxapplied},
+			certapplied = #{certapplied},
+			certexpirydate = #{certexpirydate},
+			taxratio = #{taxratio},
+			attachunit = #{attachunit},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			workflow_id = #{workflowid},
+			workflow_status = #{workflowstatus}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_con_jia_contract SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	
+	<select id="findJiaContractList" resultType="JiaContract">
+		SELECT 
+			a.id,
+      		a.CID
+		FROM btg_con_jia_contract a
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		ORDER BY a.update_date DESC
+	</select>
+
+	<select id="getContractNOByProjectIdAndBuildNO" resultType="java.lang.String" >
+		select a.CID from btg_con_jia_contract_detail b join btg_con_jia_contract a on b.contract_id=a.id
+		where
+		 a.del_flag = #{delFlag} AND
+		 b.subproject_id = #{buildNo} AND a.project_id = #{projectId}
+		limit 1
+	</select>
+
+	<select id="getAmountMoneyOfProject" resultType="java.lang.Double">
+		select sum(Cost) as "totalMoney" from btg_con_jia_contract a
+		<where>
+		a.del_flag = #{DEL_FLAG_NORMAL} AND
+		a.project_id = #{projectId}
+	</where>
+	</select>
+
+	<select id="findMyJiaContract" resultType="JiaContract">
+		SELECT 
+			<include refid="jiaContractColumns"/>
+		FROM btg_con_jia_contract a
+			<include refid="jiaContractJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="createBy != null and createBy.id!=null and createBy.id != ''">
+				and a.create_by = #{createBy.id}
+			</if>
+			<if test="search != null and search != ''">
+				and (p.name LIKE concat('%',#{search},'%')
+				OR a.cid LIKE concat('%',#{search},'%')
+				OR a.name LIKE concat('%',#{search},'%'))
+			</if>
+		</where>
+		order by (a.workflow_status+0) asc,a.update_by desc
+	</select>
+	<select id="findUnAuditJiaContract" resultType="JiaContract">
+		SELECT 
+			<include refid="jiaContractColumns"/>
+		FROM btg_con_jia_contract a
+			<include refid="jiaContractJoins"/>
+			join btg_act_current_task act on act.entry_id=a.id
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="createBy != null and createBy.id!=null and createBy.id != ''">
+				and act.user_id = #{currentUser.id}
+			</if>
+			<if test="search != null and search != ''">
+				and (p.name LIKE concat('%',#{search},'%')
+				OR a.cid LIKE concat('%',#{search},'%')
+				OR a.name LIKE concat('%',#{search},'%'))
+			</if>
+		</where>
+		order by (a.workflow_status+0) asc,a.update_by desc
+	</select>
+	<select id="findAuditDoneJiaContract" resultType="JiaContract">
+		SELECT 
+			<include refid="jiaContractColumns"/>
+		FROM btg_con_jia_contract a
+			<include refid="jiaContractJoins"/>
+			left join btg_act_done_task adt on adt.entry_id=a.id
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="createBy != null and createBy.id!=null and createBy.id != ''">
+				and (a.create_by = #{createBy.id} or adt.user_id = #{currentUser.id})
+			</if>
+			<if test="search != null and search != ''">
+				and (p.name LIKE concat('%',#{search},'%')
+				OR a.cid LIKE concat('%',#{search},'%')
+				OR a.name LIKE concat('%',#{search},'%'))
+			</if>
+		</where>
+		order by (a.workflow_status+0) asc,a.update_by desc
+	</select>
+</mapper>

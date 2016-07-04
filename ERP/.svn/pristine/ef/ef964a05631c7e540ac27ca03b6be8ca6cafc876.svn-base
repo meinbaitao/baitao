@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.inventory.dao.DepotDao">
+    
+	<sql id="depotColumns">
+		a.id AS "id",
+		a.name AS "name",
+		a.user_id AS "depotUser.id",
+		a.address AS "address",
+		a.type AS "type",
+		a.supp_id AS "supp.id",
+		a.project_id AS "project.id",
+		a.sub_id AS "sub.id"
+	</sql>
+	
+	<sql id="depotJoins">
+	</sql>
+    
+    <!-- 根据相应的条件获取唯一的仓库数据 -->
+	<select id="getOne" parameterType="String" resultType="Depot">
+		SELECT 
+			<include refid="depotColumns"/>
+		FROM btg_depot a
+		<include refid="depotJoins"/>
+		WHERE (1=1)
+			<!-- <if test="depotUser !=null and depotUser.id != null and depotUser.id != ''">
+				and a.user_id = #{depotUser.id}
+			</if> -->
+			<if test="project !=null and project.id != null and project.id != ''">
+				and a.project_id = #{project.id}
+			</if>
+			<if test="sub !=null and sub.id != null and sub.id != ''">
+				and a.sub_id = #{sub.id}
+			</if>
+			<if test="supp !=null and supp.id != null and supp.id != ''">
+				and a.supp_id = #{supp.id}
+			</if>
+		limit 0,1
+	</select>
+	<!-- 根据相应的条件获取对应的列表数据 -->
+	<sql id="projectMemberJoins">
+		left join v_project_member_str memberstr on memberstr.id=project.id
+	</sql>
+	<select id="getListByCondition" resultType="Depot">
+		SELECT
+			project.id as "project.id",
+			project.name as "project.name",
+			sub.id as "sub.id",
+			sub.house_type as "sub.houseType",
+			sub.building as "sub.building", 
+			sub.building_display_name as "sub.buildingDisplayName",
+			<include refid="depotColumns"/>
+		FROM btg_depot a
+			left join btg_subproject sub on sub.id=a.sub_id 
+			left join btg_project project on project.id=a.project_id
+			left join btg_order_bom_base obbase on obbase.sub_proj_id=sub.id
+			<include refid="projectMemberJoins"/>	
+		WHERE (1=1) and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<!-- <if test="depotUser !=null and depotUser.id != null and depotUser.id != ''">
+				and project.material_staff_bid = #{depotUser.id}
+			</if> -->
+			<if test="depotUser !=null and depotUser.id != null and depotUser.id != ''">
+				<![CDATA[ and (FIND_IN_SET(#{depotUser.id},memberstr.member_list_str)>0) ]]>
+			</if>
+			<if test="project !=null and project.id != null and project.id != ''">
+				and a.project_id = #{project.id}
+			</if>
+			<if test="sub !=null and sub.id != null and sub.id != ''">
+				and a.sub_id = #{sub.id}
+			</if>
+			<if test="supp !=null and supp.id != null and supp.id != ''">
+				and a.supp_id = #{supp.id}
+			</if>
+			<if test="lsgtVal !=null and lsgtVal != ''">
+				and obbase.order_type &lt;&gt; #{lsgtVal}
+			</if>
+			<if test="orderType !=null and orderType != ''">
+				and obbase.order_type = #{orderType}
+			</if>
+			
+			group by a.id
+	</select>
+	<!-- end 2015年11月11日 -->
+	
+	<select id="get" resultType="Depot">
+		SELECT 
+			<include refid="depotColumns"/>
+		FROM btg_depot a
+		<include refid="depotJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Depot">
+		SELECT 
+			<include refid="depotColumns"/>
+		FROM btg_depot a
+		<include refid="depotJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findListByUserId" parameterType="Depot" resultType="Depot" >
+		SELECT 
+			<include refid="depotColumns"/>
+		FROM btg_depot a
+		where a.user_id = #{depotUser.id}
+	</select>
+	
+	<select id="findAllList" resultType="Depot">
+		SELECT 
+			<include refid="depotColumns"/>
+		FROM btg_depot a
+		<include refid="depotJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_depot(
+			id,
+			name,
+			address,
+			type,
+			supp_id,
+			project_id,
+			sub_id
+		) VALUES (
+			#{id},
+			#{name},
+			#{address},
+			#{type},
+			#{supp.id},
+			#{project.id},
+			#{sub.id}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_depot SET 	
+			name = #{name},
+			address = #{address},
+			type = #{type},
+			supp_id = #{supp.id}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_depot
+		WHERE id = #{id}
+	</update>
+	<!-- 根据用户ID获取相应的数据 -->
+	<select id="getByUserID" parameterType="String" resultType="Depot">
+		SELECT 
+			<include refid="depotColumns"/>
+		FROM btg_depot a
+		<include refid="depotJoins"/>
+		WHERE a.user_id = #{userID}
+		limit 0,1
+	</select>
+	<select id="getByDepotName" parameterType="String" resultType="Depot">
+		SELECT 
+			<include refid="depotColumns"/>
+		FROM btg_depot a
+		<include refid="depotJoins"/>
+		WHERE a.name = #{name}
+		limit 0,1
+	</select>
+	
+</mapper>

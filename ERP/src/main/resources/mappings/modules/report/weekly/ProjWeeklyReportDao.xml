@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.report.weekly.mianly.dao.ProjWeeklyReportDao">
+    
+	<sql id="projWeeklyReportColumns">
+		a.id AS "id",
+		a.del_flag AS "delFlag",
+		a.project_id AS "projectId",
+		a.create_time AS "createTime",
+		a.contract_total_money AS "contractTotalMoney",
+		a.plan_start_date AS "planStartDate",
+		a.plan_finish_date AS "planFinishDate",
+		a.fact_start_date AS "factStartDate",
+		a.fact_finish_date AS "factFinishDate",
+		a.accu_apply_money AS "accuApplyMoney",
+		a.accu_apply_money_rate AS "accuApplyMoneyRate",
+		a.accu_output_value AS "accuOutputValue",
+		a.accu_signature AS "accuSignature",
+		a.proj_repons_people AS "projReponsPeople",
+		a.report_begin_date AS "reportBeginDate",
+		a.report_end_date AS "reportEndDate",
+		a.week_serial_num AS "weekSerialNum",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus",
+		a.create_by AS "createBy.id",
+		p.name AS "projectName"
+	</sql>
+	
+	<sql id="projWeeklyReportJoins">
+		join btg_project p on p.id = a.project_id
+	</sql>
+    
+	<select id="get" resultType="ProjWeeklyReport">
+		SELECT 
+			<include refid="projWeeklyReportColumns"/>
+		FROM btg_proj_weekly_report a
+		<include refid="projWeeklyReportJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="ProjWeeklyReport">
+		SELECT 
+			<include refid="projWeeklyReportColumns"/>
+		FROM btg_proj_weekly_report a
+		<include refid="projWeeklyReportJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			and a.project_id = #{projectId}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ProjWeeklyReport">
+		SELECT 
+			<include refid="projWeeklyReportColumns"/>
+		FROM btg_proj_weekly_report a
+		<include refid="projWeeklyReportJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			and a.project_id = #{projectId}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_proj_weekly_report(
+			id,
+			project_id,
+			create_time,
+			contract_total_money,
+			plan_start_date,
+			plan_finish_date,
+			fact_start_date,
+			fact_finish_date,
+			accu_apply_money,
+			accu_apply_money_rate,
+			accu_output_value,
+			accu_signature,
+			proj_repons_people,
+			report_begin_date,
+			report_end_date,
+			create_by,
+			week_serial_num
+		) VALUES (
+			#{id},
+			#{projectId},
+			#{createTime},
+			#{contractTotalMoney},
+			#{planStartDate},
+			#{planFinishDate},
+			#{factStartDate},
+			#{factFinishDate},
+			#{accuApplyMoney},
+			#{accuApplyMoneyRate},
+			#{accuOutputValue},
+			#{accuSignature},
+			#{projReponsPeople},
+			#{reportBeginDate},
+			#{reportEndDate},
+			#{createBy.id},
+			#{weekSerialNum}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_proj_weekly_report SET
+			project_id = #{projectId},
+			create_time = #{createTime},
+			contract_total_money = #{contractTotalMoney},
+			plan_start_date = #{planStartDate},
+			plan_finish_date = #{planFinishDate},
+			fact_start_date = #{factStartDate},
+			fact_finish_date = #{factFinishDate},
+			accu_apply_money = #{accuApplyMoney},
+			accu_apply_money_rate = #{accuApplyMoneyRate},
+			accu_output_value = #{accuOutputValue},
+			accu_signature = #{accuSignature},
+			proj_repons_people = #{projReponsPeople},
+			report_begin_date = #{reportBeginDate},
+			report_end_date = #{reportEndDate},
+			week_serial_num = #{weekSerialNum}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		update btg_proj_weekly_report
+		 set del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+
+	<update id="updateWorkflowStatusAndId">
+		UPDATE btg_proj_weekly_report SET
+			workflow_id = #{workflowid},
+			workflow_status = #{workflowstatus}
+		WHERE id = #{id}
+	</update>
+
+
+	<update id="updateWorkflowStatus">
+		UPDATE btg_proj_weekly_report SET
+		workflow_status = #{workflowstatus}
+		WHERE id = #{id}
+	</update>
+
+
+	<select id="getPreviousWeekReport" resultType="ProjWeeklyReport" >
+		SELECT
+		 <include refid="projWeeklyReportColumns" />
+		 from btg_proj_weekly_report a
+		<include refid="projWeeklyReportJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} and
+			a.project_id = #{projectId} AND
+			<![CDATA[
+			a.week_serial_num < #{weekSerialNum}
+			]]>
+		</where>
+		   order by a.week_serial_num DESC
+		   limit 1
+	</select>
+
+	<select id="getOneWeekReport" resultType="ProjWeeklyReport" >
+		SELECT
+		<include refid="projWeeklyReportColumns" />
+		from btg_proj_weekly_report a
+		<include refid="projWeeklyReportJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} and
+			a.week_serial_num = #{weekSerialNum} and a.project_id = #{projectId}
+		</where>
+		limit 1
+	</select>
+	
+	
+	
+	<!--xiaocai-->
+	<sql id="findWeeklyReportColumns">
+		a.id AS "id",
+		a.del_flag AS "delFlag",
+		a.project_id AS "projectId",
+		a.create_time AS "createTime",
+		a.contract_total_money AS "contractTotalMoney",
+		a.plan_start_date AS "planStartDate",
+		a.plan_finish_date AS "planFinishDate",
+		a.fact_start_date AS "factStartDate",
+		a.fact_finish_date AS "factFinishDate",
+		a.accu_apply_money AS "accuApplyMoney",
+		a.accu_apply_money_rate AS "accuApplyMoneyRate",
+		a.accu_output_value AS "accuOutputValue",
+		a.accu_signature AS "accuSignature",
+		a.proj_repons_people AS "projReponsPeople",
+		a.report_begin_date AS "reportBeginDate",
+		a.report_end_date AS "reportEndDate",
+		a.week_serial_num AS "weekSerialNum",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus",
+		a.create_by AS "createBy.id",
+		
+		p.code as "project.code",
+		p.workflow_status as "project.workflowstatus",
+		p.location as "project.location",
+		p.id as "project.id",
+		p.name AS "projectName"
+		
+	</sql>
+	<sql id="findMemberJoins">
+		left join v_project_member_str memberstr on memberstr.id=p.id
+		left join btg_proj_weekly_report a on p.id = a.project_id
+	</sql>
+	
+	
+	<select id="findMyWeekReport" resultType="ProjWeeklyReport">
+		SELECT 
+			<include refid="findWeeklyReportColumns"/>
+		FROM btg_proj_weekly_report a
+			<include refid="projWeeklyReportJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			and a.create_by = #{currentUser.id}
+			<if test="project!=null and project.name != null and project.name != ''">
+				and p.name like concat('%',#{project.name},'%')
+			</if>
+		</where>
+		ORDER BY (a.workflow_status+0) asc,a.create_time desc
+	</select>
+	
+	<select id="findUnAuditWeekReport" resultType="ProjWeeklyReport">
+		SELECT
+		<include refid="findWeeklyReportColumns" />
+		FROM btg_proj_weekly_report a
+		<include refid="projWeeklyReportJoins"/>
+		join btg_act_current_task act on act.entry_id=a.id
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="workflowstatus != null and workflowstatus != ''">
+				and a.workflow_status=#{workflowstatus}
+			</if>
+			<if test="project!=null and project.name != null and project.name != ''">
+				and p.name like concat('%',#{project.name},'%')
+			</if>
+			and act.user_id = #{currentUser.id}
+		</where>
+		ORDER BY (a.workflow_status+0) asc,a.create_time desc
+	</select>
+
+	<select id="findAuditDoneWeekReport" resultType="ProjWeeklyReport">
+		SELECT 
+			<include refid="findWeeklyReportColumns"/>
+		FROM btg_project p
+			<include refid="findMemberJoins"/>
+			left join btg_act_done_task adt on adt.entry_id=a.id
+		<where>
+			p.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="workflowstatus != null and workflowstatus != ''">
+				and (a.workflow_status=#{workflowstatus} or p.workflow_status=#{workflowstatus})
+			</if>
+			<if test="project!=null and project.name != null and project.name != ''">
+				and p.name like concat('%',#{project.name},'%')
+			</if>
+			<!-- 
+			<if test="createBy !=null and createBy.id != null and createBy.id != ''">
+				<![CDATA[ and (FIND_IN_SET(#{createBy.id},memberstr.member_list_str)>0 or adt.user_id = #{currentUser.id}) ]]>
+			</if> -->
+		</where> 
+		GROUP BY p.id
+		ORDER BY (a.workflow_status+0) asc,a.create_time desc
+	</select>
+</mapper>

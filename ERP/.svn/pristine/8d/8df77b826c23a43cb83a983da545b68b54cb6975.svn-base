@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.task.dao.TaskPlanDao">
+    
+	<sql id="taskPlanColumns">
+		a.id AS "id",
+		a.parent_id AS "parentId",
+		a.dept_id AS "deptId",
+		a.review_dept_id AS "reviewDeptId",
+		a.group_concern AS "groupConcern",
+		a.long_term_task AS "longTermTask",
+		a.discussion_suggestion AS "discussionSuggestion",
+		a.responsible_person AS "responsiblePerson",
+		a.one_level_plan AS "oneLevelPlan",
+		a.two_level_plan AS "twoLevelPlan",
+		a.task_desc AS "taskDesc",
+		a.plan_finish_time AS "planFinishTime",
+		a.actual_finish_time AS "actualFinishTime",
+		a.finish_time_adjust_1 AS "finishTimeAdjust1",
+		a.finish_time_adjust_2 AS "finishTimeAdjust2",
+		a.finish_review AS "finishReview",
+		a.summary_remarks AS "summaryRemarks",
+		a.early_warning AS "earlyWarning",
+		a.status AS "status",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.sub_task AS "subTask"
+	</sql>
+	
+	<sql id="taskPlanJoins">
+	</sql>
+    
+	<select id="get" resultType="TaskPlan">
+		SELECT 
+			<include refid="taskPlanColumns"/>
+		FROM btg_task_plan a
+		<include refid="taskPlanJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findByUser" resultType="TaskPlan">
+		SELECT 
+			<include refid="taskPlanColumns"/>
+		FROM btg_task_plan a
+		left join sys_user u on u.office_id=a.dept_id
+	where u.id=#{userId}
+	</select>
+	
+	<select id="findList" resultType="TaskPlan">
+		SELECT 
+		    u.name AS "showPerson",
+		    o.name AS "showDept",
+			<include refid="taskPlanColumns"/>
+		FROM btg_task_plan a
+		left join sys_user u on u.id=a.responsible_person
+		left join sys_office o on o.id=a.review_dept_id 
+		<include refid="taskPlanJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="taskDesc != null and taskDesc != ''">
+				AND a.task_desc LIKE 
+					<if test="dbName == 'oracle'">'%'||#{taskDesc}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{taskDesc}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{taskDesc},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="TaskPlan">
+		SELECT 
+			<include refid="taskPlanColumns"/>
+		FROM btg_task_plan a
+		<include refid="taskPlanJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_task_plan(
+			id,
+			parent_id,
+			dept_id,
+			review_dept_id,
+			group_concern,
+			long_term_task,
+			discussion_suggestion,
+			responsible_person,
+			one_level_plan,
+			two_level_plan,
+			task_desc,
+			plan_finish_time,
+			actual_finish_time,
+			finish_time_adjust_1,
+			finish_time_adjust_2,
+			finish_review,
+			summary_remarks,
+			early_warning,
+			status,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			sub_task			
+		) VALUES (
+			#{id},
+			#{parentId},
+			#{deptId},
+			#{reviewDeptId},
+			#{groupConcern},
+			#{longTermTask},
+			#{discussionSuggestion},
+			#{responsiblePerson},
+			#{oneLevelPlan},
+			#{twoLevelPlan},
+			#{taskDesc},
+			#{planFinishTime},
+			#{actualFinishTime},
+			#{finishTimeAdjust1},
+			#{finishTimeAdjust2},
+			#{finishReview},
+			#{summaryRemarks},
+			#{earlyWarning},
+			#{status},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{subTask}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_task_plan SET 	
+			parent_id = #{parentId},
+			dept_id = #{deptId},
+			review_dept_id = #{reviewDeptId},
+			group_concern = #{groupConcern},
+			long_term_task = #{longTermTask},
+			discussion_suggestion = #{discussionSuggestion},
+			responsible_person = #{responsiblePerson},
+			one_level_plan = #{oneLevelPlan},
+			two_level_plan = #{twoLevelPlan},
+			task_desc = #{taskDesc},
+			plan_finish_time = #{planFinishTime},
+			actual_finish_time = #{actualFinishTime},
+			finish_time_adjust_1 = #{finishTimeAdjust1},
+			finish_time_adjust_2 = #{finishTimeAdjust2},
+			finish_review = #{finishReview},
+			summary_remarks = #{summaryRemarks},
+			early_warning = #{earlyWarning},
+			status = #{status},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="updateSubTask">
+		UPDATE btg_task_plan SET 	
+			sub_task = #{subTask}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_task_plan SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

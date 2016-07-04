@@ -1,0 +1,153 @@
+package com.bt.modules.utils;
+
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
+
+/**
+ * 时间的各种转换
+ * @author Administrator
+ *
+ */
+//Fixme 子类名称不应该跟父类一个样
+public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
+	
+	public static final String YMD = "yyyy-MM-dd";
+	public static final String yyyyMMdd = "yyyyMMdd";
+	
+	/**
+	 * 获取查询开始时间
+	 * @param startDate
+	 * @return
+	 */
+	public static String getStartDate(Date startDate){
+		if(startDate == null)
+			startDate = new Date();
+		String d = DateFormatUtils.format(startDate, "yyyy-MM-dd")+" 00:00:00";
+		return d;
+	}
+
+	/**
+	 * 获取查询结束时间
+	 * @param endDate
+	 * @return
+	 */
+	public static String getEndDate(Date endDate){
+		if(endDate == null)
+			endDate = new Date();
+		String d = DateFormatUtils.format(endDate, "yyyy-MM-dd")+" 23:59:59";
+		return d;
+	}
+	
+	/**
+	 * 获取当前相应格式日期或时间
+	 * @param pattern 格式-如：yyyy-MM-dd
+	 * @return
+	 */
+	public static String getDateByPattern(String pattern) {
+		return DateFormatUtils.format(new Date(), pattern);
+	}
+	
+	/**
+	 * 获取给定的日期进行格式转换
+	 * @param pattern
+	 * @return
+	 */
+	public static String getDateStrByPattern(Date date,String pattern) {
+		if(date==null)
+			date = new Date();
+		return DateFormatUtils.format(date, pattern);
+	}
+
+	/**
+	 * 字符型转成日期格式，空的字符返回当天日期
+	 * @param dateStr
+	 * @param pattern
+	 * @return
+	 */
+	public static Date getDateByPattern(String dateStr,String pattern) {
+		Date date = new Date();
+		if(StringUtils.isBlank(dateStr)){
+			return date;
+		}
+		try {
+			date = org.apache.commons.lang3.time.DateUtils.parseDate(dateStr, pattern);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return date;
+	}
+	/**
+	 * 获取当前日期的第二天
+	 * @return
+	 */
+	public static Date getNowNextDate() {
+		Calendar calendar = Calendar.getInstance();
+		calendar.add(Calendar.DAY_OF_YEAR, 1);
+		Date date = calendar.getTime();
+		return date;
+	}
+
+	/**
+	 * 获取日期年月日值
+	 * @param date
+	 * @return
+	 */
+	public static Date getDateYMD(Date date) {
+		if(date==null){
+			return null;
+		}
+		String ymd = DateUtils.getDateStrByPattern(date, DateUtils.YMD);
+		return DateUtils.getDateByPattern(ymd, DateUtils.YMD);
+	}
+	/**
+	 * 日期相减
+	 * 日期1-日期2
+	 * @param date1
+	 * @param date2
+	 * @return
+	 */
+	public static int reduceDate(Date date1,Date date2) {
+		date1 = DateUtils.getDateYMD(date1);
+		date2 = DateUtils.getDateYMD(date2);
+		long day = (date1.getTime() - date2.getTime()) / (3600 * 24 * 1000);
+		return Integer.parseInt(day+"");
+	}
+	/**
+	 * 日期相减
+	 * 日期1-日期2
+	 * @param date1
+	 * @param date2
+	 * @return
+	 */
+	public static int reduceDate(String date1,String date2) {
+		if(!datePatternVerification(date1)||!datePatternVerification(date2)){
+			return 0;
+		}
+		Date d1 = DateUtils.getDateByPattern(date1, DateUtils.YMD);
+		Date d2 = DateUtils.getDateByPattern(date2, DateUtils.YMD);
+		long day = (d1.getTime() - d2.getTime()) / (3600 * 24 * 1000);
+		return Integer.parseInt(day+"");
+	}
+	/**
+	 * 利用正则表达式进行 
+	 * 日期格式简单验证
+	 * @param date
+	 * @return
+	 */
+	public static boolean datePatternVerification(String date){
+		String eL = "[0-9]{4}-([0-1][0-9]|[0-9])-([0-3][0-9]|[0-9])";
+		Pattern p = Pattern.compile(eL);
+		Matcher m = p.matcher(date);
+		return m.matches();
+	}
+	
+	public static void main(String[] args) {
+		System.out.println(datePatternVerification("2016-1-1"));
+	}
+}

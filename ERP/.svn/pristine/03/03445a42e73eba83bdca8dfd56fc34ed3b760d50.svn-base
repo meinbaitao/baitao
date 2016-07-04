@@ -1,0 +1,90 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.contract.service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.bt.modules.contract.entity.Execution;
+import com.bt.modules.contract.dao.ExecutionDao;
+
+/**
+ * 施工班组Service
+ * @author yhh
+ * @version 2015-08-04
+ */
+@Service
+@Transactional(readOnly = true)
+public class ExecutionService extends CrudService<ExecutionDao, Execution> {
+
+	@Autowired
+	private ExecutionDao executionDao;
+	
+	public Execution get(String id) {
+		return super.get(id);
+	}
+	
+	/**
+	 * 判断记录是否存在
+	 * @param id
+	 * @return
+	 */
+	public boolean isExist(String id){
+		Execution entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = executionDao.get(id);
+		}
+		if(entity == null){
+			return false;
+		}
+		return true;
+	}
+	
+	public List<Execution> findList(Execution execution) {
+		return super.findList(execution);
+	}
+	
+	public List<Execution> findListForLabor(Execution execution) {
+		return executionDao.findListForLabor(execution);
+	}
+	
+	
+	public Page<Execution> findPage(Page<Execution> page, Execution execution) {
+		return super.findPage(page, execution);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(Execution execution) {
+		if(isExist(execution.getId())){
+			execution.setIsNewRecord(false);
+			super.save(execution);
+		}else{
+			execution.setIsNewRecord(true);
+			super.save(execution);
+		}
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(Execution execution) {
+		super.delete(execution);
+	}
+	
+	public Execution getByName(Execution execution){
+		return executionDao.getByName(execution);
+	}
+	
+	public Execution getByPersonNum(Execution execution){
+		return executionDao.getByPersonNum(execution);
+	}
+	
+	public Execution getByExelevel(Execution execution){
+		return executionDao.getByExelevel(execution);
+	}
+}

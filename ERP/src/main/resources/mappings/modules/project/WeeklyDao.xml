@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.project.dao.WeeklyDao">
+    
+	<sql id="weeklyColumns">
+		a.id AS "id",
+		a.project_id AS "projectId",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.fact_time AS "factTime",
+		a.project_manager_bid AS "projectManagerBid",
+		a.contract_id AS "contractId",
+		a.contract_cost AS "contractCost",
+		a.schedule_date AS "scheduleDate",
+		a.amount_schedule_money AS "amountScheduleMoney",
+		a.amount_ratio AS "amountRatio",
+		a.plan_schedule_money AS "planScheduleMoney",
+		a.amount_revenue AS "amountRevenue",
+		a.amount_visa AS "amountVisa",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="weeklyJoins">
+	</sql>
+    
+	<select id="get" resultType="Weekly">
+		SELECT 
+			<include refid="weeklyColumns"/>
+		FROM btg_weekly a
+		<include refid="weeklyJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Weekly">
+		SELECT 
+			<include refid="weeklyColumns"/>
+		FROM btg_weekly a
+		<include refid="weeklyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Weekly">
+		SELECT 
+			<include refid="weeklyColumns"/>
+		FROM btg_weekly a
+		<include refid="weeklyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_weekly(
+			id,
+			project_id,
+			start_time,
+			end_time,
+			fact_time,
+			project_manager_bid,
+			contract_id,
+			contract_cost,
+			schedule_date,
+			amount_schedule_money,
+			amount_ratio,
+			plan_schedule_money,
+			amount_revenue,
+			amount_visa,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{projectId},
+			#{startTime},
+			#{endTime},
+			#{factTime},
+			#{projectManagerBid},
+			#{contractId},
+			#{contractCost},
+			#{scheduleDate},
+			#{amountScheduleMoney},
+			#{amountRatio},
+			#{planScheduleMoney},
+			#{amountRevenue},
+			#{amountVisa},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_weekly SET 	
+			fact_time = #{factTime},
+			contract_cost = #{contractCost},
+			schedule_date = #{scheduleDate},
+			amount_schedule_money = #{amountScheduleMoney},
+			amount_ratio = #{amountRatio},
+			plan_schedule_money = #{planScheduleMoney},
+			amount_revenue = #{amountRevenue},
+			amount_visa = #{amountVisa},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_weekly SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

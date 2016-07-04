@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.accident.dao.AccidentShareMoneyDao">
+    
+	<sql id="accidentShareMoneyColumns">
+		a.id AS "id",
+		a.accident_manage_id AS "accidentManageId",
+		a.department AS "department",
+		a.name AS "name",
+		a.accident_price AS "accidentPrice",
+		a.forfeit_price AS "forfeitPrice",
+		a.total_price AS "totalPrice",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="accidentShareMoneyJoins">
+	</sql>
+    
+	<select id="get" resultType="AccidentShareMoney">
+		SELECT 
+			<include refid="accidentShareMoneyColumns"/>
+		FROM btg_accident_share_money a
+		<include refid="accidentShareMoneyJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="AccidentShareMoney">
+		SELECT 
+			<include refid="accidentShareMoneyColumns"/>
+		FROM btg_accident_share_money a
+		<include refid="accidentShareMoneyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="accidentManageId != null and accidentManageId != ''">
+				AND a.accident_manage_id = #{accidentManageId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				order by a.department desc
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AccidentShareMoney">
+		SELECT 
+			<include refid="accidentShareMoneyColumns"/>
+		FROM btg_accident_share_money a
+		<include refid="accidentShareMoneyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_accident_share_money(
+			id,
+			accident_manage_id,
+			department,
+			name,
+			accident_price,
+			forfeit_price,
+			total_price,
+			del_flag
+		) VALUES (
+			#{id},
+			#{accidentManageId},
+			#{department},
+			#{name},
+			#{accidentPrice},
+			#{forfeitPrice},
+			#{totalPrice},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_accident_share_money SET 	
+			department = #{department},
+			name = #{name},
+			accident_price = #{accidentPrice},
+			forfeit_price = #{forfeitPrice},
+			total_price = #{totalPrice}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_accident_share_money SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="deleteByamId">
+		UPDATE btg_accident_share_money SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE accident_manage_id = #{accidentManageId}
+	</update>
+	
+</mapper>

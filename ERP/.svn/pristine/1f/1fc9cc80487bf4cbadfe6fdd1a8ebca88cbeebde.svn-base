@@ -1,0 +1,51 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.contract.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bt.modules.contract.dao.ContractPrintDao;
+import com.bt.modules.contract.dao.PurchasingContractBaseDao;
+import com.bt.modules.contract.entity.ManufContractBase;
+import com.bt.modules.contract.entity.PurchasingContractBase;
+import com.thinkgem.jeesite.common.service.CrudService;
+
+/**
+ * 合同台账Service
+ * @author yhh
+ * @version 2015-12-01
+ */
+@Service
+@Transactional(readOnly = true)
+public class ContractPrintService extends CrudService<ContractPrintDao, ManufContractBase> {
+
+	
+	@Autowired
+	private ContractPrintDao contractAccountDao;
+	
+	@Autowired
+	private PurchasingContractBaseDao purchasingContractBaseDao;
+	
+	/**
+	 * 
+	 * @param parentId
+	 * @return
+	 */
+	public ManufContractBase findTestData(String id){
+		return contractAccountDao.findTestData(id);
+	}
+	
+	/**
+	 * 
+	 * @param parentId
+	 * @return
+	 */
+	public PurchasingContractBase getPurchaseContractById(PurchasingContractBase pcb){
+		return purchasingContractBaseDao.getByContractId(pcb);
+	}
+	
+}
+

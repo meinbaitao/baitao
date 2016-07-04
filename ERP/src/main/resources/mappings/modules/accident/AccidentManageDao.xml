@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.accident.dao.AccidentManageDao">
+    
+	<sql id="accidentManageColumns">
+		a.id AS "id",
+		a.type AS "type",
+		a.accient_no AS "accientNo",
+		a.order_id AS "orderId",
+		a.material_type AS "materialType",
+		a.is_construct AS "isConstruct",
+		a.create_by AS "createUser",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.audit_process AS "auditProcess",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus",
+		a.project_id AS "projectId",
+		a.fact_arrive_date AS "factArriveDate",
+		a.require_arrive_date AS "requireArriveDate",
+		a.room_model AS "roomModel",
+		a.building_no AS "buildingNO",
+		a.sub_proj_id AS "subProjId"
+	</sql>
+	
+	<sql id="accidentManageJoins">
+	</sql>
+    
+	<select id="get" resultType="AccidentManage">
+		SELECT 
+			<include refid="accidentManageColumns"/>
+		FROM btg_accident_manage a
+		<include refid="accidentManageJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="AccidentManage">
+		SELECT 
+			<include refid="accidentManageColumns"/>
+		FROM btg_accident_manage a
+		<include refid="accidentManageJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="type != null and type != ''">
+				AND a.type = #{type} 
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.workflow_status ASC, a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AccidentManage">
+		SELECT 
+			<include refid="accidentManageColumns"/>
+		FROM btg_accident_manage a
+		<include refid="accidentManageJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_accident_manage(
+			id,
+			type,
+			accient_no,
+			order_id,
+			material_type,
+			is_construct,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			audit_process,
+			remarks,
+			del_flag,
+			workflow_id,
+			workflow_status,
+			project_id,
+			fact_arrive_date,
+			require_arrive_date,
+			room_model,
+			building_no,
+			sub_proj_id
+		) VALUES (
+			#{id},
+			#{type},
+			#{accientNo},
+			#{orderId},
+			#{materialType},
+			#{isConstruct},
+			#{createUser},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{auditProcess},
+			#{remarks},
+			#{delFlag},
+			#{workflowid},
+			#{workflowstatus},
+			#{projectId},
+			#{factArriveDate},
+			#{requireArriveDate},
+			#{roomModel},
+			#{buildingNO},
+			#{subProjId}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_accident_manage SET 	
+			<if test="orderId != null and orderId != ''">
+				order_id = #{orderId},
+			</if>
+			<if test="accientNo != null and accientNo != ''">
+				accient_no = #{accientNo},
+			</if>
+			material_type = #{materialType},
+			is_construct = #{isConstruct},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			fact_arrive_date = #{factArriveDate},
+		require_arrive_date = #{requireArriveDate},
+		audit_process = #{auditProcess},
+		room_model=#{roomModel},
+		building_no=#{buildingNO},
+		sub_proj_id=#{subProjId}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_accident_manage SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="updateWorkflowId">
+		UPDATE btg_accident_manage SET 	
+			<if test="workflowid !=null and workflowid != ''">
+				workflow_id = #{workflowid},
+			</if>			
+			workflow_status = #{workflowstatus}
+		WHERE id = #{id}
+	</update>
+</mapper>

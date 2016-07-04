@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.ConYearContractDao">
+    
+	<sql id="conYearContractColumns">
+		a.id AS "id",
+		a.contract_no AS "contractNo",
+		a.contract_type AS "contractType",
+		a.name AS "name",
+		a.exe_type AS "exeType",
+		a.exe_number AS "exeNumber",
+		a.person AS "person",
+		a.person_num AS "personNum",
+		a.person_tel AS "personTel",
+		a.bank AS "bank",
+		a.bank_num AS "bankNum",
+		a.bank_person AS "bankPerson",
+		a.exe_record AS "exeRecord",
+		a.exe_quality AS "exeQuality",
+		a.limit_date AS "limitDate",
+		a.start_date AS "startDate",
+		a.end_date AS "endDate",
+		a.end_time AS "endTime",
+		a.quality AS "quality",
+		a.con_way AS "conWay",
+		a.ensure AS "ensure",
+		a.is_issue AS "isIssue",
+		a.manage AS "manage",
+		a.check_status AS "checkStatus",
+		a.con_status AS "conStatus",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus",
+		a.department AS "department",
+		a.frist_type AS "fristType",
+		a.second_type AS "secondType",
+		a.is_standard_contract AS "isStandardContract",
+		a.standard_type AS "standardType",
+		a.party_b_code AS "partyBCode"
+	</sql>
+	
+	<sql id="conYearContractJoins">
+	</sql>
+    
+	<select id="get" resultType="ConYearContract">
+		SELECT 
+			<include refid="conYearContractColumns"/>
+		FROM btg_con_year_contract a
+		<include refid="conYearContractJoins"/>
+		WHERE a.id = #{id}
+	</select>
+    
+	<select id="getByTeamName" resultType="ConYearContract">
+		SELECT 
+			<include refid="conYearContractColumns"/>
+		FROM btg_con_year_contract a
+		<include refid="conYearContractJoins"/>
+		WHERE a.name = #{name}
+	</select>
+	
+	<select id="findList" resultType="ConYearContract">
+		SELECT 
+			<include refid="conYearContractColumns"/>
+		FROM btg_con_year_contract a
+		<include refid="conYearContractJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="contractNo != null and contractNo != ''">
+				AND a.contract_num LIKE 
+					<if test="dbName == 'oracle'">'%'||#{contractNo}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{contractNo}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{contractNo},'%')</if>
+			</if>
+			<if test="contractType != null and contractType != ''">
+				AND a.contract_type LIKE 
+					<if test="dbName == 'oracle'">'%'||#{contractType}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{contractType}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{contractType},'%')</if>
+			</if>
+			<if test="exeType != null and exeType != ''">
+				AND a.exe_type LIKE 
+					<if test="dbName == 'oracle'">'%'||#{exeType}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{exeType}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{exeType},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ConYearContract">
+		SELECT 
+			<include refid="conYearContractColumns"/>
+		FROM btg_con_year_contract a
+		<include refid="conYearContractJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_con_year_contract(
+			id,
+			contract_no,
+			contract_type,
+			name,
+			exe_type,
+			exe_number,
+			person,
+			person_num,
+			person_tel,
+			bank,
+			bank_num,
+			bank_person,
+			exe_record,
+			exe_quality,
+			limit_date,
+			start_date,
+			end_date,
+			end_time,
+			quality,
+			con_way,
+			ensure,
+			is_issue,
+			manage,
+			check_status,
+			con_status,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			department,
+			frist_type,
+			second_type,
+			is_standard_contract,
+			standard_type,
+			party_b_code
+		) VALUES (
+			#{id},
+			#{contractNo},
+			#{contractType},
+			#{name},
+			#{exeType},
+			#{exeNumber},
+			#{person},
+			#{personNum},
+			#{personTel},
+			#{bank},
+			#{bankNum},
+			#{bankPerson},
+			#{exeRecord},
+			#{exeQuality},
+			#{limitDate},
+			#{startDate},
+			#{endDate},
+			#{endTime},
+			#{quality},
+			#{conWay},
+			#{ensure},
+			#{isIssue},
+			#{manage},
+			#{checkStatus},
+			#{conStatus},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{department},
+			#{fristType},
+			#{secondType},
+			#{isStandardContract},
+			#{standardType},
+			#{partyBCode}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_con_year_contract SET 	
+			contract_no = #{contractNo},
+			contract_type = #{contractType},
+			name = #{name},
+			exe_type = #{exeType},
+			exe_number = #{exeNumber},
+			person = #{person},
+			person_num = #{personNum},
+			person_tel = #{personTel},
+			bank = #{bank},
+			bank_num = #{bankNum},
+			bank_person = #{bankPerson},
+			exe_record = #{exeRecord},
+			exe_quality = #{exeQuality},
+			limit_date = #{limitDate},
+			start_date = #{startDate},
+			end_date = #{endDate},
+			end_time = #{endTime},
+			quality = #{quality},
+			con_way = #{conWay},
+			ensure = #{ensure},
+			is_issue = #{isIssue},
+			manage = #{manage},
+			check_status = #{checkStatus},
+			con_status = #{conStatus},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			workflow_id = #{workflowid},
+			workflow_status = #{workflowstatus},
+			department = #{department},
+			frist_type = #{fristType},
+			second_type = #{secondType},
+			is_standard_contract = #{isStandardContract},
+			standard_type = #{standardType},
+			party_b_code = #{partyBCode}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_con_year_contract SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<!--查询当天生成单数	-->
+	<select id="getTodayCount" parameterType="String" resultType="int">
+		SELECT
+			count(*)
+		FROM
+			btg_con_year_contract AS a
+		WHERE
+			a.contract_no LIKE concat('%',#{date},'%')
+	</select>
+	
+</mapper>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.project.dao.DesignDirectorBuildnoMappingDao">
+
+    <sql id="ddbMappingColumns">
+        a.id AS "id",
+        a.projId AS "projId",
+        a.design_director AS "designDirector",
+        a.build_no AS "buildNo"
+    </sql>
+
+
+    <select id="get" resultType="DesignDirectorBuildnoMapping">
+        SELECT
+        <include refid="ddbMappingColumns"/>
+        FROM btg_design_director_buildno_mapping a
+        WHERE a.id = #{id}
+    </select>
+
+
+
+    <insert id="insert">
+        INSERT INTO btg_design_director_buildno_mapping(
+        id,
+        projId,
+        design_director,
+        build_no
+        ) VALUES (
+        #{id},
+        #{projId},
+        #{designDirector},
+        #{buildNo}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE btg_design_director_buildno_mapping SET
+        projId = #{projId},
+        design_director = #{designDirector},
+        build_no = #{buildNo}
+        WHERE id = #{id}
+    </update>
+
+    <update id="delete">
+        UPDATE btg_design_director_buildno_mapping SET
+        WHERE id = #{id}
+    </update>
+    
+    <select id="findByBuildingNOAndProject" resultType="DesignDirectorBuildnoMapping">
+        select
+        <include refid="ddbMappingColumns" />
+        from btg_design_director_buildno_mapping a WHERE projId = #{projId} and build_no = #{buildNo}
+    </select>
+
+</mapper>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.qualityitem.dao.QualityitemDao">
+    	
+	<sql id="qualityitemColumns">
+	  a.id as id ,
+	  a.item as item,
+	  a.exschedule_ratio as exscheduleRatio,
+	  a.account_ratio as accountRatio,
+	  a.quality_ratio_frist as qualityRatioFrist,
+	  a.quality_ratio_second as qualityRatioSecond,
+	  a.quality_pay_date_frist as qualityPayDateFrist,
+	  a.quality_pay_date_second as qualityPayDateSecond,
+	  a.itemExplain as itemExplain
+	</sql>
+    	
+	<select id="findList" resultType="Qualityitem">
+		SELECT 
+			 <include refid="qualityitemColumns"/>
+		FROM btg_con_quality_pay a
+		<where>
+			<if test="itemExplain != null and itemExplain != ''">
+				 a.itemExplain LIKE 
+				<if test="dbName == 'oracle'">'%'||#{itemExplain}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{itemExplain}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{itemExplain},'%')</if>
+			</if>
+		</where>
+		order by itemorder
+	</select>
+	
+	
+	<insert id="insert">
+		INSERT INTO btg_con_quality_pay(
+			 id,
+			 item,
+			 exschedule_ratio,
+			 account_ratio,
+			 quality_ratio_frist,
+			 quality_ratio_second,
+			 quality_pay_date_frist,
+			 quality_pay_date_second,
+			 itemExplain,
+			 itemorder
+		) VALUES (
+			#{id},
+			#{item},
+			#{exscheduleRatio},
+			#{accountRatio},
+			#{qualityRatioFrist},
+			#{qualityRatioSecond},
+			#{qualityPayDateFrist},
+			#{qualityPayDateSecond},
+			#{itemExplain},
+			quality_pay_max_ordernum()+1
+		)
+	</insert>
+	
+	
+	<update id="update">
+		UPDATE btg_con_quality_pay SET 	
+			 item=#{item},
+			 exschedule_ratio=#{exscheduleRatio},
+			 account_ratio=#{accountRatio},
+			 quality_ratio_frist=#{qualityRatioFrist},
+			 quality_ratio_second=#{qualityRatioSecond},
+			 quality_pay_date_frist=#{qualityPayDateFrist},
+			 quality_pay_date_second=#{qualityPayDateSecond},
+			 itemExplain=#{itemExplain}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		delete from btg_con_quality_pay
+		WHERE id =#{id}
+	</update>
+	
+	<select id="get" resultType="Qualityitem">
+		SELECT 
+		<include refid="qualityitemColumns"/>
+		FROM btg_con_quality_pay a
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getbyitem" resultType="Qualityitem">
+		SELECT 
+		<include refid="qualityitemColumns"/>
+		FROM btg_con_quality_pay a
+		<where>
+			<if test="item != null and item != ''">
+				 a.item LIKE 
+				<if test="dbName == 'oracle'">'%'||#{item}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{item}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{item},'%')</if>
+			</if>
+		</where>
+	</select>
+	
+</mapper>

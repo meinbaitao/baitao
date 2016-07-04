@@ -1,0 +1,97 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ taglib prefix="shiro" uri="/WEB-INF/tlds/shiros.tld" %>
+<%@ taglib prefix="fns" uri="/WEB-INF/tlds/fns.tld" %>
+	<div class="nav-operate">
+		<div id="importFile" class="hide">
+			<form id="importFileForm" action="${ctx}/orbom/orderBomDetail/importStone" method="post" enctype="multipart/form-data"
+				style="padding-left:20px;text-align:center;">
+			<ul class="modal-body">
+				<li>
+					<span class="tab-name">文件：</span>
+					<label>
+						<input id="multipartFile" name="multipartFile" type="file" style="width:330px"/><br/>
+					</label>
+				</li>
+				<li class="clear"></li>
+				<li class="fr">
+					<input id="btnImportFile" class="btn btn-primary" type="button" value="导    入"/>
+					<input name="subprojectId" id="subprojectId" type="hidden"/>
+					<input name ="orderType" id="orderType" type="hidden" value="${orderBomBase.orderType}" />
+					<input name="orderBomId" id="orderBomId" type="hidden" value="${orderBomBase.id }"/>
+					<!-- 变更/补料的原下料单Id -->
+					<input name="originalNo" id="originalNo" type="hidden" value="${originalNo }"/>
+					<!-- 是否变更/补料的标识 1-补料2-变更 -->
+					<input name="isChange" id="isChange" type="hidden" value="${isChange }">
+				</li>
+			</ul>
+			</form>
+		</div>
+	</div>	
+	<div id="uploadFile" class="hide">
+		<form id="uploadFileForm" action="${ctx}/orbom/orderBomBase/upload" method="post" enctype="multipart/form-data" style="padding-left:20px;text-align:center;">
+			<input id="uploadOrderId" name="uploadOrderId" type="hidden" value="${orderBomBase.id}"/>　
+			<ul>
+			<li><input id="file" name="file" type="file" class="input-medium"/></li>　　
+			<li><input id="uploadAttachment" class="btn btn-primary" type="button" value="上传   "/></li>
+			</ul>
+		</form>
+	</div>
+	<div class="nav-operate">
+		<ul class="operationg-new">
+			<li>
+				<form id="returnForm" action="${ctx}/orbom/orderBomBase/list?orderType=${orderBomBase.orderType}" title="detail" method="post" >
+					<input class="btn btn-primary" type="submit" value="返回">
+				</form>
+			</li> 
+			<!-- 
+			<li>
+				<form id="deleteDetailForm" action="${ctx}/cost/volumeControl/list" method="post">
+					<input id="btnDeleteDetail" class="btn btn-primary" type="button" value="删除">
+				</form>
+			</li>
+			 -->
+			<shiro:hasAnyRoles name="${fns:getWhitelistsList('sjgl')}">
+            <li> 
+               <!-- 上传附件 -->
+               <input disabled="disabled" type="button" name="uploadOrder" id="uploadOrder" class="btn btn-primary" value="上传附件">
+            </li>
+			<li> 
+               <!-- 导入数据 -->
+               <input disabled="disabled" type="button" name="importOrder" id="importOrder" class="btn btn-primary" value="${isChange eq '2'?'保存':'导入'}">
+            </li>
+			<li> 
+               <!-- 提交流程 -->
+               <input disabled="disabled" type="button" name="submitOrder" id="submitOrder" class="btn btn-primary" value="提交">
+            </li>
+            </shiro:hasAnyRoles>
+            <li> 
+               <!-- 通过，流程进入下一步 -->
+               <input style="display:none;" disabled="disabled" type="button" name="passOrder" id="passOrder" class="btn btn-primary" value="提交">
+            </li>
+            <li>
+               <!--签收 -->
+               <input disabled="disabled" type="button" name="signOrder" id="signOrder" class="btn btn-primary" value="签收">
+            </li>
+            <li>
+               <!--驳回 -->
+               <input disabled="disabled" type="button" name="rebutOrder" id="rebutOrder" class="btn btn-primary" value="驳回">
+            </li>
+            <li>
+               <!--流程图 -->
+               <input disabled="disabled" type="button" name="trackOrder" id="trackOrder" class="btn btn-primary" value="流程图">
+            </li>
+			<li class="showWorkflowAuditHistory">
+				<input disabled="disabled" type="button" name="showWorkflowAuditHistory" id="showWorkflowAuditHistory" class="btn btn-primary" value="流程轨迹"/>
+			</li>
+            <li id="showAttach">
+					<c:forEach items="${attachList}" var="obj">
+					<div>
+						<a id="${obj.id}" href="javascript:download('${obj.attachUrl}','${obj.id}')">${obj.name} </a>&nbsp;&nbsp;
+						<span style="display:none;" id="deleteAttach" deleteId="${obj.id }"  class="glyphicon glyphicon-remove-circle"></span>
+					</div>
+					</c:forEach>
+			</li>
+		</ul>
+	</div>		
+	<input type="hidden" name="workflowId" id="workflowId" value="${orderBomBase.workflowid }"/>	
+	<input type="hidden" name="workflowStatus" id="workflowStatus" value="${orderBomBase.workflowstatus }"/>	

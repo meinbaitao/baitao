@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.inventory.dao.StandingBookDao">
+    
+	<sql id="standingBookColumns">
+		a.id AS "id",
+		a.tran_type AS "tranType",
+		a.sendee AS "sendee",
+		a.business_date AS "businessDate",
+		a.seriesnumber AS "seriesnumber",
+		a.material_type AS "materialType",
+		a.out_depot AS "depotOut.id",
+		a.in_depot AS "depotIn.id",
+		a.operate_user AS "operateUser.id",
+		a.checked_user AS "checkedUser",
+		a.status AS "status",
+		a.order_bom_id AS "orderBomId",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="standingBookJoins">
+	</sql>
+    
+	<select id="get" resultType="StandingBook">
+		SELECT 
+			<include refid="standingBookColumns"/>
+		FROM btg_standing_book a
+		<include refid="standingBookJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="StandingBook">
+		SELECT 
+			<include refid="standingBookColumns"/>
+		FROM btg_standing_book a
+		<include refid="standingBookJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="tranType != null and tranType != ''">
+				and a.tran_type = #{tranType}
+			</if>
+			<if test="seriesnumber != null and seriesnumber != ''">
+				and a.seriesnumber like CONCAT('%', #{seriesnumber}, '%')
+			</if>
+			<if test="materialType != null and materialType != ''">
+				and a.material_type = #{materialType}
+			</if>
+			<if test="createBy != null and createBy.id!=null and createBy.id != ''">
+				and a.create_by = #{createBy.id}
+			</if>
+			<if test="materialTypes != null and materialTypes.size > 0">
+				and a.material_type in
+						<foreach collection="materialTypes" item="m" index="i"
+			       			 open="(" close=")" separator=",">
+			       		 			#{m}
+			    		</foreach>
+			</if>
+		</where>
+			ORDER BY a.create_date DESC
+	</select>
+	
+	<select id="findAllList" resultType="StandingBook">
+		SELECT 
+			<include refid="standingBookColumns"/>
+		FROM btg_standing_book a
+		<include refid="standingBookJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_standing_book(
+			id,
+			tran_type,
+			sendee,
+			business_date,
+			seriesnumber,
+			material_type,
+			out_depot,
+			in_depot,
+			operate_user,
+			checked_user,
+			status,
+			order_bom_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{tranType},
+			#{sendee},
+			#{businessDate},
+			#{seriesnumber},
+			#{materialType},
+			#{depotOut.id},
+			#{depotIn.id},
+			#{operateUser.id},
+			#{checkedUser},
+			#{status},
+			#{orderBomId},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_standing_book SET 	
+			tran_type = #{tranType},
+			business_date = #{businessDate},
+			seriesnumber = #{seriesnumber},
+			material_type = #{materialType},
+			out_depot = #{depotOut.id},
+			in_depot = #{depotIn.id},
+			operate_user = #{operateUser.id},
+			checked_user = #{checkedUser},
+			status = #{status},
+			order_bom_id = #{orderBomId},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			sendee=#{sendee},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_standing_book SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 统计当天添加的数据量  -->
+	<select id="getTodayCount" parameterType="map" resultType="int">
+		select ifnull(count(*),0) from btg_standing_book a
+			where 
+			TO_DAYS(a.create_date) = TO_DAYS(#{date}) 
+		and a.tran_type = #{tranType}
+	</select>
+	<!-- 获取接收人分组数据  -->
+	<select id="getGBSendee" resultType="StandingBook">
+		SELECT 
+			a.sendee AS "sendee"
+		FROM btg_standing_book a
+		WHERE 1=1
+			<if test="createBy != null and createBy.id != null and createBy.id!=''">
+				and a.create_by=#{createBy.id}
+			</if>
+			<if test="materialType != null and materialType!=''">
+				and a.material_type=#{materialType}
+			</if>
+			
+		group by a.sendee
+		
+	</select>
+	
+</mapper>

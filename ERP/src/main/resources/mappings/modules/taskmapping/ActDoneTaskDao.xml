@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.taskmapping.dao.ActDoneTaskDao">
+
+	<sql id="task_columns">
+		a.user_id AS "userId",
+		a.entry_id AS "entryId",
+		a.business_table AS "businessTable"
+	</sql>
+
+
+	<insert id="insert">
+		INSERT INTO btg_act_done_task(
+		user_id,
+		entry_id,
+		business_table
+		) VALUES (
+		#{userId},
+		#{entryId},
+		#{businessTable}
+		)
+	</insert>
+
+
+	
+</mapper>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.ManufContractDetailPriceDao">
+    
+	<sql id="manufContractDetailPriceColumns">
+		a.id AS "id",
+		a.manuf_name AS "manufName",
+		a.manuf_object AS "manufObject",
+		a.unit AS "unit",
+		a.standard_price AS "standardPrice"
+	</sql>
+	
+	<sql id="manufContractDetailPriceJoins">
+	</sql>
+    
+	<select id="get" resultType="ManufContractDetailPrice">
+		SELECT 
+			<include refid="manufContractDetailPriceColumns"/>
+		FROM btg_manuf_contract_detail_price a
+		<include refid="manufContractDetailPriceJoins"/>
+		WHERE a.id = #{id}
+	</select>
+    
+	<select id="getByManufName" resultType="ManufContractDetailPrice">
+		SELECT 
+			<include refid="manufContractDetailPriceColumns"/>
+		FROM btg_manuf_contract_detail_price a
+		<include refid="manufContractDetailPriceJoins"/>
+		WHERE a.manuf_name = #{manufName}
+	</select>
+	
+	<select id="findList" resultType="ManufContractDetailPrice">
+		SELECT 
+			<include refid="manufContractDetailPriceColumns"/>
+		FROM btg_manuf_contract_detail_price a
+		<include refid="manufContractDetailPriceJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ManufContractDetailPrice">
+		SELECT 
+			<include refid="manufContractDetailPriceColumns"/>
+		FROM btg_manuf_contract_detail_price a
+		<include refid="manufContractDetailPriceJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_manuf_contract_detail_price(
+			id,
+			manuf_name,
+			manuf_object,
+			unit,
+			standard_price
+		) VALUES (
+			#{id},
+			#{manufName},
+			#{manufObject},
+			#{unit},
+			#{standardPrice}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_manuf_contract_detail_price SET 	
+			manuf_name = #{manufName},
+			manuf_object = #{manufObject},
+			unit = #{unit},
+			standard_price = #{standardPrice}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_manuf_contract_detail_price
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

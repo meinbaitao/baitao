@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.finance.dao.ManufSettlementMappingDao">
+    
+	<sql id="manufSettlementMappingColumns">
+		a.id AS "id",
+		a.settlement_id AS "settlementId",
+		a.order_bom_id AS "orderBomId",
+		a.settlement_type AS "settlementType",
+		a.fcostdetail AS "fcostdetail",
+		v.order_bom_no AS "orderBomNo",
+		v.house_type AS "houseType",
+		v.Building AS "building",
+		v.order_type AS "orderType",
+		v.order_finish_date as "orderFinishDate",
+		v.stone_color_name as "stoneColorName",
+		s.building_display_name as "buildingDisplayName"
+	</sql>
+	
+	<sql id="manufSettlementMappingJoins">
+		join btg_order_bom_base as v on v.id = a.order_bom_id
+		LEFT JOIN btg_subproject s ON s.id = v.sub_proj_id
+	</sql>
+    
+	<select id="get" resultType="ManufSettlementMapping">
+		SELECT 
+			<include refid="manufSettlementMappingColumns"/>
+		FROM btg_manuf_settlement_mapping a
+		<include refid="manufSettlementMappingJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="ManufSettlementMapping">
+		SELECT 
+			<include refid="manufSettlementMappingColumns"/>
+		FROM btg_manuf_settlement_mapping a
+		<include refid="manufSettlementMappingJoins"/>
+		<where>
+			
+			<if test="settlementId != null and settlementId != ''">
+				AND a.settlement_id = #{settlementId}
+			</if>
+			<if test="orderBomId != null and orderBomId != ''">
+				AND a.order_bom_id = #{orderBomId}
+			</if>
+			<if test="settlementType != null and settlementType != ''">
+				AND a.settlement_type = #{settlementType}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ManufSettlementMapping">
+		SELECT 
+			<include refid="manufSettlementMappingColumns"/>
+		FROM btg_manuf_settlement_mapping a
+		<include refid="manufSettlementMappingJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_manuf_settlement_mapping(
+			id,
+			settlement_id,
+			order_bom_id,
+			settlement_type,
+			fcostdetail
+		) VALUES (
+			#{id},
+			#{settlementId},
+			#{orderBomId},
+			#{settlementType},
+			#{fcostdetail}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_manuf_settlement_mapping SET 	
+			settlement_id = #{settlementId},
+			order_bom_id = #{orderBomId},
+			settlement_type = #{settlementType},
+			fcostdetail = #{fcostdetail}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_manuf_settlement_mapping
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

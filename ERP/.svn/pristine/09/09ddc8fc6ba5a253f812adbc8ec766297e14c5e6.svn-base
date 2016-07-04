@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.cost.dao.VolumeControlDao">
+    
+	<sql id="volumeControlColumns">
+		a.id AS "id",
+		a.subproject_id AS "subprojectId",
+		a.house_type AS "houseType",
+		a.building AS "building",
+		a.type AS "type",
+		a.status AS "status",
+		a.workflow_id AS "workflowId",
+		a.workflow_status AS "workflowStatus",
+		a.create_by AS "createUser",
+		a.create_date AS "createDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="volumeControlJoins">
+	</sql>
+    
+	<select id="get" resultType="VolumeControl">
+		SELECT 
+			<include refid="volumeControlColumns"/>
+		FROM btg_volume_control a
+		<include refid="volumeControlJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="VolumeControl">
+		SELECT 
+			<include refid="volumeControlColumns"/>
+		FROM btg_volume_control a
+		<include refid="volumeControlJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date desc
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="VolumeControl">
+		SELECT 
+			<include refid="volumeControlColumns"/>
+		FROM btg_volume_control a
+		<include refid="volumeControlJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_volume_control(
+			id,
+			subproject_id,
+			house_type,
+			building,
+			type,
+			status,
+			workflow_id,
+			workflow_status,
+			create_by,
+			create_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{subprojectId},
+			#{houseType},
+			#{building},
+			#{type},
+			#{status},
+			#{workflowId},
+			#{workflowStatus},
+			#{createUser},
+			#{createDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_volume_control SET 	
+			subproject_id = #{subprojectId},
+			house_type = #{houseType},
+			building = #{building},
+			type = #{type},
+			status = #{status},
+			workflow_id = #{workflowId},
+			workflow_status = #{workflowStatus},
+			create_by = #{createUser},
+			create_date = #{createDate},
+			remarks = #{remarks},
+			del_flag = #{delFlag}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_volume_control SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

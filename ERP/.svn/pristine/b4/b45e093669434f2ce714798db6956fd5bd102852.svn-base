@@ -1,0 +1,306 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>运费申请付款管理</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript" src="${ctxStatic}/modules/finance/scripts/payment.js"></script>
+	<script type="text/javascript"  src="${ctxStatic}/common/common_service.js" ></script>
+	<script type="text/javascript">
+    	var ctxPath="${ctx}";
+    	$(function(){
+    		form_validate("inputForm");
+    	});
+    	function page(n,s){
+    		$("#pageNo").val(n);
+    		$("#pageSize").val(s);
+    		$("#searchForm").submit();
+    		return false;
+    	}
+    </script>
+</head>
+<body>
+		
+	<div class="list-content">
+	<div class="nav-operate">
+			<ul class="operationg-new" >
+				<li>
+					<input id="btnCancel" class="btn btn-primary" type="button" value="返 回" onclick="history.go(-1)"/>
+				</li>
+				<li>
+					<input type="button" name="editBtn" id="editBtn" class="btn btn-primary" value="保存"/>
+				</li>
+<%-- 				<li class="startWorkflow">
+					<input type="button" name="startWorkflow" id="startWorkflow" class="btn btn-primary" value="提交"/>
+				</li>
+				<li class="signWorkflow">
+					<input type="button" name="signWorkflow" id="signWorkflow" class="btn btn-primary" value="签收"/>
+				</li>
+				<li class="okWorkflow">
+					<input type="button" name="okWorkflow" id="okWorkflow" class="btn btn-primary" value="通过"/>
+				</li>
+				<li class="retrunWorkflow">
+					<input type="button" name="retrunWorkflow" id="retrunWorkflow" class="btn btn-primary" value="驳回"/>
+				</li>
+				<li class="showWorkflowImg">
+					<input type="button" name="showWorkflowImg" id="showWorkflowImg" class="btn btn-primary" value="流程图"/>
+				</li>
+				<li>
+					<input  type="button" name="btnUpload" id="btnUpload" class="btn btn-primary" value="附件"/>
+				</li>
+				<li id="showAttach">
+					<c:forEach items="${attachList}" var="obj">
+					<div>
+						<a id="${obj.id}" href="${ctx}${obj.attachUrl}/download?id=${obj.id}">${obj.name} </a>&nbsp;&nbsp;<span id="deleteAttach" deleteId="${obj.id }"  class="glyphicon glyphicon-remove-circle"></span></div>
+					</c:forEach>
+				</li> --%>
+	   		 </ul>
+		</div>
+	<div class="form-content">
+	<sys:message content="${message}"/>
+	<form:form id="inputForm" modelAttribute="payment" method="post" class="form-horizontal"
+		action="${ctx}/finance/payment/save" >
+			<input type="hidden" id="bindingId" name="id" value="${payment.id }"/>
+			<input type="hidden" id="punish" name="punish" value="${payment.punish }">
+<%-- 			<input type="hidden" id="workflowid" name="workflowid" value="${jiaContract.workflowid }"/>
+			<input type="hidden" id="workflowstatus" name="workflowstatus" value="${jiaContract.workflowstatus }"/>
+			<input type="hidden" name="flag" id="flag" value="${flag}"/> --%>
+		<ul>
+		<li>
+			<span class="tab-name">付款单号：</span>
+			<label>
+				<input type="text" name="paymentNumber"  maxlength="64" class="input-medium " readonly="readonly" 
+				value="${payment.paymentNumber}"/>
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">申请部门：</span>
+			<label>
+				<form:input path="requiredPart" htmlEscape="false" maxlength="64" class="input-medium " />
+				<span class="help-inline"><font color="red">*</font> </span>
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">申请日期：</span>
+			<label>
+				<input type="text" name="requiredDate" readonly="readonly" maxlength="32" class="input-medium " 
+				 value="${payment.requiredDate}">
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">收款单位：</span>
+			<label>
+				<select id="paymentObject" name="paymentObject"  class="input-medium required">
+				<option value="-1">请选择</option>
+					<c:forEach items="${suppliersWaitSettle }" var="obj">
+						<option value="${obj.carriageContract}"
+						<c:if test="${payment.paymentObject ==obj.carriageContract }">selected="selected"</c:if>>
+						${obj.supplierName}</option>
+					</c:forEach>
+				</select>
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">付款方式：</span>
+			<label>
+				<select name="paymentType" id="paymentType"  class="input-medium ">
+					<option value="-1">请选择</option>
+					<c:forEach items="${fns:getDictList('paymentType')}" var="obj" >
+						<option id="${obj.value }" value="${obj.label}" 
+							<c:if test="${obj.label ==payment.paymentType}">selected="selected"</c:if>
+						>${obj.label}</option>
+					</c:forEach>
+				</select>
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">申请金额：</span>
+			<label>
+				<input type="text" name="requiredPrice" id="requiredPrice" maxlength="18" class="input-medium number"
+					value="${payment.requiredPrice }"/>
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">开户银行：</span>
+			<label>
+				<input type="text" id="bankName" class="input-medium" readonly="readonly" value="${AccountBank }"> 
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">收款人账户名：</span>
+			<label>
+				<input type="text" id="accountName" class="input-medium" readonly="readonly" value="${AccountName }"> 
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">收款人账号：</span>
+			<label>
+				<input type="text" id="account" class="input-medium" readonly="readonly" value="${AccountNum}"> 
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">扣款金额：</span>
+			<label>
+				<input type="text" name="punishPrice" id="punishPrice" class="input-medium "
+					readonly="readonly" value="${payment.punishPrice }"/>
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">付款金额：</span>
+			<label>
+				<input type="text" name="paymentPrice" id="paymentPrice" class="input-medium "
+					readonly="readonly" value="${payment.paymentPrice }"/>
+			</label>
+		</li>
+<%-- 		<li>
+			<span class="tab-name">审核部门：</span>
+			<label>
+				<input type="text" name="verifyPart" id="verifyPart" class="input-medium "
+						readonly="readonly" value="${payment.verifyPart }"/>
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">审核人：</span>
+			<label>
+				<input type="text" name="verifyPerson" id="verifyPerson" class="input-medium "
+						readonly="readonly" value="${payment.verifyPerson }"/>
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">批复内容：</span>
+			<label>
+				<input type="text" name="verifyContent" id="verifyContent" class="input-medium "
+						readonly="readonly" value="${payment.verifyContent }"/>
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">审核时间：</span>
+			<label>
+				<input type="text" name="verifyDate" id="verifyDate" class="input-medium "
+						readonly="readonly" value="${payment.verifyDate }"/>
+			</label>
+		</li> --%>
+		<li>
+			<span class="tab-name">备注信息：</span>
+			<label>
+				<form:textarea path="remarks" htmlEscape="false" maxlength="255" class="input-xmedium "/>
+			</label>
+		</li>
+		<li>
+			<span class="tab-name">扣款类型：</span>
+			<label >
+				<select id="punishType" name="punishType" class="input-medium" multiple="multiple">
+				<c:forEach items="${fns:getDictList('punishType')}" var="obj" >
+						<option id="${obj.value }" value="${obj.label}" 
+							<c:forEach items="${punishTypeSelected}" var="objSelected">
+								<c:if test="${obj.label ==objSelected}">selected="selected"</c:if>
+							</c:forEach> 
+						>${obj.label}</option>
+					</c:forEach>
+				</select>
+			</label>
+		</li>
+		</ul>
+		<ul id="addPunish">
+		</ul>
+					
+        <div class="nav-operate" >
+			<ul class="operationg-new  operationg-attach" >
+				<li id="tr_add"><span class="glyphicon glyphicon-plus"></span>添加</li>
+				<li id="tr_payment_del"><span class="glyphicon glyphicon-remove"></span>删除</li>
+		    </ul>
+	   </div>
+	   <div class="table_scroll">
+	   <table id="contentTable1" class="table table-striped table-bordered table-condensed table-eidt">
+			<thead>
+				<tr list="transportationList">
+					
+				    <th class="all-check"  >
+						<input type="checkbox" id="all-check">
+						<label for="all-check">选择</label>
+				    </th>
+				    <th type="text" class=" input-medium hide" name="id"></th>
+				    <th type="text" class=" input-medium hide" name="mappingId"></th>
+					<th type="select" class="required input-medium" readonly="true" name="logisticSend">发货通知单</th>
+					<th type="text" class=" input-medium" readonly="true"  name="transportationNum">物流编号</th>
+					<th type="text" class=" input-medium" readonly="true"  name="startArea">起始地址</th>
+					<th type="text" class=" input-medium" readonly="true"  name="realWeight">过磅重量</th>
+					<th type="text" class=" input-medium" readonly="true"  name="settleWeight">结算重量</th>
+					<th type="text" class=" input-medium" readonly="true"  name="contractPrice">单价(元)</th>
+					<th type="text" class=" input-medium" readonly="true"  name="loadPrice">装货费</th>
+					<th type="text" class=" input-medium" readonly="true"  name="unloadTotalPrice">多点卸货费</th>
+					<th type="text" class=" input-medium" readonly="true"  name="sumPrice">总价(元)</th>
+				</tr>
+			</thead>
+			<tbody id="paymentList" copy="false">
+				<input type="hidden" name="delId" id="delId" value=""/>
+				<c:forEach items="${payment.transportationList}" var="detail" varStatus="idx">
+					<tr list="transportationList" index="${idx.index }">
+						<td type="hidden" name="transportationList[${idx.index}].id" value="${detail.id}" class="hide"></td>
+						<td type="hidden" name="transportationList[${idx.index}].mappingId" value="${detail.mappingId}" class="hide"></td>
+						<td class="check">
+							<input type="checkbox" id="${detail.mappingId}" name="transportationList[${idx.index}].mappingId" value="${detail.mappingId}">
+						</td>
+						<td type="select" class="required input-medium" readonly="true" name="transportationList[${idx.index}].logisticSend" >${detail.logisticSend}</td>
+						<td type="text" class="input-medium" readonly="true" name="transportationList[${idx.index}].transportationNum" >${detail.transportationNum}</td>
+						<td type="text" class="input-medium" readonly="true" name="transportationList[${idx.index}].startArea" >${detail.startArea}</td>
+						<td type="text" class="input-medium" readonly="true" name="transportationList[${idx.index}].realWeight" >${detail.realWeight}</td>
+						<td type="text" class="input-medium" readonly="true" name="transportationList[${idx.index}].settleWeight" >${detail.settleWeight}</td>
+						<td type="text" class="input-medium" readonly="true" name="transportationList[${idx.index}].contractPrice" >${detail.contractPrice}</td>
+						<td type="text" class="input-medium" readonly="true" name="transportationList[${idx.index}].loadPrice" >${detail.loadPrice}</td>
+						<td type="text" class="input-medium" readonly="true" name="transportationList[${idx.index}].unloadTotalPrice" >${detail.unloadTotalPrice}</td>
+						<td type="text" class="input-medium" readonly="true" name="transportationList[${idx.index}].sumPrice" >${detail.sumPrice}</td>
+					 </tr>
+		 		</c:forEach>			
+			</tbody>
+		</table>
+		</div>
+		
+		<div class="hr_60"></div>
+		
+	   <div class="table_scroll">
+       	<table id="contentTable2" class="table table-striped table-bordered table-condensed table-eidt">
+			<thead>
+				<tr>
+					<th> 发货通知单号</th>
+					<th> 下料单号</th>
+					<th> 收货地址</th>
+					<th> 发货加工厂</th>
+					<th> 要求到货日期</th>
+					<th> 实际发货日期</th>
+					<th> 收货人</th>
+					<th> 收货人电话</th>
+					<th> 面积（m²）</th>
+					<th> 分摊运费 </th>
+				</tr>
+			</thead>
+			<tbody id="formView">
+				<c:forEach items="${settlementDetailList}" var="detail" varStatus="idx">
+					<tr flag="${detail.mappingId }">
+						<td>${detail.logisticSend }</td>
+						<td>${detail.obbaseNo }</td>
+						<td>${detail.receiveAddress }</td>
+						<td>${detail.supplierName }</td>
+						<td>${detail.requiredDate }</td>
+						<td>${detail.sendDate }</td>
+						<td>${detail.receiveName }</td>
+						<td>${detail.receivePhone }</td>
+						<td>${detail.area }</td>
+						<td>${detail.price }</td>
+					 </tr>
+		 		</c:forEach>
+			</tbody>
+			
+			<tbody id="formCount" >
+			
+			</tbody>
+		</table>
+		</div>
+		
+		<div class="hr_60"></div>
+	</form:form>
+	
+	</div>
+	</div>
+</body>
+</html>

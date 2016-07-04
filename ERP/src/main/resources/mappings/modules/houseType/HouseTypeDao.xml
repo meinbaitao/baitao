@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.houseType.dao.HouseTypeDao">
+    
+	<sql id="houseTypeColumns">
+		a.id AS "id",
+		a.house_type AS "houseType",
+		a.construct_area AS "constructArea",
+		a.labor_area AS "laborArea",
+		a.labor_budget_sc AS "laborBudgetSc",
+		a.labor_budget_gj AS "laborBudgetGj",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="houseTypeJoins">
+	</sql>
+    
+	<select id="get" resultType="HouseType">
+		SELECT 
+			<include refid="houseTypeColumns"/>
+		FROM btg_house_type a
+		<include refid="houseTypeJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="HouseType">
+		SELECT 
+			<include refid="houseTypeColumns"/>
+		FROM btg_house_type a
+		<include refid="houseTypeJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="keyWord!=null and keyWord!=''">
+				and (
+					 a.house_type like concat('%',#{keyWord},'%')
+					or a.construct_area like concat('%',#{keyWord},'%')
+					or a.labor_area like concat('%',#{keyWord},'%')
+					or a.labor_budget_sc like concat('%',#{keyWord},'%')
+					or a.labor_budget_gj like concat('%',#{keyWord},'%')
+				)
+			</if>
+			<!-- <if test="houseType!=null and houseType!=''">
+				and a.house_type like concat('%',#{houseType},'%')
+			</if>	-->
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="getOne" resultType="HouseType">
+		SELECT 
+			<include refid="houseTypeColumns"/>
+		FROM btg_house_type a
+		<include refid="houseTypeJoins"/>
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="houseType!=null and houseType!=''">
+				and a.house_type = #{houseType}
+			</if>
+		limit 0,1
+	</select>
+	
+	<select id="findAllList" resultType="HouseType">
+		SELECT 
+			<include refid="houseTypeColumns"/>
+		FROM btg_house_type a
+		<include refid="houseTypeJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_house_type(
+			id,
+			house_type,
+			construct_area,
+			labor_area,
+			labor_budget_sc,
+			labor_budget_gj,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{houseType},
+			#{constructArea},
+			#{laborArea},
+			#{laborBudgetSc},
+			#{laborBudgetGj},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_house_type SET 	
+			house_type = #{houseType},
+			construct_area = #{constructArea},
+			labor_area = #{laborArea},
+			labor_budget_sc = #{laborBudgetSc},
+			labor_budget_gj = #{laborBudgetGj},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_house_type SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

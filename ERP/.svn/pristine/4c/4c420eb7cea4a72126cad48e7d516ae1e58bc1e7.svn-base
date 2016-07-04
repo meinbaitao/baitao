@@ -1,0 +1,221 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.common.persistence;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.hibernate.validator.constraints.Length;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.thinkgem.jeesite.common.utils.IdGen;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 数据Entity类
+ * @author ThinkGem
+ * @version 2014-05-16
+ */
+public abstract class DataEntity<T> extends BaseEntity<T> {
+
+	private static final long serialVersionUID = 1L;
+	
+	protected String remarks;	// 备注
+	protected User createBy;	// 创建者
+	protected Date createDate;	// 创建日期
+	protected User updateBy;	// 更新者
+	protected Date updateDate;	// 更新日期
+	protected String delFlag; 	// 删除标记（0：正常；1：删除；2：审核）
+	
+	protected String workflowid;			// 流程ID
+	protected String workflowstatus;		// 流程状态(1-新建流程、2-流程进行中、3-流程被驳回结束、4-流程正常结束)
+	protected String gtVal;	//大于此状态值
+	protected String ltVal;	//小于此状态值
+	protected String gtEqVal;	//大于等于此值
+	protected String ltEqVal;	//小于等于此值
+	protected String lsgtVal;	//	<>-不等于此值
+	protected Map<String,Object> extraData = new HashMap<String,Object>();	//额外的数据
+	protected User aboutUser;			//跟数据有关的人员
+	protected String keyWord;	//关键字（界面查询关键字段）
+	
+	public DataEntity() {
+		super();
+		this.delFlag = DEL_FLAG_NORMAL;
+	}
+	
+	public DataEntity(String id) {
+		super(id);
+	}
+	
+	/**
+	 * 插入之前执行方法，需要手动调用
+	 */
+	@Override
+	public void preInsert(){
+		// 不限制ID为UUID，调用setIsNewRecord()使用自定义ID
+		if (!this.isNewRecord){
+			setId(IdGen.uuid());
+		}
+		User user = UserUtils.getUser();
+		if (StringUtils.isNotBlank(user.getId())){
+			this.updateBy = user;
+			this.createBy = user;
+		}
+		this.updateDate = new Date();
+		this.createDate = this.updateDate;
+	}
+	
+	/**
+	 * 更新之前执行方法，需要手动调用
+	 */
+	@Override
+	public void preUpdate(){
+		User user = UserUtils.getUser();
+		if (StringUtils.isNotBlank(user.getId())){
+			this.updateBy = user;
+		}
+		this.updateDate = new Date();
+	}
+	
+	@Length(min=0, max=255)
+	public String getRemarks() {
+		return remarks;
+	}
+
+	public void setRemarks(String remarks) {
+		this.remarks = remarks;
+	}
+	
+	@JsonIgnore
+	public User getCreateBy() {
+		return createBy;
+	}
+
+	public void setCreateBy(User createBy) {
+		this.createBy = createBy;
+	}
+
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public Date getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(Date createDate) {
+		this.createDate = createDate;
+	}
+
+	@JsonIgnore
+	public User getUpdateBy() {
+		return updateBy;
+	}
+
+	public void setUpdateBy(User updateBy) {
+		this.updateBy = updateBy;
+	}
+
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public Date getUpdateDate() {
+		return updateDate;
+	}
+
+	public void setUpdateDate(Date updateDate) {
+		this.updateDate = updateDate;
+	}
+
+	@JsonIgnore
+	@Length(min=1, max=1)
+	public String getDelFlag() {
+		return delFlag;
+	}
+
+	public void setDelFlag(String delFlag) {
+		this.delFlag = delFlag;
+	}
+
+	public String getWorkflowid() {
+		return workflowid;
+	}
+
+	public void setWorkflowid(String workflowid) {
+		this.workflowid = workflowid;
+	}
+
+	public String getWorkflowstatus() {
+		return workflowstatus;
+	}
+
+	public void setWorkflowstatus(String workflowstatus) {
+		this.workflowstatus = workflowstatus;
+	}
+
+	public Map<String, Object> getExtraData() {
+		return extraData;
+	}
+
+	public String getGtVal() {
+		return gtVal;
+	}
+
+	public void setGtVal(String gtVal) {
+		this.gtVal = gtVal;
+	}
+
+	public String getLtVal() {
+		return ltVal;
+	}
+
+	public void setLtVal(String ltVal) {
+		this.ltVal = ltVal;
+	}
+
+	public void setExtraData(Map<String, Object> extraData) {
+		this.extraData = extraData;
+	}
+
+	public String getLsgtVal() {
+		return lsgtVal;
+	}
+
+	public void setLsgtVal(String lsgtVal) {
+		this.lsgtVal = lsgtVal;
+	}
+
+	public String getGtEqVal() {
+		return gtEqVal;
+	}
+
+	public void setGtEqVal(String gtEqVal) {
+		this.gtEqVal = gtEqVal;
+	}
+
+	public String getLtEqVal() {
+		return ltEqVal;
+	}
+
+	public void setLtEqVal(String ltEqVal) {
+		this.ltEqVal = ltEqVal;
+	}
+
+	public User getAboutUser() {
+		return aboutUser;
+	}
+
+	public void setAboutUser(User aboutUser) {
+		this.aboutUser = aboutUser;
+	}
+
+	public String getKeyWord() {
+		return keyWord;
+	}
+
+	public void setKeyWord(String keyWord) {
+		this.keyWord = keyWord;
+	}
+	
+
+}

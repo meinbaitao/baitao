@@ -1,0 +1,685 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.LaborcontractDao">
+
+	<sql id="pureLabContractColumns">
+		a.id AS "id",
+		a.contract_jiafang AS "contractJiafang",
+		a.company_type AS "companyType",
+		a.contract_type AS "contractType",
+		a.pro_name AS "proName",
+		a.laborcontract AS "laborcontract",
+		a.address AS "address",
+		a.exetype AS "exetype",
+		a.subsidy AS "subsidy",
+		a.ctype AS "ctype",
+		a.house AS "house",
+		a.buildings AS "buildings",
+		a.hurrybuildings AS "hurrybuildings",
+		a.startdate AS "startdate",
+		a.enddate AS "enddate",
+		a.duration AS "duration",
+		a.projectlead_bid AS "projectleadBid",
+		a.projectlead_bidtel AS "projectleadBidtel",
+		a.projectmanager_aid AS "projectmanagerAid",
+		a.projectmanager_aidtel AS "projectmanagerAidtel",
+		a.mfloatratio AS "mfloatratio",
+		a.contractscopeadjust AS "contractscopeadjust",
+		a.rightrespadjust AS "rightrespadjust",
+		a.qualityreqadjust AS "qualityreqadjust",
+		a.warrantyadjust AS "warrantyadjust",
+		a.settletermadjust AS "settletermadjust",
+		a.sign_date AS "signDate",
+		a.exe_scope AS "exeScope",
+		a.accept_scope AS "acceptScope",
+		a.stone_price AS "stonePrice",
+		a.bone_price AS "bonePrice",
+		a.qualityitem   AS "qualityitem",
+		a.stone_exeArea AS "stoneArea",
+		a.bone_exeArea  AS "boneArea",
+		a.other_exeArea AS "otherArea",	
+		a.contract_price AS "contractPrice",
+		a.standard_price AS "standardPrice",
+		a.budget_price AS "budgetPrice",
+		a.all_ratio AS "allRatio",
+		a.schedule_ratio AS "scheduleRatio",
+		a.exschedule_ratio AS "exscheduleRatio",
+		a.account_ratio AS "accountRatio",
+		a.quality_ratio_frist AS "qualityRatioFrist",
+		a.quality_ratio_second AS "qualityRatioSecond",
+		a.quality_pay_date_frist AS "qualityPayDateFrist",
+		a.quality_pay_date_second AS "qualityPayDateSecond",
+		a.check_status AS "checkStatus",
+		a.fujian AS "fujian",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus",
+		ifnull(a.con_status,"") AS "conStatus",
+		a.settlement_type AS "settlementType",
+		a.department AS "department",
+		a.frist_type AS "fristType",
+		a.second_type AS "secondType",
+		a.is_standard_contract AS "isStandardContract",
+		a.standard_type AS "standardType",
+		a.project_id AS "projectId",
+		a.party_b_code AS "partyBCode",
+		a.invoice_type AS "invoiceType",
+		a.tax_ratio AS "taxRatio",
+		a.is_include_carriage AS "isIncludeCarriage",
+		a.payment_type AS "paymentType",
+		a.payment_progress AS "paymentProgress",
+		a.quality_guarantee_price AS "qualityGuaranteePrice",
+		a.execute_guarantee_price AS "executeGuaranteePrice",
+		a.contract_no AS "contractNo"
+		
+	</sql>
+    
+	<sql id="laborcontractColumns">
+		a.id AS "id",
+		a.contract_jiafang AS "contractJiafang",
+		a.company_type AS "companyType",
+		a.contract_type AS "contractType",
+		a.pro_name AS "proName",
+		a.laborcontract AS "laborcontract",
+		a.address AS "address",
+		a.exetype AS "exetype",
+		a.subsidy AS "subsidy",
+		a.ctype AS "ctype",
+		a.house AS "house",
+		a.buildings AS "buildings",
+		a.hurrybuildings AS "hurrybuildings",
+		a.startdate AS "startdate",
+		a.enddate AS "enddate",
+		a.duration AS "duration",
+		a.projectlead_bid AS "projectleadBid",
+		a.projectlead_bidtel AS "projectleadBidtel",
+		a.projectmanager_aid AS "projectmanagerAid",
+		a.projectmanager_aidtel AS "projectmanagerAidtel",
+		a.mfloatratio AS "mfloatratio",
+		a.contractscopeadjust AS "contractscopeadjust",
+		a.rightrespadjust AS "rightrespadjust",
+		a.qualityreqadjust AS "qualityreqadjust",
+		a.warrantyadjust AS "warrantyadjust",
+		a.settletermadjust AS "settletermadjust",
+		a.sign_date AS "signDate",
+		a.exe_scope AS "exeScope",
+		a.accept_scope AS "acceptScope",
+		a.stone_price AS "stonePrice",
+		a.bone_price AS "bonePrice",
+		a.qualityitem   AS "qualityitem",
+		a.stone_exeArea AS "stoneArea",
+		a.bone_exeArea  AS "boneArea",
+		a.other_exeArea AS "otherArea",	
+		a.contract_price AS "contractPrice",
+		a.standard_price AS "standardPrice",
+		a.budget_price AS "budgetPrice",
+		a.all_ratio AS "allRatio",
+		a.schedule_ratio AS "scheduleRatio",
+		a.exschedule_ratio AS "exscheduleRatio",
+		a.account_ratio AS "accountRatio",
+		a.quality_ratio_frist AS "qualityRatioFrist",
+		a.quality_ratio_second AS "qualityRatioSecond",
+		a.quality_pay_date_frist AS "qualityPayDateFrist",
+		a.quality_pay_date_second AS "qualityPayDateSecond",
+		a.check_status AS "checkStatus",
+		a.fujian AS "fujian",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus",
+		ifnull(a.con_status,"") AS "conStatus",
+		a.settlement_type AS "settlementType",
+		a.department AS "department",
+		a.frist_type AS "fristType",
+		a.second_type AS "secondType",
+		a.is_standard_contract AS "isStandardContract",
+		a.standard_type AS "standardType",
+		a.project_id AS "projectId",
+		a.party_b_code AS "partyBCode",
+		a.invoice_type AS "invoiceType",
+		a.tax_ratio AS "taxRatio",
+		a.is_include_carriage AS "isIncludeCarriage",
+		a.payment_type AS "paymentType",
+		a.payment_progress AS "paymentProgress",
+		a.quality_guarantee_price AS "qualityGuaranteePrice",
+		a.execute_guarantee_price AS "executeGuaranteePrice",
+		a.contract_no AS "contractNo",
+		a.parent_id AS "parentid",
+		a.isHurry AS "isHurry",
+		a.agreementDate AS "agreementDate",
+		a.settleterm AS "settleterm",
+		a.qualityExpireDateFrist AS "qualityExpireDateFrist",
+		a.qualityExpireDateSecond AS "qualityExpireDateSecond",
+		a.completeDate AS "completeDate",
+		a.settleDate AS "settleDate",
+		a.settleSum AS "settleSum",
+		
+		v.name AS "executionName",
+		project.name as "project.name",
+		project.code as "project.code",
+		b.name as "fristTypeName"
+	</sql>
+	
+	<sql id="laborcontractJoins">
+		left JOIN btg_con_execution as v on v.id = a.ctype
+		left join btg_contract_account_type as b on b.id = a.frist_type
+		left join btg_project project on project.id=a.project_id
+	</sql>
+	<sql id="keyWordJoins">
+		<if test="keyWord != null and keyWord != ''">
+			AND ( a.contract_no like concat('%',#{keyWord},'%')
+					or project.code like concat('%',#{keyWord},'%') 
+					or a.house like concat('%',#{keyWord},'%')
+					or a.contract_price like concat('%',#{keyWord},'%')
+					or a.StartDate like concat('%',#{keyWord},'%')
+					or a.EndDate like concat('%',#{keyWord},'%')
+					or a.Duration like concat('%',#{keyWord},'%')
+					or a.con_status like concat('%',#{keyWord},'%')
+					or v.name like concat('%',#{keyWord},'%')
+					or a.remarks like concat('%',#{keyWord},'%')
+				)
+		</if>
+	</sql>
+    
+	<select id="get" resultType="Laborcontract">
+		SELECT 
+			<include refid="laborcontractColumns"/>
+		FROM btg_con_laborcontract a
+		<include refid="laborcontractJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Laborcontract">
+		SELECT 
+			<include refid="laborcontractColumns"/>
+		FROM btg_con_laborcontract a
+			<include refid="laborcontractJoins"/>
+		<where>
+			a.del_flag = #{delFlag}
+			<include refid="keyWordJoins"/>
+			<if test="workflowstatus != null and workflowstatus != ''">
+				AND a.workflow_status = #{workflowstatus}
+			</if>
+			<if test="createBy != null and createBy.id != null and createBy.id != ''">
+				AND a.create_by = #{createBy.id}
+			</if>
+			<if test="parentid != null and parentid != ''">
+				AND a.parent_id = #{parentid}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.house DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Laborcontract">
+		SELECT 
+			<include refid="laborcontractColumns"/>
+		FROM btg_con_laborcontract a
+		<include refid="laborcontractJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_con_laborcontract(
+			id,
+			contract_jiafang,
+			company_type,
+			contract_type,
+			pro_name,
+			laborcontract,
+			address,
+			exetype,
+			subsidy,
+			ctype,
+			house,
+			buildings,
+			hurrybuildings,
+			startdate,
+			enddate,
+			duration,
+			projectlead_bid,
+			projectlead_bidtel,
+			projectmanager_aid,
+			projectmanager_aidtel,
+			mfloatratio,
+			contractscopeadjust,
+			rightrespadjust,
+			qualityreqadjust,
+			warrantyadjust,
+			settletermadjust,
+			sign_date,
+			exe_scope,
+			accept_scope,
+			stone_price,
+			bone_price,
+			qualityitem  ,
+			stone_exeArea,
+			bone_exeArea ,
+			other_exeArea,
+			contract_price,
+			standard_price,
+			budget_price,
+			all_ratio,
+			schedule_ratio,
+			exschedule_ratio,
+			account_ratio,
+			quality_ratio_frist,
+			quality_ratio_second,
+			quality_pay_date_frist,
+			quality_pay_date_second,
+			check_status,
+			con_status,
+			fujian,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			settlement_type,
+			department,
+			frist_type,
+			second_type,
+			is_standard_contract,
+			standard_type,
+			project_id,
+			party_b_code,
+			invoice_type,
+			tax_ratio,
+			is_include_carriage,
+			payment_type,
+			payment_progress,
+			quality_guarantee_price,
+			execute_guarantee_price,
+			isHurry,
+			agreementDate,
+			settleterm,
+			qualityExpireDateFrist,
+			qualityExpireDateSecond,
+			completeDate,
+			settleDate,
+			settleSum,
+			contract_no,
+			parent_id
+		) VALUES (
+			#{id},
+			#{contractJiafang},
+			#{companyType},
+			#{contractType},
+			#{proName},
+			#{laborcontract},
+			#{address},
+			#{exetype},
+			#{subsidy},
+			#{ctype},
+			#{house},
+			#{buildings},
+			#{hurrybuildings},
+			#{startdate},
+			#{enddate},
+			#{duration},
+			#{projectleadBid},
+			#{projectleadBidtel},
+			#{projectmanagerAid},
+			#{projectmanagerAidtel},
+			#{mfloatratio},
+			#{contractscopeadjust},
+			#{rightrespadjust},
+			#{qualityreqadjust},
+			#{warrantyadjust},
+			#{settletermadjust},
+			#{signDate},
+			#{exeScope},
+			#{acceptScope},
+			#{stonePrice},
+			#{bonePrice},
+			#{qualityitem},
+	        #{stoneArea  },
+	        #{boneArea   },
+	        #{otherArea  },
+			#{contractPrice},
+			#{standardPrice},
+			#{budgetPrice},
+			#{allRatio},
+			#{scheduleRatio},
+			#{exscheduleRatio},
+			#{accountRatio},
+			#{qualityRatioFrist},
+			#{qualityRatioSecond},
+			#{qualityPayDateFrist},
+			#{qualityPayDateSecond},
+			#{checkStatus},
+			#{conStatus},
+			#{fujian},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{settlementType},
+			#{department},
+			#{fristType},
+			#{secondType},
+			#{isStandardContract},
+			#{standardType},
+			#{projectId},
+			#{partyBCode},
+			#{invoiceType},
+			#{taxRatio},
+			#{isIncludeCarriage},
+			#{paymentType},
+			#{paymentProgress},
+			#{qualityGuaranteePrice},
+			#{executeGuaranteePrice},
+			#{isHurry},
+			#{agreementDate},
+			#{settleterm},
+			#{qualityExpireDateFrist},
+			#{qualityExpireDateSecond},
+			#{completeDate},
+			#{settleDate},
+			#{settleSum},
+			#{contractNo},
+			#{parentid}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_con_laborcontract SET 	
+			contract_jiafang = #{contractJiafang},
+			company_type = #{companyType},
+			contract_type = #{contractType},
+			pro_name = #{proName},
+			laborcontract = #{laborcontract},
+			address = #{address},
+			exetype = #{exetype},
+			subsidy = #{subsidy},
+			ctype = #{ctype},
+			house = #{house},
+			buildings = #{buildings},
+			hurrybuildings = #{hurrybuildings},
+			startdate = #{startdate},
+			enddate = #{enddate},
+			duration = #{duration},
+			projectlead_bid = #{projectleadBid},
+			projectlead_bidtel = #{projectleadBidtel},
+			projectmanager_aid = #{projectmanagerAid},
+			projectmanager_aidtel = #{projectmanagerAidtel},
+			mfloatratio = #{mfloatratio},
+			contractscopeadjust = #{contractscopeadjust},
+			rightrespadjust = #{rightrespadjust},
+			qualityreqadjust = #{qualityreqadjust},
+			warrantyadjust = #{warrantyadjust},
+			settletermadjust = #{settletermadjust},
+			sign_date = #{signDate},
+			exe_scope = #{exeScope},
+			accept_scope = #{acceptScope},
+			stone_price = #{stonePrice},
+			bone_price = #{bonePrice},
+			qualityitem   =	#{qualityitem},
+		    stone_exeArea = #{stoneArea  },
+		    bone_exeArea  = #{boneArea   },
+		    other_exeArea = #{otherArea  },
+			contract_price = #{contractPrice},
+			standard_price = #{standardPrice},
+			budget_price = #{budgetPrice},
+			all_ratio = #{allRatio},
+			schedule_ratio = #{scheduleRatio},
+			exschedule_ratio = #{exscheduleRatio},
+			account_ratio = #{accountRatio},
+			quality_ratio_frist = #{qualityRatioFrist},
+			quality_ratio_second = #{qualityRatioSecond},
+			quality_pay_date_frist = #{qualityPayDateFrist},
+			quality_pay_date_second = #{qualityPayDateSecond},
+			check_status = #{checkStatus},
+			con_status = #{conStatus},
+			fujian = #{fujian},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			workflow_id = #{workflowid},
+			workflow_status = #{workflowstatus},
+			settlement_type = #{settlementType},
+			department = #{department},
+			frist_type = #{fristType},
+			second_type = #{secondType},
+			is_standard_contract = #{isStandardContract},
+			standard_type = #{standardType},
+			project_id = #{projectId},
+			party_b_code = #{partyBCode},
+			invoice_type = #{invoiceType},
+			tax_ratio = #{taxRatio},
+			is_include_carriage = #{isIncludeCarriage},
+			payment_type = #{paymentType},
+			payment_progress = #{paymentProgress},
+			quality_guarantee_price = #{qualityGuaranteePrice},
+			execute_guarantee_price = #{executeGuaranteePrice},
+			isHurry = #{isHurry},
+			agreementDate = #{agreementDate},
+			settleterm = #{settleterm},
+			qualityExpireDateFrist = #{qualityExpireDateFrist},
+			qualityExpireDateSecond = #{qualityExpireDateSecond},
+			completeDate = #{completeDate},
+			settleDate = #{settleDate},
+			settleSum = #{settleSum},
+			contract_no = #{contractNo},
+			parent_id = #{parentid}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="updateForParentid">
+		UPDATE btg_con_laborcontract SET 	
+			company_type = #{companyType},
+			contract_type = #{contractType},
+			pro_name = #{proName},
+			address = #{address},
+			exetype = #{exetype},
+			subsidy = #{subsidy},
+			ctype = #{ctype},
+			house = #{house},
+			hurrybuildings = #{hurrybuildings},
+			startdate = #{startdate},
+			enddate = #{enddate},
+			duration = #{duration},
+			projectlead_bid = #{projectleadBid},
+			projectlead_bidtel = #{projectleadBidtel},
+			projectmanager_aid = #{projectmanagerAid},
+			projectmanager_aidtel = #{projectmanagerAidtel},
+			mfloatratio = #{mfloatratio},
+			contractscopeadjust = #{contractscopeadjust},
+			rightrespadjust = #{rightrespadjust},
+			qualityreqadjust = #{qualityreqadjust},
+			warrantyadjust = #{warrantyadjust},
+			settletermadjust = #{settletermadjust},
+			sign_date = #{signDate},
+			exe_scope = #{exeScope},
+			accept_scope = #{acceptScope},
+			stone_price = #{stonePrice},
+			bone_price = #{bonePrice},
+			qualityitem   =	#{qualityitem},
+		    stone_exeArea = #{stoneArea  },
+		    bone_exeArea  = #{boneArea   },
+		    other_exeArea = #{otherArea  },			
+			all_ratio = #{allRatio},
+			schedule_ratio = #{scheduleRatio},
+			exschedule_ratio = #{exscheduleRatio},
+			account_ratio = #{accountRatio},
+			quality_ratio_frist = #{qualityRatioFrist},
+			quality_ratio_second = #{qualityRatioSecond},
+			quality_pay_date_frist = #{qualityPayDateFrist},
+			quality_pay_date_second = #{qualityPayDateSecond},
+			check_status = #{checkStatus},
+			con_status = #{conStatus},
+			fujian = #{fujian},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			workflow_id = #{workflowid},
+			workflow_status = #{workflowstatus},
+			settlement_type = #{settlementType},
+			department = #{department},
+			frist_type = #{fristType},
+			second_type = #{secondType},
+			is_standard_contract = #{isStandardContract},
+			standard_type = #{standardType},
+			project_id = #{projectId},
+			party_b_code = #{partyBCode},
+			invoice_type = #{invoiceType},
+			tax_ratio = #{taxRatio},
+			is_include_carriage = #{isIncludeCarriage},
+			payment_type = #{paymentType},
+			payment_progress = #{paymentProgress},
+			quality_guarantee_price = #{qualityGuaranteePrice},
+			execute_guarantee_price = #{executeGuaranteePrice},
+			isHurry = #{isHurry},
+			agreementDate = #{agreementDate},
+			settleterm = #{settleterm},
+			qualityExpireDateFrist = #{qualityExpireDateFrist},
+			qualityExpireDateSecond = #{qualityExpireDateSecond},
+			completeDate = #{completeDate},
+			settleDate = #{settleDate},
+			settleSum = #{settleSum},
+			contract_no = #{contractNo}
+		WHERE parent_id = #{parentid}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_con_laborcontract SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="deleteForParentid">
+		UPDATE btg_con_laborcontract SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE parent_id = #{id}
+	</update>
+	
+	
+	<update id="deleteByProjectBuilding">
+		UPDATE btg_con_laborcontract SET 
+			del_flag = '1'
+		WHERE project_id = #{projectId} and Buildings = #{buildings} and House = #{house}
+	</update>
+	
+	<!--查询当天生成单数	-->
+	<select id="getTodayCount" parameterType="String" resultType="int">
+		SELECT
+			count(*)
+		FROM
+			btg_con_laborcontract AS a
+		WHERE
+			a.contract_no LIKE concat('%',#{date},'%')
+	</select>
+
+	<select id="getOneByProIdAndBuild" resultType="Laborcontract" >
+		select
+		<include refid="pureLabContractColumns"/>
+		from btg_con_laborcontract a
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			and project_id=#{projectId}
+			and find_in_set(#{buildings},Buildings)
+		</where>
+		 limit 1
+	</select>
+	
+	
+	<select id="getByProIdAndBuild" resultType="Laborcontract" >
+		select
+		<include refid="pureLabContractColumns"/>
+		from btg_con_laborcontract a
+		<where>
+			a.del_flag = 0
+			and project_id=#{projectId}
+			and House=#{house}
+			and find_in_set(#{buildings},Buildings)
+		</where>
+	</select>
+
+	<!--产值为100的楼栋 -->
+	<select id="findFinishBuildilgs" resultType="Laborcontract">
+		select
+			<include refid="laborcontractColumns"/>
+		from btg_con_laborcontract as a 
+		join btg_proj_weekly_report as d on d.project_id=a.project_id
+		join btg_building_schedule as c on c.report_id = d.id and c.build_no = a.Buildings
+		left JOIN btg_con_execution as v on v.id = a.ctype
+		left join btg_contract_account_type as b on b.id = a.frist_type
+		where c.pro_value_schedule='100'
+	</select>
+		
+	<select id="findUnAuditLaborcontract" resultType="Laborcontract">
+		SELECT 
+			<include refid="laborcontractColumns"/>
+		FROM btg_con_laborcontract a
+		<include refid="laborcontractJoins"/>
+		left join btg_act_current_task act on act.entry_id=a.id
+		left join btg_act_done_task adt on adt.entry_id=a.id
+		<where>
+			a.del_flag = #{delFlag} 
+				and (act.user_id = #{currentUser.id} 
+					or a.create_by = #{currentUser.id} 
+					or adt.user_id = #{currentUser.id})
+			<include refid="keyWordJoins"/>
+		</where>
+		group by a.id
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAuditDoneLaborcontract" resultType="Laborcontract">
+		SELECT 
+			<include refid="laborcontractColumns"/>
+		FROM btg_con_laborcontract a
+		<include refid="laborcontractJoins"/>
+			left join btg_act_done_task adt on adt.entry_id=a.id
+		<where>
+			a.del_flag = #{delFlag} 
+				and adt.user_id = #{currentUser.id}
+			<if test="workflowstatus != null and workflowstatus != ''">
+				AND a.workflow_status = #{workflowstatus}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+</mapper>

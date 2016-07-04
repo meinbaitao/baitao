@@ -1,0 +1,448 @@
+package com.bt.modules.todotask.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.engine.HistoryService;
+import org.activiti.engine.history.HistoricProcessInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bt.modules.accident.entity.AccidentManage;
+import com.bt.modules.activiti.constants.BusinessTypeDefinition;
+import com.bt.modules.contract.entity.JiaContract;
+import com.bt.modules.contract.entity.LaborDemand;
+import com.bt.modules.contract.entity.Laborcontract;
+import com.bt.modules.contract.entity.PurchasingContractBase;
+import com.bt.modules.contract.entity.StoneCarriageContractBase;
+import com.bt.modules.finance.entity.TransportationSettlement;
+import com.bt.modules.orbom.entity.OrderBomBase;
+import com.bt.modules.project.entity.Project;
+import com.bt.modules.project.entity.Subproject;
+import com.bt.modules.purchase.entity.Purchase;
+import com.bt.modules.report.weekly.mianly.entity.ProjWeeklyReport;
+import com.bt.modules.todotask.entity.TaskCategory;
+import com.bt.modules.todotask.entity.TodoTask;
+import com.bt.modules.todotask.entity.TodoTaskRedirectMapping;
+import com.google.common.base.Strings;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.BizServicesProvider;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.taskmapping.entity.ActCurrentTask;
+
+/**
+ * author fanjinyuan. amend by 许俊雄
+ * 
+ * @since 20160510
+ */
+@Service
+@Transactional(readOnly = true)
+public class TodoTaskService extends BizServicesProvider {
+
+	/** logger. */
+	private static Logger logger = LoggerFactory
+			.getLogger(TodoTaskService.class);
+
+	@Autowired
+	private HistoryService historyService;
+
+	/*
+	 * private static final String ORDER_BOM_TABLE_NAME = "btg_order_bom_base";
+	 * private static final String ACCIDENT_MANAGE_TABLE_NAME =
+	 * "btg_accident_manage"; private static final String
+	 * WEEKLY_REPORT_TABLE_NAME = "btg_proj_weekly_report";
+	 */
+
+	/**
+	 * 业务表名，用来获取判断获取待办页面的 业务数据
+	 * 
+	 * @author 许俊雄
+	 * @since 20160504
+	 *
+	 */
+	enum TableName {
+		btg_order_bom_base// 下料单
+		, btg_accident_manage// 事故管理
+		, btg_proj_weekly_report// 项目周报
+		, btg_acc_carriage_contract_base// 物料运输合同管理
+		, btg_con_jia_contract// 甲方合同
+		, btg_con_laborcontract// 劳务评审
+		, btg_con_labor_demand // 劳务需求
+		, btg_project // 项目信息审核
+		, btg_purchase // 采购单（刚、辅料）
+		, btg_purchasing_contract_base// 采购合同
+		, btg_stone_carriage_contract_base// 石材运输合同管理
+		, btg_transportation_settlement; // 运费登记
+
+		public static TableName getTableName(String tableName) {
+			return valueOf(tableName);
+		}
+	}
+
+	private static final String BUSINESS_TYPE = "1";
+	private static final String CATEGORY_MAP_KEY_TEMPLATE = "TB:%s_BT:%s";
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public Page<TaskCategory> findPage(Page page, ActCurrentTask currentTask) {
+		Page rsPage = queryCurrentTasks(page, currentTask);
+		List<TodoTask> todoTasks = null;
+		Map<java.lang.String, List<TodoTask>> todoTaskMap = new HashMap<java.lang.String, List<TodoTask>>();
+		for (Object obj : rsPage.getList()) {
+			ActCurrentTask ct = (ActCurrentTask) obj;
+			// 转换个人任务信息为待办信息
+			TodoTask todoTask = transferTodoTask(ct);
+
+			String mapKey = buildMapKey(todoTask);
+			if (todoTaskMap.get(mapKey) == null) {
+				todoTasks = new ArrayList<TodoTask>();
+				todoTaskMap.put(mapKey, todoTasks);
+			} else {
+				todoTasks = todoTaskMap.get(mapKey);
+			}
+
+			todoTasks.add(todoTask);
+		}
+		List<TaskCategory> categories = wrapWithCategory(todoTaskMap);
+		rsPage.setList(categories);
+		return rsPage;
+	}
+
+	/*
+	 * private TodoTask transferTodoTask(ActCurrentTask ct) { TodoTask todoTask
+	 * = null; String tableName = ct.getBusinessTable(); //
+	 * 通过当前的任务业务表，来处理具体的业务流程 if (ORDER_BOM_TABLE_NAME.equals(tableName)) {
+	 * todoTask = handleOrderBom(ct.getEntryId(), ct.getTaskType()); } else if
+	 * (ACCIDENT_MANAGE_TABLE_NAME.equals(ct.getBusinessTable())) { todoTask =
+	 * handleAccident(ct.getEntryId(), ct.getTaskType()); } else if
+	 * (WEEKLY_REPORT_TABLE_NAME.equals(ct.getBusinessTable())) { todoTask =
+	 * handleWeeklyReport(ct.getEntryId(), ct.getTaskType()); } else { todoTask
+	 * = new TodoTask(); TodoTaskRedirectMapping todoTaskRedirectMapping =
+	 * todoTaskRedirectMappingService .get(ct.getBusinessTable(), "1"); String
+	 * redirectUrl = String.format( todoTaskRedirectMapping.getRedirectUrl(),
+	 * ct.getEntryId()); todoTask.setRedirectUrl(redirectUrl);
+	 * todoTask.setTaskType(ct.getTaskType());
+	 * todoTask.setBusinessName(todoTaskRedirectMapping.getBusinessName());
+	 * todoTask.setStatus("待审核");
+	 * todoTask.setBusinessTable(ct.getBusinessTable());
+	 * todoTask.setBusinessType(BUSINESS_TYPE);
+	 * todoTask.setCompositeBusType(BUSINESS_TYPE); } return todoTask; }
+	 */
+
+	private TodoTask transferTodoTask(ActCurrentTask ct) {
+		TodoTask todoTask = new TodoTask();
+		String tableName = ct.getBusinessTable();
+		String entryId = ct.getEntryId();
+
+		// 设置默认的待办信息
+		setDefaultTodoTaskInfo(ct, todoTask);
+		// 设置流程具体的业务数据，如项目名称，下料单编号等
+		assembleBusinessDataByTBName(tableName, entryId, todoTask);
+		return todoTask;
+	}
+
+	private void setDefaultTodoTaskInfo(ActCurrentTask ct, TodoTask todoTask) {
+		// setting default info
+		TodoTaskRedirectMapping todoTaskRedirectMapping = todoTaskRedirectMappingService
+				.get(ct.getBusinessTable(), BUSINESS_TYPE);
+		String redirectUrl = "";
+		if (todoTaskRedirectMapping != null) {
+			redirectUrl = String.format(
+					todoTaskRedirectMapping.getRedirectUrl(), ct.getEntryId());
+			todoTask.setBusinessName(todoTaskRedirectMapping.getBusinessName());
+		}
+
+		// set directLink 许俊雄
+		todoTask.setRedirectUrl(redirectUrl);
+		todoTask.setTaskType(ct.getTaskType());
+		todoTask.setStatus("待审核");
+		todoTask.setBusinessTable(ct.getBusinessTable());
+		todoTask.setBusinessType(BUSINESS_TYPE);
+		todoTask.setCompositeBusType(BUSINESS_TYPE);
+	}
+
+	/**
+	 * 根据具体业务数据装配待办Bean
+	 * 
+	 * @param tableName
+	 * @param todoTask
+	 */
+	private void assembleBusinessDataByTBName(String tableName, String entryId,
+			TodoTask todoTask) {
+
+		// 调整信息
+		TodoTaskRedirectMapping dr = new TodoTaskRedirectMapping();
+		logger.debug("待办数据业务表：{}", tableName);
+		switch (TableName.getTableName(tableName)) {
+
+		// 项目单据
+		case btg_project:
+			Project p = projectService.get(entryId);
+			// 简称
+			todoTask.setProjectShortName(p.getCode());
+			// 根据[流程实例id]设置单据编号和发起人以及发起时间
+			todoTask.setProcessInstanceId(p.getWorkflowid());
+			todoTask.setEntryName(p.getName());
+			break;
+		// 下料单
+		case btg_order_bom_base:
+			// 业务信息
+			OrderBomBase orderBomBase = orderBomBaseService.get(entryId);
+			String subType = null;
+			if ("1".equals(orderBomBase.getOrderType())) {
+				subType = "1-" + orderBomBase.getUniformMaterielType();
+			} else {
+				subType = orderBomBase.getOrderType();
+			}
+			// 获取配置的跳转信息
+			dr = getDirectInfoBySubType(
+					TableName.btg_order_bom_base.toString(), subType);
+			todoTask.setRedirectUrl(String.format(dr.getRedirectUrl(), entryId));
+			todoTask.setBusinessName(dr.getBusinessName());
+			todoTask.setBusinessType(orderBomBase.getOrderType());
+			todoTask.setCompositeBusType(subType);
+			// 下料单编号
+			todoTask.setEntryName(orderBomBase.getOrderBomNo());
+			// 根据[流程实例id]设置单据编号和发起人以及发起时间
+			todoTask.setProcessInstanceId(orderBomBase.getWorkflowid());
+			// 通过下料单-二级项目id--查询一级项目简称
+			Subproject sp = subProjectService.get(orderBomBase.getSubProjId());
+			if (sp != null) {
+				todoTask.setProjectShortName(getPCodeByProjectId(sp
+						.getProjectId()));
+			}
+			break;
+		case btg_accident_manage:
+			// 业务信息
+			AccidentManage accidentManage = accidentManageService.get(entryId);
+			// 获取配置的跳转信息
+			dr = getDirectInfoBySubType(
+					TableName.btg_accident_manage.toString(),
+					accidentManage.getType());
+			todoTask.setRedirectUrl(String.format(dr.getRedirectUrl(), entryId));
+			todoTask.setBusinessName(dr.getBusinessName());
+			todoTask.setBusinessType(accidentManage.getType());
+			todoTask.setCompositeBusType(accidentManage.getType());
+			// 事故编号
+			todoTask.setEntryName(accidentManage.getAccientNo());
+			// 获取项目简称
+			todoTask.setProjectShortName(getPCodeByProjectId(accidentManage
+					.getProjectId()));
+			todoTask.setProcessInstanceId(accidentManage.getWorkflowid());
+
+			break;
+		case btg_proj_weekly_report:
+			ProjWeeklyReport r = weeklyReportService.get(entryId);
+			todoTask.setEntryName(r.getProjectName());
+			// 获取一级项目简称
+			todoTask.setProjectShortName(getPCodeByProjectId(r.getProjectId()));
+			todoTask.setProcessInstanceId(r.getWorkflowid());
+			break;
+		case btg_con_labor_demand:
+			LaborDemand d = laborDemandService.get(entryId);
+			todoTask.setEntryName(d.getProName());
+			// 获取一级项目简称
+			todoTask.setProjectShortName(getPCodeByProjectId(d.getProjectId()));
+			todoTask.setProcessInstanceId(d.getWorkflowid());
+			break;
+		case btg_con_laborcontract:
+			Laborcontract l = laborcontractService.get(entryId);
+			todoTask.setEntryName(l.getProName());
+			// 获取一级项目简称
+			todoTask.setProjectShortName(getPCodeByProjectId(l.getProjectId()));
+			todoTask.setProcessInstanceId(l.getWorkflowid());
+			break;
+		case btg_con_jia_contract:
+			JiaContract j = jiaContractService.get(entryId);
+			todoTask.setEntryName(j.getProjectName());
+			// 获取一级项目简称
+			todoTask.setProjectShortName(getPCodeByProjectId(j.getProjectId()));
+			todoTask.setProcessInstanceId(j.getWorkflowid());
+			break;
+		case btg_purchase:
+			Purchase pur = purchaseService.getTodoInfo(entryId);
+
+			// copy pojo,否则无法实现接下来的引用
+			// BeanMapper.copy(pur.getTodoTask(), todoTask);
+			// todoTask = pur.getTodoTask();
+			// 手动copy防止标题丢失,怕了你了！！！
+			todoTask.setEntryName(pur.getTodoTask().getEntryName());
+			// 获取一级项目简称
+			todoTask.setProjectShortName(pur.getTodoTask()
+					.getProjectShortName());
+			todoTask.setProcessInstanceId(pur.getTodoTask()
+					.getProcessInstanceId());
+			break;
+		case btg_purchasing_contract_base:
+			PurchasingContractBase pcb = pcBaseService.get(entryId);
+			todoTask.setEntryName(pcb.getContractNo());
+			todoTask.setProjectShortName("--");
+			todoTask.setProcessInstanceId(pcb.getWorkflowid());
+			break;
+		case btg_stone_carriage_contract_base:
+			StoneCarriageContractBase sc = aContractService.get(entryId);
+			if(sc == null)
+				break;
+			todoTask.setEntryName(sc.getContractNo());
+			todoTask.setProjectShortName("--");
+			todoTask.setProcessInstanceId(sc.getWorkflowid());
+			break;
+		case btg_transportation_settlement:
+			TransportationSettlement ts = transSService.get(entryId);
+			todoTask.setEntryName(ts.getLogisticSendSeries());
+			todoTask.setProjectShortName(getPCodeByProjectId(ts.getProjectId()));
+			todoTask.setProcessInstanceId(ts.getWorkflowid());
+			break;
+		default:
+			break;
+		}
+
+		// 挂上流程实例的相关信息
+		assembleProccessInstanceInfoByIId(todoTask);
+
+	}
+
+	/**
+	 * 通过项目Id获取项目简称
+	 * 
+	 * @author 许俊雄
+	 * @param pId
+	 * @return
+	 */
+	private String getPCodeByProjectId(String pId) {
+		if (Strings.isNullOrEmpty(pId))
+			return "";
+		Project p = projectService.get(pId);
+		if (p == null)
+			return "";
+		return p.getCode();
+	}
+
+	/**
+	 * 根据业务子类型获取跳转的连接
+	 * 
+	 * @param tableName
+	 * @param entryId
+	 * @param subType
+	 * @return
+	 */
+	private TodoTaskRedirectMapping getDirectInfoBySubType(String tableName,
+			String subType) {
+		TodoTaskRedirectMapping todoTaskRedirectMapping = todoTaskRedirectMappingService
+				.get(tableName, subType);
+		return todoTaskRedirectMapping;
+	}
+
+	private String buildMapKey(TodoTask todoTask) {
+		return String.format(CATEGORY_MAP_KEY_TEMPLATE,
+				todoTask.getBusinessTable(), todoTask.getCompositeBusType());
+	}
+
+	private List<TaskCategory> wrapWithCategory(
+			Map<String, List<TodoTask>> todoTaskMap) {
+		List<TaskCategory> categories = new ArrayList<TaskCategory>();
+		for (Map.Entry<String, List<TodoTask>> entry : todoTaskMap.entrySet()) {
+			TaskCategory category = new TaskCategory();
+			category.setAmount(entry.getValue().size());
+			category.setCateName(entry.getValue().get(0).getBusinessName());
+			category.setTasks(entry.getValue());
+			categories.add(category);
+		}
+		return categories;
+	}
+
+	/*
+	 * private TodoTask handleOrderBom(String orderId, String taskType) {
+	 * OrderBomBase orderBomBase = orderBomBaseService.get(orderId); String
+	 * subType = null; if ("1".equals(orderBomBase.getOrderType())) { subType =
+	 * "1-" + orderBomBase.getUniformMaterielType(); } else { subType =
+	 * orderBomBase.getOrderType(); } TodoTaskRedirectMapping
+	 * todoTaskRedirectMapping = todoTaskRedirectMappingService
+	 * .get(ORDER_BOM_TABLE_NAME, subType); String redirectUrl = String.format(
+	 * todoTaskRedirectMapping.getRedirectUrl(), orderId); TodoTask todoTask =
+	 * new TodoTask(); todoTask.setRedirectUrl(redirectUrl);
+	 * todoTask.setBusinessName(todoTaskRedirectMapping.getBusinessName());
+	 * todoTask.setStatus("待审核"); todoTask.setTaskType(taskType);
+	 * todoTask.setBusinessTable(ORDER_BOM_TABLE_NAME);
+	 * todoTask.setBusinessType(orderBomBase.getOrderType());
+	 * todoTask.setCompositeBusType(subType); return todoTask; }
+	 */
+
+	/*
+	 * private TodoTask handleAccident(String accidentId, String taskType) {
+	 * AccidentManage accidentManage = accidentManageService.get(accidentId);
+	 * TodoTaskRedirectMapping todoTaskRedirectMapping =
+	 * todoTaskRedirectMappingService .get(ACCIDENT_MANAGE_TABLE_NAME,
+	 * accidentManage.getType()); String redirectUrl = String.format(
+	 * todoTaskRedirectMapping.getRedirectUrl(), accidentId); TodoTask todoTask
+	 * = new TodoTask(); todoTask.setRedirectUrl(redirectUrl);
+	 * todoTask.setBusinessName(todoTaskRedirectMapping.getBusinessName());
+	 * todoTask.setStatus("待审核"); todoTask.setTaskType(taskType);
+	 * todoTask.setBusinessTable(ACCIDENT_MANAGE_TABLE_NAME);
+	 * todoTask.setBusinessType(accidentManage.getType());
+	 * todoTask.setCompositeBusType(accidentManage.getType()); return todoTask;
+	 * }
+	 */
+
+	/*
+	 * private TodoTask handleWeeklyReport(String reportId, String taskType) {
+	 * ProjWeeklyReport report = weeklyReportService.get(reportId); TodoTask
+	 * todoTask = new TodoTask();
+	 * todoTask.setEntryName(report.getProjectName()); TodoTaskRedirectMapping
+	 * mapping = todoTaskRedirectMappingService.get( WEEKLY_REPORT_TABLE_NAME,
+	 * BUSINESS_TYPE); String redirectUrl =
+	 * String.format(mapping.getRedirectUrl(), reportId);
+	 * todoTask.setRedirectUrl(redirectUrl); todoTask.setStatus("待审核");
+	 * todoTask.setBusinessType(BUSINESS_TYPE);
+	 * todoTask.setCompositeBusType(BUSINESS_TYPE);
+	 * todoTask.setBusinessName(mapping.getBusinessName());
+	 * todoTask.setTaskType(taskType); return todoTask; }
+	 */
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private Page queryCurrentTasks(Page page, ActCurrentTask currentTask) {
+		Page rsPage = null;
+
+		if (StringUtils.isEmpty(currentTask.getBusinessType())) {
+			rsPage = currentTaskService.findPage(page, currentTask);
+		} else if (currentTask.getBusinessType().equals(
+				BusinessTypeDefinition.PROJECT_WEEKLY_REPORT.getValue())) {
+			rsPage = currentTaskService.searchTaskWithWeeklyReport(page,
+					currentTask);
+		} else {
+			rsPage = currentTaskService.findPage(page, currentTask);
+		}
+		return rsPage;
+	}
+
+	private void assembleProccessInstanceInfoByIId(TodoTask todoTask) {
+		String procInsId = todoTask.getProcessInstanceId();
+
+		if (!Strings.isNullOrEmpty(procInsId)) {
+			List<HistoricProcessInstance> il = historyService
+					.createHistoricProcessInstanceQuery()
+					.processInstanceId(procInsId)
+					.orderByProcessInstanceStartTime().asc().list();
+			if (il.size() > 0) {
+				if (StringUtils.isNotBlank(il.get(0).getStartUserId())) {
+					User user = UserUtils.getByLoginName(il.get(0)
+							.getStartUserId());
+					if (user != null) {
+						todoTask.setInitiator(user.getName());
+						todoTask.setBeginDate(DateUtils.formatDateTime(il
+								.get(0).getStartTime()));
+					}
+				}
+			}
+		}
+
+	}
+
+}

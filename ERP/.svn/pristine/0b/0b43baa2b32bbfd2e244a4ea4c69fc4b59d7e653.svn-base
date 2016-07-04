@@ -1,0 +1,521 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>劳务结算单管理</title>
+	<meta name="decorator" content="default"/>
+	<%@include file="/WEB-INF/views/include/activitiHeader.jsp"%>
+	<script src="${ctxStatic}/modules/finance/scripts/laborSettlement.js?tsf=${jsVersion}"
+	type="text/javascript">
+	</script>
+	<script
+	src="${ctxStatic}/common/activiti/flowCommonController.js?tsf=${jsVersion}"
+	type="text/javascript"></script>
+	<script type="text/javascript"  src="${ctxStatic}/common/common_service.js" ></script>
+	<script type="text/javascript">
+    	var ctxPath="${ctx}";
+    	$(function(){
+    		$(document).ready(function() {
+    			var price = $("#price").val();
+    			var priceDX = numberDX(price);
+        		$("#priceDX").val(priceDX);
+        		
+				isOffline(isOffline);		
+        	});
+    		
+    		form_validate("inputForm");
+    		/**
+			 * 点击提交按钮
+			 */
+			$("#editBtn").on("click",function(){
+				$("#inputForm").submit();
+			});
+    		
+			//提交
+			$("#startWorkflow").on("click", function(){
+				loading();
+				var laborSettlementId = $("#laborSettlementId").val();
+				//var url = "/a/contract/laborcontract/startAuditFlow/" + contractId;
+				var url = "/a/finance/laborSettlement/startProcess/" + laborSettlementId;
+				startUp.getAsyncData(url, function(data){
+					loaded();
+					if(data !=null && data.code==200){
+						$.jBox.info(data.message, '提示信息');
+						waitTimesAndCallback(callbackWhenActionDone);
+					}else if(data !=null && data.code==500){
+						$.jBox.alert(data.message, '警告');
+					}else if(data && data.status){
+						$.jBox.alert(data.message, '警告');
+					}
+					else{
+						$.jBox.error('操作失败', '错误');
+					}
+
+				});
+			});
+    		
+    		$("#laborContract").on("change", function(){
+    			var contractId = $("#laborContract").val();
+    			//重置带出信息
+    			$("#partyBName").val("");
+				$("#projectName").val("");
+				$("#startDate").val("");
+				$("#endDate").val("");
+				$("#duration").val("");
+				$("#contractPrice").val("");
+    			var detailList = $("#formEdit");
+				detailList.text("");
+				var html = "";
+				
+    			if(contractId){
+    				var url = "/a/finance/laborSettlement/getContractById?contractId="+contractId;
+        			startUp.getData(url, function(data){
+        				if(data){
+        					//计算价格	
+        					var price = $("#price").val();
+        					countPrice(data.contractPrice, price);
+        					//带出信息	
+        					$("#partyBName").val(data.executionName);
+        					$("#projectName").val(data.proName);
+        					$("#startDate").val(data.startdate);
+        					$("#endDate").val(data.endate);
+        					$("#duration").val(data.duration);
+        					$("#contractPrice").val(data.contractPrice);
+        					$("#houseType").val(data.house);
+        					$("#building").val(data.buildingsDisName);
+        					$("#jiaEndDate").val(data.jiaContractDetail.endDate);
+        					
+/*         					//户型下拉
+        					if(data.house){
+        						var houseType = $("#houseType");
+        						houseType.text("");
+        						var houseOptions = stringToOptions(data.house);
+        						houseType.append(houseOptions);
+        					}
+        					//楼栋下拉
+        					if(data.buildings){
+        						var buildings = $("#building");
+        						buildings.text("");
+        						var buildingOptions = stringToOptions(data.buildings);
+        						buildings.append(buildingOptions);
+        					} */
+        					//结算明细	
+        					if(data.detailList){
+            					$.each(data.detailList, function(idx, item){
+            						var id = startUp.uuid();
+            						var tr="<tr list='detailList' index='"+idx+"'>\
+        							<input type='hidden' class='hide' name='detailList["+idx+"].id' id='detailList["+idx+"].id' value='"+id+"'/>\
+        							<input type='hidden' class='hide' name='detailList["+idx+"].laborDetailId' id='detailList["+idx+"].laborDetailId' value='"+item.id+"'/>\
+        							<td>"+dealWithUndefined(item.seriesnumber)+"</td>\
+        							<td>"+dealWithUndefined(item.name)+"</td>\
+        							<td>"+dealWithUndefined(item.length)+"</td>\
+        							<td>"+dealWithUndefined(item.width)+"</td>\
+        							<td>"+dealWithUndefined(item.heigh)+"</td>\
+        							<td>"+dealWithUndefined(item.unit)+"</td>\
+        							<td><input type='text' class='input-medium' id='detailList["+idx+"].afterNumber' \
+        										value='"+item.afterNumber+"' readonly='readonly'/></td>\
+        							<td><input type='text' class='input-medium' name='detailList["+idx+"].realWorkload' \
+        										id='detailList["+idx+"].realWorkload' value='"+item.afterNumber+"' /></td>\
+        							<td><input type='text' class='input-medium' name='detailList["+idx+"].settleWorkload' \
+        										id='detailList["+idx+"].settleWorkload'/></td>\
+        							<td>"+item.contractPrice+"</td>\
+        							<td><input type='text' class='input-medium' name='detailList["+idx+"].price' \
+        										id='detailList["+idx+"].price'/></td>\
+        							</tr>";
+        							html += tr;
+            					});
+            					detailList.append(html);
+            				}
+        				}
+        			});
+    			}
+    			
+    		});
+    		
+    		$("#contentTable tr td>input[name*='realWorkload']").live("keyup",function(){
+    			var realWorkload = $(this).val();
+    			var aa = this.id.replace("realWorkload","afterNumber");
+    			var afterNumber = $("[id='"+aa+"']").val();
+    			if(parseFloat(realWorkload) == parseFloat(afterNumber)){
+    				$(this).attr("style" ,"none");
+    			}
+    			if(parseFloat(realWorkload) > parseFloat(afterNumber)){
+    				$(this).attr("style" ,"color:red");
+    			}
+    			if(parseFloat(realWorkload) < parseFloat(afterNumber)){
+    				$(this).attr("style" ,"color:green");
+    			}
+    		});
+    		
+    		$("#isOffline").on("change",function(){
+				isOffline(isOffline);
+			});
+    		
+    		$("#price").on("keyup", function(){
+    			var contractPrice = $("#contractPrice").val();
+        		var price = $("#price").val();
+        		price = parseFloat(price).toFixed(2);
+        		var priceDX = numberDX(price);
+        		$("#priceDX").val(priceDX);
+    			countPrice(contractPrice,price);
+    		});
+    	});
+		//金额转大写
+   		function numberDX(n) {
+			if (!/^(0|[1-9]\d*)(\.\d+)?$/.test(n)){
+				return "";
+			}
+			var unit = "千百拾亿千百拾万千百拾元角分", str = "";
+				n += "00";
+			var p = n.indexOf('.');
+			if (p >= 0){
+				n = n.substring(0, p) + n.substr(p+1, 2);
+				unit = unit.substr(unit.length - n.length);
+			}
+			for (var i=0; i < n.length; i++){
+				str += '零壹贰叁肆伍陆柒捌玖'.charAt(n.charAt(i)) + unit.charAt(i);
+			}
+			
+			return str.replace(/零(千|百|拾|角)/g, "零").replace(/(零)+/g, "零").replace(/零(万|亿|元)/g, "$1").replace(/(亿)万|壹(拾)/g, "$1$2").replace(/^元零?|零分/g, "").replace(/元$/g, "元整");
+		}
+	    //价格计算	
+    	function countPrice(contractPrice,price){
+    		if(contractPrice && price){
+    			var priceDifference = parseFloat(price)-parseFloat(contractPrice);
+    			priceDifference = Math.abs(priceDifference);
+    			var priceDifferenceRatio = priceDifference / parseFloat(contractPrice) * 100;
+    			priceDifference = priceDifference.toFixed(2);
+    			priceDifferenceRatio = priceDifferenceRatio.toFixed(2);
+    			priceDifferenceRatio = priceDifferenceRatio + "%";
+    			$("#priceDifference").val(priceDifference);
+    			$("#priceDifferenceRatio").val(priceDifferenceRatio);
+    		}
+    		
+    	}
+    	//字符串转下拉选项	
+    	function stringToOptions(string){
+   			var valueArray = string.split(",");
+   			for(var i=0; i<valueArray.length; i++){
+   				var temp = "<option value='"+valueArray[i]+"'>"+valueArray[i]+"</option>";
+   				return temp;
+   			}
+    	}
+    	//分页	
+    	function page(n,s){
+    		$("#pageNo").val(n);
+    		$("#pageSize").val(s);
+    		$("#searchForm").submit();
+    		return false;
+    	}
+    	//是否线下结算
+    	function isOffline(isOffline){
+    		var isOffline = $("#isOffline").val();
+			if(isOffline == "1"){
+				$("#contentTable").hide();
+			}
+			if(isOffline == "0"){
+				$("#contentTable").show();
+			}
+    	}
+    	
+    	function callbackWhenActionDone(){
+			var url = $("#managementPageUrl").val();
+			window.location.href = url;
+		}
+    </script>
+</head>
+<body>
+	<div class="list-content">
+		<div class="nav-operate">
+			<ul class="operationg-new" >
+				<li>
+					<input id="btnCancel" class="btn btn-primary" type="button" value="返 回" onclick="history.go(-1)"/>
+				</li>
+				<shiro:hasAnyRoles name="${fns:getWhitelistsList('lwjs')}">
+				<li>
+					<input type="button" name="editBtn" id="editBtn" class="btn btn-primary" value="保存"/>
+				</li>
+				</shiro:hasAnyRoles>
+				<li class="startWorkflow">
+					<input type="button" name="startWorkflow" id="startWorkflow" class="btn btn-primary" value="提交"/>
+				</li>
+				<li class="signWorkflow">
+					<input type="button" name="signWorkflow" id="signWorkflow" class="btn btn-primary" value="签收"/>
+				</li>
+				<li class="okWorkflow">
+					<input type="button" name="okWorkflow" id="okWorkflow" class="btn btn-primary" value="通过"/>
+				</li>
+				<li class="retrunWorkflow">
+					<input type="button" name="retrunWorkflow" id="retrunWorkflow" class="btn btn-primary" value="驳回"/>
+				</li>
+				<li class="showWorkflowImg">
+					<input type="button" name="showWorkflowImg" id="showWorkflowImg" class="btn btn-primary" value="流程图"/>
+				</li>
+				<li class="showWorkflowAuditHistory"><input type="button"
+					name="showWorkflowAuditHistory" id="showWorkflowAuditHistory"
+					class="btn btn-primary" value="流程轨迹" /></li>
+				<%-- <li>
+					<input  type="button" name="btnUpload" id="btnUpload" class="btn btn-primary" value="附件"/>
+				</li>
+				<li id="showAttach">
+					<c:forEach items="${attachList}" var="obj">
+					<div>
+						<a id="${obj.id}" href="${ctx}${obj.attachUrl}/download?id=${obj.id}">${obj.name} </a>&nbsp;&nbsp;<span id="deleteAttach" deleteId="${obj.id }"  class="glyphicon glyphicon-remove-circle"></span></div>
+					</c:forEach>
+				</li> --%>
+	   		 </ul>
+		</div>
+		
+		<div class="form-content">
+		<sys:message content="${message}"/>
+		<form:form id="inputForm" modelAttribute="laborSettlement" action="${ctx}/finance/laborSettlement/save" method="post" class="form-horizontal">
+			<input type="hidden" id="laborSettlementId" name="id" value="${laborSettlement.id }"/>
+				<form:hidden path="workflowid" id="workflowid" />
+				<form:hidden path="workflowstatus" id="workflowstatus" />
+				<input type="hidden" name="flag" id="flag" value="${flag}" />
+				<input type="hidden" id="managementPageUrl"
+					value="${ctx}/finance/laborSettlement/findMylaborSettlement" />
+			<ul>
+			<c:if test="${flags eq 'view' }">
+				<li>
+					<span class="tab-name">劳务结算编号：</span>
+					<label>
+						<input type="text" id="seriesnumber" class="input-medium " readonly="readonly"
+							 value="${laborSettlement.seriesnumber }">
+						<span class="help-inline"><font color="red">*</font> </span>
+					</label>
+				</li>
+			</c:if>
+			<c:if test="${flags eq 'edit' }">
+			<li>
+				<span class="tab-name">合同编号：</span>
+				<label>
+					<select id="laborContract" name="laborContract" class="input-medium required" >
+		             	<option value="" >${laborSettlement.contractNo }</option>
+		             	<c:forEach items="${contractList}" var="obj">
+							<option value="${obj.id}" 
+								<c:if test="${obj.id==laborSettlement.laborContract.id}">selected="selected"</c:if>>
+								${obj.contractNo}--${obj.buildingsDisName}</option>
+						</c:forEach>
+	            	 </select>
+<%-- 					<form:select id="laborContract" path="laborContract" class="input-medium required">
+						<form:option value="">请选择</form:option>
+						<form:options items="${contractList}" itemLabel="contractNo" itemValue="id" htmlEscape="false"/>
+					</form:select> --%>
+					<span class="help-inline"><font color="red">*</font> </span>
+				</label>
+			</li>
+			</c:if>
+			<c:if test="${flags eq 'view' }">
+				<li>
+				<span class="tab-name">合同编号：</span>
+				<label>
+					<input type="text" id="contractNo" name="contractNo" class="input-medium" readonly="readonly" 
+						value="${laborSettlement.contractNo }"> 
+				</label>
+				</li>
+			</c:if>
+				<li>
+					<span class="tab-name">申请日期：</span>
+					<label>
+						<input type="text" id="createDate" name="createDate" class="input-medium" readonly="readonly"
+							value="<fmt:formatDate value="${laborSettlement.createDate}" pattern="yyyy-MM-dd"/>">
+					</label>
+				</li>
+			<li>
+				<span class="tab-name">施工班组名称：</span>
+				<label>
+					<input type="text" id="partyBName" name="partyBName" class="input-medium" readonly="readonly" 
+						value="${laborSettlement.partyBName }"> 
+				</label>
+			</li>
+			<li>
+				<span class="tab-name">项目名称：</span>
+				<label>
+					<input type="text" id="projectName" name="projectName" class="input-medium" readonly="readonly" 
+						value="${laborSettlement.projectName }"> 
+				</label>
+			</li>
+			<li>
+				<span class="tab-name">户型：</span>
+				<label>
+					<input type="text" id="houseType" name="houseType" class="input-medium" readonly="readonly" 
+						value="${laborSettlement.houseType }"> 
+				</label>
+			</li>
+			<li>
+				<span class="tab-name">楼栋：</span>
+				<label>
+					<input type="text" id="building" name="building" class="input-medium" readonly="readonly" 
+						value="${laborSettlement.buildingsDisName }"> 
+				</label>
+			</li>
+<%-- 			<li>
+				<span class="tab-name">户型：</span>
+				<label>
+					<select id="houseType" name="houseType" class="input-medium" > 
+						<c:forEach items="${houseTypeOptions }" var="obj">
+							<option value="${obj}"
+							<c:if test="${laborSettlement.houseType eq obj}">selected="selected"</c:if>
+							>${obj}</option>
+						</c:forEach>
+					</select>
+				</label>
+			</li>
+			<li>
+				<span class="tab-name">楼栋：</span>
+				<label>
+					<select id="building" name="building" class="input-medium" >
+						<c:forEach items="${buildingOptions }" var="obj">
+							<option value="${obj}"
+							<c:if test="${laborSettlement.building eq obj}">selected="selected"</c:if>
+							>${obj}</option>
+						</c:forEach>
+					</select> 
+				</label>
+			</li> --%>
+			<li>
+				<span class="tab-name">甲方合同竣工日期：</span>
+				<label>
+					<input name="jiaEndDate" id="jiaEndDate" type="text" readonly="readonly" 
+						 value="${laborSettlement.jiaEndDate }" class="input-medium Wdate "
+						onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false});" />
+				</label>
+			</li>
+			<li>
+				<span class="tab-name">开工日期：</span>
+				<label>
+					<input type="text" id="startDate" name="startDate" class="input-medium" readonly="readonly"
+						value="${laborSettlement.startDate}"> 
+				</label>
+			</li>
+			<li>
+				<span class="tab-name">竣工日期：</span>
+				<label>
+					<input type="text" id="endDate" name="endDate" class="input-medium" readonly="readonly"
+						value="${laborSettlement.endDate }"> 
+				</label>
+			</li>
+			<li>
+				<span class="tab-name">施工工期(天数)：</span>
+				<label>
+					<input type="text" id="duration" name="duration" class="input-medium" readonly="readonly" 
+						value="${laborSettlement.duration }"> 
+				</label>
+			</li>
+			<li>
+				<span class="tab-name">合同金额：</span>
+				<label>
+					<input type="text" id="contractPrice" name="contractPrice" class="input-medium"  
+						readonly="readonly" value="${laborSettlement.contractPrice }"> 
+				</label>
+			</li>
+			<li>
+				<span class="tab-name">差异金额：</span>
+				<label>
+					<input type="text" id="priceDifference" name="priceDifference" class="input-medium"  
+						readonly="readonly" value="${laborSettlement.priceDifference }"> 
+				</label>
+			</li>
+			<li>
+				<span class="tab-name">差异率：</span>
+				<label>
+					<input type="text" id="priceDifferenceRatio" name="priceDifferenceRatio" class="input-medium"  
+						readonly="readonly" value="${laborSettlement.priceDifferenceRatio }">
+				</label>
+			</li>
+			<li>
+				<span class="tab-name">实际结算金额：</span>
+				<label>
+					<input type="text" id="price" name="price" class="input-medium number"  
+						value="${laborSettlement.price }"> 
+				</label>
+			</li>
+			<li>
+				<span class="tab-name">实际结算金额(大写)：</span>
+				<label>
+					<input type="text" id="priceDX" name="priceDX" class="input-medium" readonly="readonly" > 
+				</label>
+			</li>
+			
+			<li>
+				<span class="tab-name">是否线下结算：</span>
+				<label>
+					<form:select id="isOffline" path="isOffline" class="input-medium">
+						<form:option value="0">否</form:option>
+						<form:option value="1">是</form:option>
+					</form:select>
+				</label>
+			</li>
+<%-- 			<li class="autoHeight">
+				<span class="tab-name">备注信息：</span>
+				<label>
+					<form:textarea path="remarks" htmlEscape="false" maxlength="255" class="input-xmedium " />
+				</label>
+			</li> --%>
+			</ul>
+		
+		<div class="hr_60"></div>
+		
+		<div class="table_scroll">
+		<table id="contentTable" class="table table-striped table-bordered table-condensed table-eidt">
+			<thead>
+				<tr>
+					<th rowspan="2" style="text-align: center">序号</th>
+					<th rowspan="2" style="text-align: center">名称</th>
+					<th colspan="3" style="text-align: center">规格</th>
+					<th rowspan="2" style="text-align: center">单位</th>
+					<th rowspan="2" style="text-align: center">合同量</th>
+					<th rowspan="2" style="text-align: center">实际劳务结算工程量<br>【施工班组提供】</th>
+					<th rowspan="2" style="text-align: center">最终劳务结算工程量<br>【成本中心审核】</th>
+					<th rowspan="2" style="text-align: center">合同单价</th>
+					<th rowspan="2" style="text-align: center">实际结算金额</th>
+				</tr>
+				<tr>
+					<th>长</th>
+					<th>宽</th>
+					<th>高</th>
+				</tr>
+			</thead>
+			<tbody id="formView">
+				<c:forEach items="${laborSettlement.detailList}" var="detail" varStatus="idx">
+					<tr>
+						<input type="hidden" name="detailList["+${idx.index}+"].id"
+							 id="detailList["+idx${idx.index}"].id" value="+${detail.id }+"/>
+						<td>${detail.seriesnumber }</td>
+						<td>${detail.name }</td>
+						<td>${detail.length }</td>
+						<td>${detail.width }</td>
+						<td>${detail.heigh }</td>
+						<td>${detail.unit }</td>
+						<td>${detail.afterNumber }</td>
+						<td>
+							<input type="text" class="input-medium" name="detailList[${idx.index}].realWorkload" 
+								id="detailList[${idx.index}].realWorkload" value="${detail.realWorkload}"
+								<c:if test="${detail.realWorkload gt detail.afterNumber}"> style="color:red"</c:if>
+								<c:if test="${detail.realWorkload eq detail.afterNumber}"> style="color:none"</c:if>
+								<c:if test="${detail.realWorkload lt detail.afterNumber}"> style="color:green"</c:if>
+								/></td>
+						<td>
+							<input type="text" class="input-medium" name="detailList[${idx.index}].settleWorkload" 
+								id="detailList[${idx.index}].settleWorkload" value="${detail.settleWorkload}"/></td>
+						<td>${detail.contractPrice }</td>
+						<td>
+							<input type="text" class="input-medium" name="detailList[${idx.index}].price" 
+								id="detailList[${idx.index}].price" value="${detail.price}"/></td>
+					 </tr>
+		 		</c:forEach>
+			</tbody>
+			<tbody id="formEdit">
+			
+			</tbody>
+		</table>
+		</div>
+		
+		</form:form>
+	</div>
+	<div class="hr_60"></div>
+</div>
+</body>
+
+</html>

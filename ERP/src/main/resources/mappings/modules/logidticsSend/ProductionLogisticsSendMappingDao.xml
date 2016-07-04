@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.logistics.dao.ProductionLogisticsSendMappingDao">
+    
+	<sql id="productionLogisticsSendMappingColumns">
+		a.id AS "id",
+		a.production_id AS "productionId",
+		a.logistics_send_id AS "logisticsSendId"
+	</sql>
+	
+	<sql id="productionLogisticsSendMappingJoins">
+	</sql>
+    
+	<select id="get" resultType="ProductionLogisticsSendMapping">
+		SELECT 
+			<include refid="productionLogisticsSendMappingColumns"/>
+		FROM btg_production_logistics_send_mapping a
+		<include refid="productionLogisticsSendMappingJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="ProductionLogisticsSendMapping">
+		SELECT 
+			<include refid="productionLogisticsSendMappingColumns"/>
+		FROM btg_production_logistics_send_mapping a
+		<include refid="productionLogisticsSendMappingJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ProductionLogisticsSendMapping">
+		SELECT 
+			<include refid="productionLogisticsSendMappingColumns"/>
+		FROM btg_production_logistics_send_mapping a
+		<include refid="productionLogisticsSendMappingJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_production_logistics_send_mapping(
+			id,
+			production_id,
+			logistics_send_id
+		) VALUES (
+			#{id},
+			#{productionId},
+			#{logisticsSendId}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_production_logistics_send_mapping SET 	
+			production_id = #{productionId},
+			logistics_send_id = #{logisticsSendId}
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 根据物流ID查看发货详细 --> 
+	<select id="getProDetailByLID" parameterType="String" resultType="ProductionLogisticsSendMapping">
+		SELECT 
+			ls.seriesnumber as "ls.seriesnumber",
+			pro.seriesnumber as "pro.seriesnumber",
+			obbase.order_bom_no as "pro.orderBomBase.orderBomNo",
+			obbase.id as "pro.orderBomBase.id",
+			pro.id as "pro.id"
+		FROM btg_production_logistics_send_mapping a
+			left join btg_production pro on pro.id=a.production_id
+			left join btg_order_bom_box obbox on obbox.id=pro.order_bom_box_id
+	 		left join btg_order_bom_base obbase on obbase.id=obbox.order_bom_id
+			left join btg_logistics_send ls on ls.id=a.logistics_send_id
+		where ls.id=#{logisticsSendId} and obbase.del_flag = #{DEL_FLAG_NORMAL}
+		group by obbase.id
+	</select>
+	
+	
+	<update id="delete">
+		DELETE FROM btg_production_logistics_send_mapping
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="deleteByProductionId">
+		DELETE FROM btg_production_logistics_send_mapping
+		WHERE production_id = #{productionId}
+	</delete>
+	
+</mapper>

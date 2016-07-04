@@ -1,0 +1,34 @@
+$(function(){	
+	/**
+	 * 点击添加项目
+	 */
+	$("#addProject2area").on("click",function(){
+		 window.location.href=startUp.getRootPath()+"/a/project2area/form";
+	});
+	
+	$("#editBtn").on("click",function(){
+		//锁屏验证提交表单
+		submitWValidLoading($("#inputForm"));
+	});
+	
+	$(document).on("select2-opening","select[name ='proCode']",function(){
+		var option ="<option value=''>请选择</option>";
+		var url = "/a/project2area/getProjectcode";
+		var sel = $(this);
+		sel.text("");
+		sel.append(option);
+		startUp.getAsyncData(url,function(data){
+				var list = data.list;
+				$.each(list,function(i,item){
+					var option ="<option value='"+item.code+"'>"+item.code+"</option>";
+					sel.append(option);
+				});
+			});
+		
+		});
+});
+
+
+function callbackWhenActionDone(){
+	window.location.href=startUp.getRootPath()+"/a/project/list";
+}

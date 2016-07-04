@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.finance.dao.TransportationSettlementDao">
+    
+	<sql id="transportationSettlementColumns">
+		v.logisticSendSeries,
+		v.supplier,
+		v.supplierName,
+		v.boxNumber,
+		v.area,
+		v.theoryWeight,
+		v.realWeight,
+		v.startArea,
+		v.length,
+		v.driver,
+		v.driverTel,
+		v.tracer,
+		v.clerk,
+		v.sendDate,
+		v.factoryName,
+		v.projectId,
+		a.id AS "id",
+		a.logistic_send AS "logisticSend",
+		a.seriesnumber AS "seriesnumber",
+		a.business_type AS "businessType",
+		a.transportation_way AS "transportationWay",
+		a.settlement_way AS "settlementWay",
+		a.load_price AS "loadPrice",
+		a.unload_times AS "unloadTimes",
+		a.unload_price AS "unloadPrice",
+		a.unload_total_price AS "unloadTotalPrice",
+		ifnull(a.settle_weight, v.theoryWeight) AS "settleWeight",
+		a.contract_price AS "contractPrice",
+		a.sum_price AS "sumPrice",
+		a.single_car_price AS "singleCarPrice",
+		a.split_price AS "splitPrice",
+		a.split_light_price AS "splitLightPrice",
+		a.statue AS "statue",
+		a.payment_seriesnumber AS "paymentSeriesnumber",
+		a.payment_type AS "paymentType",
+		a.payment_date AS "paymentDate",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.receiver AS "receiver",
+		a.receive_place AS "receivePlace",
+		a.weigh AS "weigh",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus"
+	</sql>
+	
+	<sql id="transportationSettlementJoins">
+		JOIN view_transportation_settlement AS v ON v.logisticSend = a.logistic_send
+	</sql>
+    
+	<select id="get" resultType="TransportationSettlement">
+		SELECT 
+			<include refid="transportationSettlementColumns"/>
+		FROM btg_transportation_settlement a
+		<include refid="transportationSettlementJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="TransportationSettlement">
+		SELECT 
+			<include refid="transportationSettlementColumns"/>
+		FROM btg_transportation_settlement a
+		<include refid="transportationSettlementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="logisticSend != null and logisticSend != ''">
+				AND a.logistic_send = #{logisticSend}
+			</if>
+			<if test="statue != null and statue != ''">
+				AND a.statue = #{statue}
+			</if>
+			<if test="search != null and search !=''">
+				and v.logisticSendSeries like concat('%', #{search} ,'%')
+				or a.seriesnumber like concat('%', #{search} ,'%')
+				or v.supplierName like concat('%', #{search} ,'%')
+				or v.factoryName like concat('%', #{search} ,'%')
+				or a.payment_seriesnumber like concat('%', #{search} ,'%')
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY v.logisticSendSeries DESC , a.statue ASC
+			</otherwise>
+			
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="TransportationSettlement">
+		SELECT 
+			<include refid="transportationSettlementColumns"/>
+		FROM btg_transportation_settlement a
+		<include refid="transportationSettlementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_transportation_settlement(
+			id,
+			logistic_send,
+			seriesnumber,
+			business_type,
+			transportation_way,
+			settlement_way,
+			load_price,
+			unload_times,
+			unload_price,
+			unload_total_price,
+			settle_weight,
+			contract_price,
+			sum_price,
+			single_car_price,
+			split_price,
+			split_light_price,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			receiver,
+			receive_place,
+			weigh
+		) VALUES (
+			#{id},
+			#{logisticSend},
+			#{seriesnumber},
+			#{businessType},
+			#{transportationWay},
+			#{settlementWay},
+			#{loadPrice},
+			#{unloadTimes},
+			#{unloadPrice},
+			#{unloadTotalPrice},
+			#{settleWeight},
+			#{contractPrice},
+			#{sumPrice},
+			#{singleCarPrice},
+			#{splitPrice},
+			#{splitLightPrice},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{receiver},
+			#{receivePlace},
+			#{weigh}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_transportation_settlement SET 	
+			logistic_send = #{logisticSend},
+			seriesnumber = #{seriesnumber},
+			business_type = #{businessType},
+			transportation_way = #{transportationWay},
+			settlement_way = #{settlementWay},
+			load_price = #{loadPrice},
+			unload_times = #{unloadTimes},
+			unload_price = #{unloadPrice},
+			unload_total_price = #{unloadTotalPrice},
+			settle_weight = #{settleWeight},
+			contract_price = #{contractPrice},
+			sum_price = #{sumPrice},
+			single_car_price = #{singleCarPrice},
+			split_price = #{splitPrice},
+			split_light_price = #{splitLightPrice},
+			statue = #{statue},
+			payment_seriesnumber = #{paymentSeriesnumber},
+			payment_type = #{paymentType},
+			payment_date = #{paymentDate},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			receiver = #{receiver},
+			receive_place = #{receivePlace},
+			weigh = #{weigh},
+			workflow_id = #{workflowid},
+			workflow_status = #{workflowstatus}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_transportation_settlement SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<!--由收货通知单号获取结算信息-->
+	<select id="getSettlementByLogisticSendId" parameterType="String" resultType="TransportationSettlement">
+		SELECT
+			a.*
+		FROM
+			view_transportation_settlement AS a
+		WHERE 
+			a.logisticSend = #{logisticSendId}
+	</select>
+	
+	<!--由收货通知单号获取下料单结算信息-->
+	<select id="findSettlementDetailByLogisticSendId" parameterType="String" resultType="TransportationSettlementDetail">				    	
+		SELECT
+			a.*
+		FROM
+			view_transportation_settlement_detail AS a
+		WHERE
+			a.logisticSend = #{logisticSendId}
+	</select>
+	
+	
+	<select id="findMyTransportationSettlement" resultType="TransportationSettlement">
+		SELECT 
+			<include refid="transportationSettlementColumns"/>
+		FROM btg_transportation_settlement a
+			<include refid="transportationSettlementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<!-- 
+			<if test="createBy != null and createBy.id!=null and createBy.id != ''">
+				and act.user_id = #{currentUser.id}
+			</if> -->
+			<if test="search != null and search !=''">
+				and (v.logisticSendSeries like concat('%', #{search} ,'%')
+				or a.seriesnumber like concat('%', #{search} ,'%')
+				or v.supplierName like concat('%', #{search} ,'%')
+				or v.factoryName like concat('%', #{search} ,'%')
+				or a.payment_seriesnumber like concat('%', #{search} ,'%'))
+			</if>
+		</where>
+		order by (a.workflow_status+0) asc,a.update_by desc
+	</select>
+	<select id="findUnAuditTransportationSettlement" resultType="TransportationSettlement">
+		SELECT 
+			<include refid="transportationSettlementColumns"/>
+		FROM btg_transportation_settlement a
+			<include refid="transportationSettlementJoins"/>
+			join btg_act_current_task act on act.entry_id=a.id
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="createBy != null and createBy.id!=null and createBy.id != ''">
+				and act.user_id = #{currentUser.id}
+			</if>
+			<if test="search != null and search !=''">
+				and (v.logisticSendSeries like concat('%', #{search} ,'%')
+				or a.seriesnumber like concat('%', #{search} ,'%')
+				or v.supplierName like concat('%', #{search} ,'%')
+				or v.factoryName like concat('%', #{search} ,'%')
+				or a.payment_seriesnumber like concat('%', #{search} ,'%'))
+			</if>
+		</where>
+		order by (a.workflow_status+0) asc,a.update_by desc
+	</select>
+	
+	<select id="findAuditDoneTransportationSettlement" resultType="TransportationSettlement">
+		SELECT 
+			<include refid="transportationSettlementColumns"/>
+		FROM btg_transportation_settlement a
+			<include refid="transportationSettlementJoins"/>
+			left join btg_act_done_task adt on adt.entry_id=a.id
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="createBy != null and createBy.id!=null and createBy.id != ''">
+				and (a.create_by = #{createBy.id} or adt.user_id = #{currentUser.id})
+			</if>
+			<if test="search != null and search !=''">
+				and (v.logisticSendSeries like concat('%', #{search} ,'%')
+				or a.seriesnumber like concat('%', #{search} ,'%')
+				or v.supplierName like concat('%', #{search} ,'%')
+				or v.factoryName like concat('%', #{search} ,'%')
+				or a.payment_seriesnumber like concat('%', #{search} ,'%'))
+			</if>
+		</where>
+		order by (a.workflow_status+0) asc,a.update_by desc
+	</select>
+</mapper>

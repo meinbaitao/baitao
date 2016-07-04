@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.report.weekly.mianly.dao.BuildingScheduleDao">
+    
+	<sql id="buildingScheduleColumns">
+		a.id AS "id",
+		a.report_id AS "reportId",
+		a.contract_no AS "contractNo",
+		a.district AS "district",
+		a.build_no AS "buildNo",
+		a.work_group_gj AS "workGroupGj",
+		a.work_group_sc AS "workGroupSc",
+		a.people_number_gj AS "peopleNumberGj",
+		a.people_number_sc AS "peopleNumberSc",
+		a.project_amount AS "projectAmount",
+		a.transfer_time_gj AS "transferTimeGj",
+		a.transfer_time_sc AS "transferTimeSc",
+		a.plan_finish_rate_gj AS "planFinishRateGj",
+		a.plan_finish_rate_sc AS "planFinishRateSc",
+		a.fact_finish_rate_gj AS "factFinishRateGj",
+		a.fact_finish_rate_sc AS "factFinishRateSc",
+		a.nw_finish_rate_gj AS "nwFinishRateGj",
+		a.nw_finish_rate_sc AS "nwFinishRateSc",
+		a.production_value AS "productionValue",
+		a.pro_value_schedule AS "proValueSchedule",
+		a.schedule_pic_south AS "schedulePicSouth",
+		a.schedule_pic_north AS "schedulePicNorth",
+		a.schedule_pic_east AS "schedulePicEast",
+		a.schedule_pic_west AS "schedulePicWest",
+		a.jia_contract_no AS "jiaContractNo",
+		a.plan_transfer_date as "planTransferDate",
+		a.plan_finish_date as "planFinishDate",
+		a.member_count as "memberCount",
+		a.hurry as "hurry",
+		a.subsidy as "subsidy"
+	</sql>
+	
+	<sql id="buildingScheduleJoins">
+		 join btg_proj_weekly_report b on b.id = a.report_id
+	</sql>
+    
+	<select id="get" resultType="BuildingSchedule">
+		SELECT 
+			<include refid="buildingScheduleColumns"/>
+		FROM btg_building_schedule a
+		<include refid="buildingScheduleJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="BuildingSchedule">
+		SELECT 
+			<include refid="buildingScheduleColumns"/>
+		FROM btg_building_schedule a
+		<include refid="buildingScheduleJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="reportId != null and reportId != ''">
+				and a.report_id = #{reportId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				order by a.build_no
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="BuildingSchedule">
+		SELECT 
+			<include refid="buildingScheduleColumns"/>
+		FROM btg_building_schedule a
+		<include refid="buildingScheduleJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="reportId != null and reportId != ''">
+				and a.report_id = #{reportId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_building_schedule(
+			id,
+			report_id,
+			contract_no,
+			district,
+			build_no,
+			work_group_gj,
+			work_group_sc,
+			people_number_gj,
+			people_number_sc,
+			project_amount,
+			transfer_time_gj,
+			transfer_time_sc,
+			plan_finish_rate_gj,
+			plan_finish_rate_sc,
+			fact_finish_rate_gj,
+			fact_finish_rate_sc,
+			nw_finish_rate_gj,
+			nw_finish_rate_sc,
+			production_value,
+			pro_value_schedule,
+			schedule_pic_south,
+			schedule_pic_north,
+			schedule_pic_east,
+			schedule_pic_west,
+			jia_contract_no,
+			plan_transfer_date,
+			plan_finish_date,
+			member_count,
+			hurry,
+			subsidy
+		) VALUES (
+			#{id},
+			#{reportId},
+			#{contractNo},
+			#{district},
+			#{buildNo},
+			#{workGroupGj},
+			#{workGroupSc},
+			#{peopleNumberGj},
+			#{peopleNumberSc},
+			#{projectAmount},
+			#{transferTimeGj},
+			#{transferTimeSc},
+			#{planFinishRateGj},
+			#{planFinishRateSc},
+			#{factFinishRateGj},
+			#{factFinishRateSc},
+			#{nwFinishRateGj},
+			#{nwFinishRateSc},
+			#{productionValue},
+			#{proValueSchedule},
+			#{schedulePicSouth},
+			#{schedulePicNorth},
+			#{schedulePicEast},
+			#{schedulePicWest},
+			#{jiaContractNo},
+			#{planTransferDate},
+			#{planFinishDate},
+			#{memberCount},
+			#{hurry},
+			#{subsidy}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_building_schedule SET
+			report_id = #{reportId},
+			contract_no = #{contractNo},
+			district = #{district},
+			build_no = #{buildNo},
+			work_group_gj = #{workGroupGj},
+			work_group_sc = #{workGroupSc},
+			people_number_gj = #{peopleNumberGj},
+			people_number_sc = #{peopleNumberSc},
+			project_amount = #{projectAmount},
+			transfer_time_gj = #{transferTimeGj},
+			transfer_time_sc = #{transferTimeSc},
+			plan_finish_rate_gj = #{planFinishRateGj},
+			plan_finish_rate_sc = #{planFinishRateSc},
+			fact_finish_rate_gj = #{factFinishRateGj},
+			fact_finish_rate_sc = #{factFinishRateSc},
+			nw_finish_rate_gj = #{nwFinishRateGj},
+			nw_finish_rate_sc = #{nwFinishRateSc},
+			production_value = #{productionValue},
+			pro_value_schedule = #{proValueSchedule},
+			schedule_pic_south = #{schedulePicSouth},
+			schedule_pic_north = #{schedulePicNorth},
+			schedule_pic_east = #{schedulePicEast},
+			schedule_pic_west = #{schedulePicWest},
+			jia_contract_no = #{jiaContractNo}
+			<if test="planTransferDate!=null and planTransferDate!=''">
+				,plan_transfer_date = #{planTransferDate}
+			</if>
+			<if test="planFinishDate!=null and planFinishDate!=''">
+				,plan_finish_date = #{planFinishDate}
+			</if>
+			<if test="memberCount!=null and memberCount!=''">
+				,member_count = #{memberCount}
+			</if>
+			<if test="hurry!=null and hurry!=''">
+				,hurry = #{hurry}
+			</if>
+			<if test="subsidy!=null and subsidy!=''">
+				,subsidy = #{subsidy}
+			</if>
+		WHERE id = #{id}
+	</update>
+
+
+	
+	<update id="delete">
+		UPDATE btg_building_schedule
+		set
+			def_flag = #{defFlag}
+		WHERE id = #{id}
+	</update>
+
+
+	<delete id="deleteByIdForUpdate">
+		delete FROM btg_building_schedule where id=#{id}
+	</delete>
+
+	<select id="getOneByProjectAndBuildNo" resultType="BuildingSchedule" >
+		select
+		<include refid="buildingScheduleColumns" />
+		from btg_building_schedule a
+		<include refid="buildingScheduleJoins" />
+		<where>
+			b.project_id = #{projectId}
+			and b.week_serial_num = #{weekSerialNum}
+			and a.del_flag = #{delFlag}
+			and a.build_no=#{buildNo}
+		</where>
+		limit 1
+	</select>
+
+
+	<update id="updateSouthImage">
+		update btg_building_schedule
+		 set schedule_pic_south = #{schedulePicSouth}
+		 where id = #{id}
+	</update>
+
+	<update id="updateNorthImage">
+		update btg_building_schedule
+		set schedule_pic_north = #{schedulePicNorth}
+		where id = #{id}
+	</update>
+
+	<update id="updateEastImage">
+		update btg_building_schedule
+		set schedule_pic_east = #{schedulePicEast}
+		where id = #{id}
+	</update>
+
+	<update id="updateWestImage">
+		update btg_building_schedule
+		set schedule_pic_west = #{schedulePicWest}
+		where id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.todotask.dao.TodoTaskRedirectMappingDao">
+
+	<sql id="todo_task_columns">
+		a.business_key AS "businessKey",
+		a.redirect_url AS "redirectUrl",
+		a.business_name AS "businessName",
+		a.sub_type AS "subType"
+	</sql>
+
+
+	<select id="get" resultType="com.bt.modules.todotask.entity.TodoTaskRedirectMapping" >
+		select
+		 <include refid="todo_task_columns" />
+		 from btg_todotask_redirect_mapping a
+		 <where>
+			 a.business_key = #{businessKey}
+			 and a.sub_type = #{subType}
+		 </where>
+		 limit 1
+	</select>
+
+
+	
+</mapper>

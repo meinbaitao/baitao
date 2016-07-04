@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.receiving.dao.ReceivingAccidentDao">
+    
+	<sql id="receivingAccidentColumns">
+		a.receiving_accident_id AS "receivingAccidentId",
+		a.isinfluence AS "isinfluence",
+		a.type AS "type",
+		a.description AS "description",
+		a.annex AS "annex",
+		a.solution AS "solution"
+	</sql>
+	
+	<sql id="receivingAccidentJoins">
+	</sql>
+    
+	<select id="get" resultType="ReceivingAccident">
+		SELECT 
+			<include refid="receivingAccidentColumns"/>
+		FROM btg_receiving_accident a
+		<include refid="receivingAccidentJoins"/>
+		WHERE a.receiving_accident_id = #{receivingAccidentId}
+	</select>
+	
+	<select id="findList" resultType="ReceivingAccident">
+		SELECT 
+			<include refid="receivingAccidentColumns"/>
+		FROM btg_receiving_accident a
+		<include refid="receivingAccidentJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ReceivingAccident">
+		SELECT 
+			<include refid="receivingAccidentColumns"/>
+		FROM btg_receiving_accident a
+		<include refid="receivingAccidentJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_receiving_accident(
+			receiving_accident_id,
+			isinfluence,
+			type,
+			description,
+			annex,
+			solution
+		) VALUES (
+			#{receivingAccidentId},
+			#{isinfluence},
+			#{type},
+			#{description},
+			#{annex},
+			#{solution}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_receiving_accident SET 	
+			isinfluence = #{isinfluence},
+			type = #{type},
+			annex = #{annex},
+			description = #{description},
+			solution = #{solution}
+		WHERE receiving_accident_id = #{receivingAccidentId}
+	</update>
+	
+	<update id="delete">
+		<!-- DELETE FROM btg_receiving_accident
+		WHERE receiving_accident_id = #{receivingAccidentId} -->
+		UPDATE btg_receiving_accident SET 	
+			del_falg = #{DEL_FLAG_DELETE}
+		WHERE receiving_accident_id = #{receivingAccidentId}
+	</update>
+	
+</mapper>

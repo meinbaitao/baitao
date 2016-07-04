@@ -1,0 +1,31 @@
+package com.bt.modules.material.dao;
+
+import java.util.List;
+
+import com.bt.modules.houseType.entity.HouseType;
+import com.bt.modules.material.entity.Material;
+import com.bt.modules.material.entity.SettlementMaterial;
+import com.thinkgem.jeesite.common.persistence.CrudDao;
+import com.thinkgem.jeesite.common.persistence.annotation.MyBatisDao;
+
+/**
+ * 可配置加工项物料信息DAO接口
+ * @author zjs
+ * @version 2016-05-06
+ */
+@MyBatisDao
+public interface SettlementMaterialDao extends CrudDao<SettlementMaterial> {
+	 
+	/**
+	 * 查询加工类别
+	 * @return
+	 */
+	public List<String> selectSettlementType();
+	
+	/**
+	 * 获取单个对象
+	 * @param settlementMaterial
+	 * @return
+	 */
+	public List<SettlementMaterial> getOne(SettlementMaterial settlementMaterial);
+}

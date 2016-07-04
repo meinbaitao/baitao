@@ -1,0 +1,641 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.production.dao.ProductionDao">
+    
+	<sql id="productionColumns">
+		a.id AS "id",
+		a.seriesnumber AS "seriesnumber",
+		min(a.status) AS "status",
+		a.count AS "count",
+		a.order_bom_box_id AS "orderBomBox.id",
+		a.assignto AS "assignto.id",
+		a.documentaryby AS "documentaryby.id",
+		a.settleby AS "settleby.id",
+		a.supp AS "supp.id",
+		a.finishDate AS "finishDate",
+		min(a.plan_send_date) AS "planSendDate",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		ifnull(a.remarks,"") AS "remarks",
+		ifnull(a.director_remarks,"") AS "directorremarks",
+		ifnull(a.amaldar_remarks,"") AS "amaldarremarks",
+		a.del_flag AS "delFlag",
+		a.workflow_id AS "workflowId",
+		a.workflow_status AS "workflowStatus"
+	</sql>
+	
+	<sql id="productionJoins">
+	</sql>
+    
+	<select id="get" resultType="Production">
+		SELECT 
+			<include refid="productionColumns"/>
+		FROM btg_production a
+		<include refid="productionJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Production">
+		SELECT 
+			<include refid="productionColumns"/>
+		FROM btg_production a
+		<include refid="productionJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Production">
+		SELECT 
+			<include refid="productionColumns"/>
+		FROM btg_production a
+		<include refid="productionJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_production(
+			id,
+			seriesnumber,
+			status,
+			count,
+			project_id,
+			order_bom_box_id,
+			assignto,
+			documentaryby,
+			settleby,
+			supp,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			director_remarks,
+			amaldar_remarks,
+			del_flag,
+			workflow_id,
+			workflow_status
+		) VALUES (
+			#{id},
+			#{seriesnumber},
+			#{status},
+			#{count},
+			#{project.id},
+			#{orderBomBox.id},
+			#{assignto.id},
+			#{documentaryby.id},
+			#{settleby.id},
+			#{supp.id},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{directorremarks},
+			#{amaldarremarks},
+			#{delFlag},
+			#{workflowid},
+			#{workflowstatus}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_production SET 	
+			update_date = now()
+			<if test="finishDate != null and finishDate != ''">
+				,finishDate = #{finishDate}
+			</if>
+			<if test="orderDate !=null and orderDate != ''">
+				,orderDate=#{orderDate}
+			</if>
+			<if test="planSendDate != null and planSendDate != ''">
+				,plan_send_date = #{planSendDate}
+			</if>
+			<if test="orderBomBox !=null and orderBomBox.id != null and orderBomBox.id != ''">
+				,order_bom_box_id = #{orderBomBox.id}
+			</if>
+			<if test="assignto !=null and assignto.id != null and assignto.id != ''">
+				,assignto = #{assignto.id}
+			</if>
+			<if test="documentaryby !=null and documentaryby.id != null and documentaryby.id != ''">
+				,documentaryby = #{documentaryby.id}
+			</if>
+			<if test="settleby !=null and settleby.id != null and settleby.id != ''">
+				,settleby = #{settleby.id}
+			</if>
+			<if test="supp !=null and supp.id != null and supp.id != ''">
+				,supp = #{supp.id}
+			</if>
+			<if test="updateBy !=null and updateBy.id != null and updateBy.id != ''">
+				,update_by = #{updateBy.id}
+			</if>
+			<if test="status !=null and status != ''">
+				,status = #{status}
+			</if>
+			<if test="remarks !=null and remarks != ''">
+				,remarks = #{remarks}
+			</if>
+			<if test="directorremarks !=null and directorremarks != ''">
+				,director_remarks = #{directorremarks}
+			</if>
+			<if test="amaldarremarks !=null and amaldarremarks != ''">
+				,amaldar_remarks = #{amaldarremarks}
+			</if>
+			<if test="workflowid !=null and workflowid != ''">
+				,workflow_id = #{workflowid}
+			</if>
+			<if test="workflowstatus !=null and workflowstatus != ''">
+				,workflow_status = #{workflowstatus}
+			</if>
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_production SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<sql id="projectMemberJoins">
+		left join v_project_member_str memberstr on memberstr.id=project.id
+	</sql>
+	<!-- 根据已有的生产单显示相关的项目列表数据 -->
+	<select id="getListForProject" resultType="Production">
+		SELECT 
+			   obbase.order_bom_no as "orderBomBase.orderBomNo",
+			   obbase.order_type as "orderBomBase.orderType",
+			   obbase.id as "orderBomBase.id",
+			   obbox.box_no as "orderBomBox.boxNo",
+			   obdetail.materiel_name as "orderBomDetail.materielName",
+			   obdetail.materiel_no as "orderBomDetail.materielNo",
+			   obdetail.id as "orderBomDetail.id",
+			   obdetail.count as "orderBomDetail.count",
+			   obdetail.box_no as "orderBomDetail.boxNo",
+			   ifnull(sum(obdetail.area),0) as "orderBomDetail.area",
+			   dict.label as "orderBomBase.stoneColorName",
+			   project.id as "project.id",
+			   project.name as "project.name",
+			   project.address as "project.address",
+			   case when (project.operation_specialist_bid=#{currentUser.id}) then 'true'
+			   		else 'false' end as "operationSpecialistFlag",
+			   case when (project.coordinator_leader_bid=#{currentUser.id}) then 'true'
+			   		else 'false' end as "coordinatorLeaderFlag",
+			   case when (a.assignto=#{currentUser.id}) then 'true'
+			   		else 'false' end as "assigntoFlag",
+			   sub.id as "sub.id",
+			   sub.stone_expect_date as "sub.stoneExpectDate",
+			<include refid="productionColumns"/>
+		FROM btg_production a
+			left join btg_order_bom_box obbox on obbox.id=a.order_bom_box_id
+	 		join btg_order_bom_base obbase on obbase.id=obbox.order_bom_id and obbase.del_flag = #{DEL_FLAG_NORMAL}
+	 		left join btg_order_bom_detail obdetail on obdetail.order_bom_id=obbox.order_bom_id and obdetail.box_no=obbox.box_no
+	 		left join sys_dict dict on dict.value = obbase.stone_color_name
+	 		left join btg_subproject sub on sub.id=obbase.sub_proj_id
+	 		join btg_project project on project.id=sub.project_id
+	 		left join btg_supplier supp on supp.id=a.supp
+	 		left join sys_user usersupp on usersupp.id=supp.business_preson
+	 		<include refid="projectMemberJoins"/>
+		where project.del_flag = #{DEL_FLAG_NORMAL} 
+			<if test="project !=null and project.id != null and project.id != ''">
+				and project.id = #{project.id}
+			</if>
+			<if test="project !=null and project.coordinatorLeaderBid != null and project.coordinatorLeaderBid != ''">
+				and project.coordinator_leader_bid = #{project.coordinatorLeaderBid}
+			</if>
+			<if test="assignto !=null and assignto.id != null and assignto.id != ''">
+				and a.assignto = #{assignto.id}
+			</if>
+			<if test="supp !=null and supp.businessPreson !=null and supp.businessPreson != ''">
+				and usersupp.id = #{supp.businessPreson}
+			</if>
+			<if test="documentaryby !=null and documentaryby.id !=null and documentaryby.id != ''">
+				and a.documentaryby = #{documentaryby.id}
+			</if>
+			<if test="status !=null and status != ''">
+				and a.status = #{status}
+			</if>
+			<if test="gtVal !=null and gtVal != ''">
+				and a.status &gt; (#{gtVal}+0)
+			</if>
+			<if test="gtEqVal !=null and gtEqVal != ''">
+				and a.status &gt;= (#{gtEqVal}+0)
+			</if>
+			<if test="ids !=null and ids.size > 0 ">
+				and a.id in
+						<foreach collection="ids" item="id" index="i"
+		           			 open="(" close=")" separator=",">
+		           		 			#{id}
+		        		</foreach>
+			</if>
+			<if test="aboutUser !=null and aboutUser.id != null and aboutUser.id != ''">
+				<![CDATA[ and (FIND_IN_SET(#{aboutUser.id},memberstr.member_list_str)>0) ]]>
+			</if>
+			
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='proName'">
+				group by project.name
+			</if>
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='obbase'">
+				group by obbase.id
+				order by a.update_date desc,obbase.building asc
+			</if>
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='obdetail'">
+				group by obdetail.id
+				order by obdetail.box_no
+			</if>
+	</select>
+	<select id="getDetail" resultType="Production">
+		SELECT ifnull(auser.name,"") as "assignto.name",
+			   obbase.order_bom_no as "orderBomBase.orderBomNo",
+			   obbase.order_type as "orderBomBase.orderType",
+			   obbase.id as "orderBomBase.id",
+			   obdetail.materiel_name as "orderBomDetail.materielName",
+			   obdetail.materiel_no as "orderBomDetail.materielNo",
+			   obdetail.id as "orderBomDetail.id",
+			   obdetail.count as "orderBomDetail.count",
+			   obbox.id as "orderBomBox.id",
+			   ifnull(obbox.status,"") as "orderBomBox.status",
+			   obdetail.box_no as "orderBomDetail.boxNo",
+			   ifnull(supp.name,"") as "supp.name",
+			   ifnull(usersupp.name,"") as "supp.businessPreson",
+			   ifnull(supp.business_tel,"") as "supp.businessTel",
+			   sub.stone_expect_date as "sub.stoneExpectDate",
+			   project.id as "project.id",
+			   project.address as "project.address",
+			   case when (a.assignto=#{currentUser.id}) then 'true'
+			   		else 'false' end as "assigntoFlag",
+			   ifnull(documentaryUser.name,"") as "documentaryby.name",
+			<include refid="productionColumns"/>
+		FROM btg_production a
+			left join btg_order_bom_box obbox on obbox.id=a.order_bom_box_id
+	 		join btg_order_bom_base obbase on obbase.id=obbox.order_bom_id
+	 		left join btg_order_bom_detail obdetail on obdetail.order_bom_id=obbox.order_bom_id and obdetail.box_no=obbox.box_no
+	 		left join sys_user auser on auser.id=a.assignto
+	 		left join btg_supplier supp on supp.id=a.supp
+	 		left join sys_user usersupp on usersupp.id=supp.business_preson
+	 		left join btg_subproject sub on sub.id=obbase.sub_proj_id
+	 		left join btg_project project on project.id=sub.project_id
+	 		left join sys_user documentaryUser on documentaryUser.id=a.documentaryby
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="assignto !=null and assignto.id != null and assignto.id != ''">
+				and a.assignto = #{assignto.id}
+			</if>
+			<if test="status !=null and status != ''">
+				and a.status = #{status}
+			</if>
+			<if test="gtVal !=null and gtVal != ''">
+				and a.status &gt; (#{gtVal}+0)
+			</if>
+			<if test="gtEqVal !=null and gtEqVal != ''">
+				and a.status &gt;= (#{gtEqVal}+0)
+			</if>
+			<if test="supp !=null and supp.businessPreson !=null and supp.businessPreson != ''">
+				and usersupp.id = #{supp.businessPreson}
+			</if>
+			<if test="orderBomBox !=null and orderBomBox.orderBomId != null and orderBomBox.orderBomId != ''">
+				and obbase.id = #{orderBomBox.orderBomId}
+			</if>
+			<if test="ids !=null and ids.size > 0 ">
+				and a.id in
+						<foreach collection="ids" item="id" index="i"
+		           			 open="(" close=")" separator=",">
+		           		 			#{id}
+		        		</foreach>
+			</if>
+			
+		</where>
+		group by obbox.id
+		ORDER BY (a.status+0) asc,a.update_date,obbox.box_no DESC
+	</select>
+	
+	<!-- 根据下料单ID直接修改全部相关数据的状态以及相关字段 -->
+	<update id="updateStatusByOBBaseIDs">
+		update btg_production a 
+			left join btg_order_bom_box obbox on obbox.id=a.order_bom_box_id
+	 		join btg_order_bom_base obbase on obbase.id=obbox.order_bom_id
+	 		left join btg_subproject sub on sub.id=obbase.sub_proj_id
+	 		join btg_project project on project.id=sub.project_id
+	 		<if test="supp !=null and supp.businessPreson != null and supp.businessPreson != ''">
+				left join btg_supplier supp on supp.id=a.supp
+			</if>
+		set 
+			a.status=#{status}
+			<if test="sub !=null and sub.stoneExpectDate != '' and sub.stoneExpectDate != null">
+				,sub.stone_expect_date=#{sub.stoneExpectDate}
+			</if>
+			<if test="orderDate !=null and orderDate != ''">
+				,a.orderDate=#{orderDate}
+			</if>
+			<if test="finishDate != null and finishDate != ''">
+				,a.finishDate = #{finishDate}
+			</if>
+			<if test="directorremarks !=null and directorremarks != ''">
+				,a.director_remarks=#{directorremarks}
+			</if>
+			<if test="amaldarremarks !=null and amaldarremarks != ''">
+				,a.amaldar_remarks=#{amaldarremarks}
+			</if>
+			<if test="remarks !=null and remarks != ''">
+				,a.remarks = #{remarks}
+			</if>
+			<if test="assignto !=null and assignto.id != null and assignto.id != ''">
+				,a.assignto = #{assignto.id}
+			</if>
+			<if test="documentaryby !=null and documentaryby.id != null and documentaryby.id != ''">
+				,a.documentaryby = #{documentaryby.id}
+			</if>
+			<if test="settleby !=null and settleby.id != null and settleby.id != ''">
+				,a.settleby = #{settleby.id}
+			</if>
+			<if test="supp !=null and supp.id != null and supp.id != ''">
+				,a.supp = #{supp.id}
+			</if>
+		where 
+			obbase.id in 
+					<foreach collection="ids" item="id" index="i"
+	           			 open="(" close=")" separator=",">
+	           		 			#{id}
+	        		</foreach>
+	        <if test="originStatus !=null and originStatus != ''">
+				and a.status=#{originStatus}
+			</if>
+			<if test="scjl !=null and scjl.id != null and scjl.id != ''">
+				and a.assignto = #{scjl.id}
+			</if>
+			<if test="supp !=null and supp.businessPreson != null and supp.businessPreson != ''">
+				and supp.business_preson = #{supp.businessPreson}
+			</if>
+	</update>
+	
+	<select id="getIdsByObbIds" resultType="Production">
+		select 
+				sub.id as "sub.id",															<!-- 二级项目id -->
+				sub.building as "sub.building",												<!-- 楼栋号 -->
+				sub.building_display_name as "sub.buildingDisplayName",						<!-- 显示楼栋号 -->
+				sub.stone_expect_date as "sub.stoneExpectDate",								<!-- 石材要求到货时间 -->
+				<include refid="productionColumns"/>  
+			from btg_production a 
+				left join btg_order_bom_box obbox on obbox.id=a.order_bom_box_id
+		 		join btg_order_bom_base obbase on obbase.id=obbox.order_bom_id
+		 		left join btg_subproject sub on sub.id=obbase.sub_proj_id
+		 		join btg_project project on project.id=sub.project_id
+	 		<if test="supp !=null and supp.businessPreson != null and supp.businessPreson != ''">
+				left join btg_supplier supp on supp.id=a.supp
+			</if>
+		where 
+			obbase.id in 
+					<foreach collection="ids" item="id" index="i"
+	           			 open="(" close=")" separator=",">
+	           		 			#{id}
+	        		</foreach>
+	        <if test="originStatus !=null and originStatus != ''">
+				and a.status=#{originStatus}
+			</if>
+			<if test="scjl !=null and scjl.id != null and scjl.id != ''">
+				and a.assignto = #{scjl.id}
+			</if>
+			<if test="supp !=null and supp.businessPreson != null and supp.businessPreson != ''">
+				and supp.business_preson = #{supp.businessPreson}
+			</if>
+			
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='sub'">	<!-- 楼栋分组 -->
+				group by sub.id
+			</if>
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='production'"><!-- 加工单分组 -->
+				group by a.id
+			</if>
+	</select>
+	
+	<!-- 根据已有的生产单显示相关的数据 的关联表-->
+	<sql id="getListByProductionJoins">
+		join btg_supplier supp on supp.id=a.supp
+		left join btg_order_bom_box obbox on obbox.id=a.order_bom_box_id
+		left join btg_order_bom_base obbase on obbase.id=obbox.order_bom_id
+		left join btg_order_bom_detail obdetail on obdetail.box_no=obbox.box_no and obdetail.order_bom_id=obbox.order_bom_id
+		left join btg_subproject sub on sub.id=obbase.sub_proj_id
+		left join btg_project project on project.id=sub.project_id
+		left join sys_province province on province.ProvinceID=project.province
+		left join btg_production_logistics_send_mapping plsm on plsm.production_id=a.id
+		left join btg_logistics_send ls on ls.id=plsm.logistics_send_id
+		left join sys_user usersupp on usersupp.id=supp.business_preson
+	</sql>
+	<!-- 根据已有的生产单显示相关的数据 -->
+	<select id="getListByProduction" resultType="Production">
+		select 
+				province.ProvinceName as "project.province",								<!-- 省份 -->
+				project.name as "project.name",												<!-- 项目名称 -->
+				project.id as "project.id",													<!-- 项目id -->
+				project.address as "project.address",										<!-- 项目地址 -->
+				sub.id as "sub.id",															<!-- 二级项目id -->
+				sub.building as "sub.building",												<!-- 楼栋号 -->
+				sub.building_display_name as "sub.buildingDisplayName",						<!-- 显示楼栋号 -->
+				sub.stone_expect_date as "sub.stoneExpectDate",								<!-- 石材要求到货时间 -->
+				obbase.id as "orderBomBase.id",												<!-- 下料ID -->
+				obbase.order_bom_no as "orderBomBase.orderBomNo",							<!-- 下料单号 -->
+				obbase.order_type as "orderBomBase.orderType",								<!-- 材料类型 -->
+				obbox.box_no as "orderBomBox.boxNo",										<!-- 箱号 -->
+				ifnull(supp.name,"") as "supp.name",										<!-- 加工厂名称 -->
+				ifnull(supp.business_address,"") as "supp.businessAddress",					<!-- 加工厂地址 -->
+				<include refid="productionColumns"/> 
+			from btg_production a 
+				<include refid="getListByProductionJoins"/>
+				<include refid="projectMemberJoins"/>
+			where (1=1) and obbase.del_flag = #{DEL_FLAG_NORMAL}
+				<if test="documentaryby !=null and documentaryby.id !=null and documentaryby.id != ''">
+					and a.documentaryby = #{documentaryby.id}
+				</if>
+				<if test="id !=null and id != ''">
+					and a.id = #{id}
+				</if>
+				<if test="ids !=null and ids.size > 0 ">
+					and a.id in
+						<foreach collection="ids" item="id" index="i"
+		           			 open="(" close=")" separator=",">
+		           		 			#{id}
+		        		</foreach>
+				</if>
+				<if test="status !=null and status != ''">
+					and a.status = #{status}
+				</if>
+				<if test="orderBomBase !=null and orderBomBase.orderType!=null and orderBomBase.orderType != ''">
+					and obbase.order_type = #{orderBomBase.orderType}
+				</if>
+				<if test="orderBomBase !=null and orderBomBase.id!=null and orderBomBase.id != ''">
+					and obbase.id = #{orderBomBase.id}
+				</if>
+				<if test="sub !=null and sub.id!=null and sub.id != ''">
+					and sub.id = #{sub.id}
+				</if>
+				<if test="supp !=null and supp.id!=null and supp.id != ''">
+					and supp.id = #{supp.id}
+				</if>
+				<if test="project !=null and project.id!=null and project.id != ''">
+					and project.id=#{project.id}
+				</if>
+				<if test="project !=null and project.name!=null and project.name != ''">
+					and project.name=#{project.name}
+				</if>
+				<if test="sub !=null and sub.building!=null and sub.building != ''">
+					and sub.building=#{sub.building} 
+				</if>
+				<if test="logisticsSend !=null and logisticsSend.id!=null and logisticsSend.id != ''">
+					and ls.id = #{logisticsSend.id}
+				</if>
+				<if test="aboutUser !=null and aboutUser.id != null and aboutUser.id != ''">
+					<![CDATA[ and (FIND_IN_SET(#{aboutUser.id},memberstr.member_list_str)>0) ]]>
+				</if>
+				<if test="assignto !=null and assignto.id != null and assignto.id != ''">
+					and a.assignto = #{assignto.id}
+				</if>
+				<if test="supp !=null and supp.businessPreson !=null and supp.businessPreson != ''">
+					and usersupp.id = #{supp.businessPreson}
+				</if>
+				<if test="documentaryby !=null and documentaryby.id !=null and documentaryby.id != ''">
+					and a.documentaryby = #{documentaryby.id}
+				</if>
+				
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='sendNotice'">
+				group by supp.id,obbase.order_type,sub.id
+			</if>
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='carNoticeList'">
+				group by supp.id,obbase.order_type,sub.id,obbase.id
+			</if>
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='box'">
+				group by obbox.id
+				order by obbox.box_no asc
+			</if>
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='production'">
+				group by a.id
+				limit 0,1
+			</if>
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='obbaseid'">
+				group by obbase.id
+			</if>
+	</select>
+	<!-- 根据条件统计箱数 -->
+	<select id="countOrderBomBoxByCondition" resultType="int">
+		select ifnull(count(a.id),0) 
+			from (  
+		   select 
+				obbox.id as id
+			from btg_production a 
+				<include refid="getListByProductionJoins"/>
+			where (1=1) 
+				and obbase.del_flag = #{DEL_FLAG_NORMAL}
+				<if test="sub !=null and sub.id!=null and sub.id != ''">
+					and sub.id=#{sub.id} 
+				</if>
+				<if test="orderBomBase !=null and orderBomBase.orderType!=null and orderBomBase.orderType != ''">
+					and obbase.order_type=#{orderBomBase.orderType}
+				</if>
+				<if test="orderBomBase !=null and orderBomBase.id!=null and orderBomBase.id != ''">
+					and obbase.id=#{orderBomBase.id}
+				</if>
+				<if test="project !=null and project.id!=null and project.id != ''">
+					and project.id=#{project.id}
+				</if>
+				<if test="project !=null and project.name!=null and project.name != ''">
+					and project.name=#{project.name}
+				</if>
+				<if test="supp !=null and supp.id!=null and supp.id != ''">
+					and supp.id = #{supp.id}
+				</if>
+				<if test="logisticsSend !=null and logisticsSend.id!=null and logisticsSend.id != ''">
+					and ls.id = #{logisticsSend.id}
+				</if>
+				<if test="documentaryby !=null and documentaryby.id !=null and documentaryby.id != ''">
+					and a.documentaryby = #{documentaryby.id}
+				</if>
+				<if test="status !=null and status != ''">
+					and a.status = #{status}
+				</if>
+				<if test="gtVal !=null and gtVal != ''">
+					and (a.status+0) &gt; #{gtVal}
+				</if>
+				<if test="ltVal !=null and ltVal != ''">
+					and (a.status+0) &lt; #{ltVal}
+				</if>
+			group by obbox.id ) a
+	</select>
+	<!-- 石材进度跟进 -->
+	<select id="getListForStoneScheduleToSub" resultType="Production">
+		select 
+				province.ProvinceName as "project.province",									<!-- 省份 -->
+				project.name as "project.name",												<!-- 项目名称 -->
+				project.id as "project.id",													<!-- 项目id -->
+				project.address as "project.address",										<!-- 项目地址 -->
+				sub.id as "sub.id",															<!-- 二级项目id -->
+				sub.building as "sub.building",												<!-- 楼栋号 -->
+				sub.building_display_name as "sub.buildingDisplayName",						<!-- 显示楼栋号 -->
+				sub.stone_expect_date as "sub.stoneExpectDate",								<!-- 石材要求到货时间 -->
+				obbase.order_bom_no as "orderBomBase.orderBomNo",							<!-- 下料单号 -->
+				obbase.order_type as "orderBomBase.orderType",								<!-- 材料类型 -->
+				obbox.box_no as "orderBomBox.boxNo",										<!-- 箱号 -->
+				ifnull(supp.name,"") as "supp.name",										<!-- 加工厂名称 -->
+				ifnull(supp.business_address,"") as "supp.businessAddress",					<!-- 加工厂地址 -->
+				<include refid="productionColumns"/> 
+			from btg_production a 
+				<include refid="getListByProductionJoins"/>
+			where (1=1)
+				and obbase.del_flag = #{DEL_FLAG_NORMAL}
+				<if test="documentaryby !=null and documentaryby.id !=null and documentaryby.id != ''">
+					and a.documentaryby = #{documentaryby.id}
+				</if>
+				<if test="id !=null and id != ''">
+					and a.id = #{id}
+				</if>
+				<if test="status !=null and status != ''">
+					and a.status = #{status}
+				</if>
+				<if test="orderBomBase !=null and orderBomBase.orderType!=null and orderBomBase.orderType != ''">
+					and obbase.order_type = #{orderBomBase.orderType}
+				</if>
+				<if test="sub !=null and sub.id!=null and sub.id != ''">
+					and sub.id = #{sub.id}
+				</if>
+				<if test="supp !=null and supp.id!=null and supp.id != ''">
+					and supp.id = #{supp.id}
+				</if>
+				<if test="project !=null and project.id!=null and project.id != ''">
+					and project.id=#{project.id}
+				</if>
+				<if test="project !=null and project.name!=null and project.name != ''">
+					and project.name like CONCAT('%', #{project.name}, '%')
+				</if>
+				<if test="sub !=null and sub.building!=null and sub.building != ''">
+					and sub.building_display_name like CONCAT('%', #{sub.building}, '%')
+				</if>
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='sendNotice'">
+				group by supp.id,obbase.order_type,sub.id
+			</if>
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='box'">
+				group by obbox.id
+				order by obbox.box_no asc
+			</if>
+			<if test="glfpGB !=null and glfpGB != '' and glfpGB=='production'">
+				group by a.id
+				limit 0,1
+			</if>
+	</select>
+</mapper>

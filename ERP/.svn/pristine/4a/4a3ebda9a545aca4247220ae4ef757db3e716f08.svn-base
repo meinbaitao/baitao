@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.ContractPrintDao">
+	<sql id="contractPrintColumns">
+		a.id AS "id",
+		a.contract_type AS "contractType",
+		a.contract_no AS "contractNo",
+		b.name AS "partyBName",
+		a.party_b_phone AS "partyBPhone",
+		a.party_b_tel AS "partyBTel",
+		a.party_b_email AS "partyBEmail",
+		a.party_b_fax AS "partyBFax",
+		a.party_b_legal_person AS "partyBLegalPerson",
+		a.party_b_entrusted_agent AS "partyBEntrustedAgent",
+		a.party_b_strength AS "partyBStrength",
+		a.party_b_address AS "partyBAddress",
+		a.party_b_account_name AS "partyBAccountName",
+		a.party_b_account_bank AS "partyBAccountBank",
+		a.party_b_account_no AS "partyBAccountNo",
+		a.settlement_type AS "settlementType",
+		a.payment_type AS "paymentType",
+		a.cooperation_notice AS "cooperationNotice",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.date_signature AS "dateSignature",
+		a.date_break AS "dateBreak",
+		a.uniform_materiel AS "uniformMateriel",
+		a.tax_rate AS "taxRate",
+		a.invoice_type AS "invoiceType",
+		a.statue AS "statue",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.manuf_area AS "manufArea",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus",
+		a.department AS "department",
+		c.parent_id AS "fristType",
+		a.second_type AS "secondType",
+		a.is_standard_contract AS "isStandardContract",
+		a.standard_type AS "standardType",
+		a.party_b_code AS "partyBCode",
+		a.is_include_carriage AS "isIncludeCarriage",
+		a.contract_price AS "contractPrice",
+		a.payment_progress AS "paymentProgress",
+		a.quality_guarantee_price AS "qualityGuaranteePrice",
+		a.execute_guarantee_price AS "executeGuaranteePrice",
+		a.is_include_quality AS "isIncludeQuality",
+		a.quality_guarantee_way AS "qualityGuaranteeWay",
+		a.quality_return_way AS "qualityReturnWay",
+		a.is_include_execute AS "isIncludeExecute",
+		a.execute_guarantee_way AS "executeGuaranteeWay",
+		a.execute_return_way AS "executeReturnWay"
+	</sql>
+	
+	<sql id="contractPrintJoins">
+		inner join btg_supplier b on a.party_b_name = b.id
+		inner join btg_contract_account_type c on c.id = a.frist_type
+	</sql>
+	
+	
+	<select id="findTestData" parameterType="String" resultType="com.bt.modules.contract.entity.ManufContractBase">
+		SELECT 
+			<include refid="contractPrintColumns"/>
+		FROM btg_manuf_contract_base a
+		<include refid="contractPrintJoins"/>
+		<where>
+		 a.id = #{id}
+		</where>
+	</select>
+</mapper>

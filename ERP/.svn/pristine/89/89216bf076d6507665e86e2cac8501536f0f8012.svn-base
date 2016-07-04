@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.taskmapping.dao.ActCurrentTaskDao">
+    
+	<sql id="task_columns">
+		a.user_id AS "userId",
+		a.entry_id AS "entryId",
+		a.business_table AS "businessTable",
+		a.task_type AS "taskType"
+	</sql>
+
+	<select id="findCurrentTaskByEntryAndTable" resultType="ActCurrentTask">
+		SELECT
+		 	<include refid="task_columns" />
+		from btg_act_current_task a
+		 where a.entry_id=#{entryId} and a.business_table=#{businessTable}
+	</select>
+
+
+	<insert id="insert">
+		INSERT INTO btg_act_current_task(
+			user_id,
+			entry_id,
+			business_table,
+			task_type
+		) VALUES (
+			#{userId},
+			#{entryId},
+			#{businessTable},
+			#{taskType}
+		)
+	</insert>
+
+	
+	<update id="delete">
+		DELETE from btg_act_current_task where entry_id = #{entryId} and business_table = #{businessTable}
+	</update>
+
+	<select id="findList" resultType="ActCurrentTask">
+		SELECT
+		 <include refid="task_columns" />
+		 FROM btg_act_current_task a
+		 where a.user_id = #{userId}
+		 order by business_table desc
+	</select>
+
+
+	<select id="searchTaskWithWeeklyReport" resultType="ActCurrentTask">
+		SELECT
+		<include refid="task_columns" />
+		FROM btg_act_current_task a
+		 join btg_proj_weekly_report wr on wr.id = a.entry_id
+		 join btg_project p on p.id = wr.project_id
+		<where>
+			a.user_id = #{userId}
+			<if test="keyWord!=null and keyWord!=''" >
+				and p.name like "%"#{keyWord}"%"
+			</if>
+		</where>
+
+	</select>
+
+
+</mapper>

@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.finance.dao.ManufSettlementDao">
+    
+	<sql id="manufSettlementColumns">
+		a.id AS "id",
+		a.seriesnumber AS "seriesnumber",
+		a.project_id AS "projectId",
+		a.factory_id AS "factoryId",
+		a.price AS "price",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.statue AS "statue",
+		a.payment_seriesnumber AS "paymentSeriesnumber",
+		a.payment_type AS "paymentType",
+		a.payment_date AS "paymentDate",
+		project.code AS "projectCode",
+		supplier.name AS "supplierName"
+	</sql>
+	
+	<sql id="manufSettlementJoins">
+		join btg_supplier as supplier on supplier.id = a.factory_id
+		join btg_project as project on project.id = a.project_id
+	</sql>
+    
+	<select id="get" resultType="ManufSettlement">
+		SELECT 
+			<include refid="manufSettlementColumns"/>
+		FROM btg_manuf_settlement a
+		<include refid="manufSettlementJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="ManufSettlement">
+		SELECT 
+			<include refid="manufSettlementColumns"/>
+		FROM btg_manuf_settlement a
+		<include refid="manufSettlementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="seriesnumber != null and seriesnumber != ''">
+				AND a.seriesnumber = #{seriesnumber}
+			</if>
+			<if test="statue != null and statue != ''">
+				AND a.statue = #{statue}
+			</if>
+			<if test="search != null and search != ''">
+				AND a.seriesnumber like concat('%',#{search},'%')
+				or project.code like concat('%',#{search},'%')
+				or supplier.name like concat('%',#{search},'%')
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.statue ASC, a.update_date DESC, a.seriesnumber DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ManufSettlement">
+		SELECT 
+			<include refid="manufSettlementColumns"/>
+		FROM btg_manuf_settlement a
+		<include refid="manufSettlementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_manuf_settlement(
+			id,
+			seriesnumber,
+			factory_id,
+			project_id,
+			price,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{seriesnumber},
+			#{factoryId},
+			#{projectId},
+			#{price},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_manuf_settlement SET 	
+			seriesnumber = #{seriesnumber},
+			factory_id = #{factoryId},
+			project_id = #{projectId},
+			price = #{price},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			statue = #{statue},
+			payment_seriesnumber = #{paymentSeriesnumber},
+			payment_type = #{paymentType},
+			payment_date = #{paymentDate}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_manuf_settlement SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<!--由发货通知单id获取需生成结算单
+	<select id="createSettlementList" parameterType="String" resultType="ManufSettlement">
+		SELECT
+			a.*
+		FROM view_manuf_settlement AS a
+		WHERE
+			a..logisticSend = #{logisticSendId}
+	</select>-->
+	
+	<!--获取发货物料-->
+	<select id="findSettlementDetailList" parameterType="Map" resultType="LogisticsDetail">
+		SELECT 
+			a.*
+		FROM view_manuf_settlement_details AS a
+		LEFT JOIN btg_order_bom_detail b ON b.order_bom_id=a.orderBomId
+		WHERE
+			a.orderBomId = #{orderBomId}
+		<if test="factoryId != null and factoryId != ''">
+			AND a.factoryId = #{factoryId}
+		</if>
+		<if test="settlementType != null and settlementType != ''">
+			AND a.settlement_type = #{settlementType}
+		</if>
+		AND b.del_flag = #{delFlag}
+		group by b.id
+	</select>
+	
+	<!--查结算单处理几种下料单类型
+	<select id="findOrderBomTypeList" resultType="logisticsDetail">
+		SELECT DISTINCT
+			a.orderBomType, 
+			a.logisticsId, 
+			a.orderBomNo,
+			a.orientation
+		FROM view_manuf_settlement_detail AS a
+		WHERE 
+			a.logisticsId = #{logisticSend}
+		AND 
+			a.orderBomNo = #{orderBomNo}
+		order by
+			a.orderDate
+	</select>-->
+	
+	<!--查加工厂有效加工项的价格-->
+	<select id="findContractPriceList" parameterType="Map" resultType="ManufContractDetail">
+		select distinct
+			detail.*
+		from btg_manuf_contract_detail as detail 
+		join btg_manuf_contract_base as base on base.id = detail.contract_id
+		where 
+			base.Party_B_name = #{factory}
+		and
+			base.end_time &gt; #{orderDate}
+		and
+			base.start_time &lt; #{orderDate}
+		order by 
+			base.create_date desc
+	</select>
+	
+	<!--查结算单关联下料单 -->
+	<select id="findOrderBomList" resultType="ManufSettlementMapping">
+		select
+			orderBom.id AS "id",
+			orderBom.order_bom_no AS "orderBomNo",
+			orderBom.house_type AS "houseType",
+			orderBom.Building AS "building",
+			orderBom.order_type AS "orderType",
+			orderBom.order_finish_date as "orderFinishDate",
+			orderBom.stone_color_name as "stoneColorName",
+			mapping.settlemetn_type as "settlementType"
+		from btg_manuf_settlement as settlement
+		join btg_manuf_settlement_mapping as mapping on mapping.settlement_id = settlement.id
+		join btg_order_bom_base as orderBom on orderBom.id = mapping.order_bom_id
+		where
+			settlement.id = #{id}
+	</select>
+	
+	<!--由料单id获取所属加工厂,项目 -->
+	<select id="findManufOrderBom" parameterType= "String" resultType="ManufOrderBom">
+		select
+			a.*
+		from view_manuf_orderbom as a
+		where 
+			a.orderBomId = #{orderBomId}
+	</select>
+	
+	<!--查询当天生成单数	-->
+	<select id="getTodayCount" parameterType="String" resultType="int">
+		SELECT
+			count(*)
+		FROM
+			btg_manuf_settlement AS a
+		WHERE
+			a.seriesnumber LIKE concat('%',#{date},'%')
+	</select>
+	
+	<!--查询物料加工项列表-->
+	<select id="getSettlementItem" parameterType= "String" resultType="String">
+		SELECT 
+		  	a.settlement_item 
+		FROM btg_manuf_settlement_material_mapping a
+		LEFT JOIN btg_manuf_settlement_material b ON b.ID = a.PID
+		WHERE b.material_no = #{materialNo}
+	</select>
+	<!--查询类型加工项编号列表-->
+	<select id="getTypeSettlementItem" parameterType= "map" resultType="String">
+		SELECT 
+			a.item_code 
+		FROM btg_dict_make_item a
+		WHERE a.item_type = #{itemType} 
+		AND a.del_flag = #{delFlag}
+		GROUP BY a.item_code
+	</select>
+	<!--查询可配置物料编号列表-->
+	<select id="getAllMaterialNoItem" parameterType= "map" resultType="String">
+		SELECT 
+			material_no
+		FROM btg_manuf_settlement_material
+		WHERE del_flag = #{delFlag}
+	</select>
+	<!--根据类型查询物料编号-->
+	<select id="getMaterialNoByType" parameterType= "map" resultType="String">
+		SELECT 
+			material_no
+		FROM btg_manuf_settlement_material
+		WHERE del_flag = #{delFlag}
+		AND settlement_type = #{settlementType}
+	</select>
+	<!--查询编号对应的加工项名称-->
+	<select id="getSettlementName" parameterType= "map" resultType="String">
+		SELECT 
+			item_name 
+		FROM btg_dict_make_item
+		WHERE item_code = #{itemCode}
+		AND del_flag = #{delFlag}
+	</select>
+	<!--查询下料单加工图号-->
+	<select id="getprocessChartNo" parameterType= "String" resultType="String">
+		SELECT 
+			c.process_chart_no
+		FROM btg_logistics_detail a
+		JOIN btg_order_bom_box b ON b.id = a.box_id
+		LEFT JOIN btg_order_bom_detail c ON c.order_bom_id = b.order_bom_id and c.box_no=b.box_no
+		LEFT JOIN btg_order_bom_base d ON d.id = c.order_bom_id
+		WHERE a.logistics_id = #{logisticsId}
+		AND b.id = #{boxId}
+		AND c.materiel_no = #{materialNo}
+		AND c.del_flag = #{DEL_FLAG_NORMAL}
+		GROUP BY c.id
+	</select>
+</mapper>

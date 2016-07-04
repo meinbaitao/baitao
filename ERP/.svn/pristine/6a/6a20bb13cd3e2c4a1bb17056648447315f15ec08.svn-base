@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.ContractAccountDao">
+    
+	<sql id="contractAccountColumns">
+		a.contract_type AS "contractType",
+		a.frist_type AS "fristType",
+		a.second_type AS "secondType",
+		a.party_b_name AS "partyBName",
+		a.party_b_code AS "partyBCode",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.workflow_status AS "workflowStatus",
+		a.contract_no AS "contractNo",
+		a.contract_price AS "contractPrice",
+		a.tax_rate AS "taxRate",
+		a.invoice_type AS "invoiceType",
+		a.is_include_carriage AS "isIncludeCarriage",
+		a.settlement_type AS "settlementType",
+		a.payment_type AS "paymentType",
+		a.payment_progress AS "paymentProgress",
+		a.quality_guarantee_price AS "qualityGuaranteePrice",
+		a.execute_guarantee_price AS "executeGuaranteePrice",
+		a.lanuch_person AS "lanuchPerson"
+	</sql>
+	
+	<sql id="contractAccountJoins">
+	</sql>
+    
+	<select id="findList" resultType="ContractAccount">
+		SELECT 
+			<include refid="contractAccountColumns"/>
+		FROM view_contract_account a
+		<include refid="contractAccountJoins"/>
+		<where>
+			
+			<if test="search != null and search != ''">
+				and a.contract_type LIKE concat('%',#{search},'%')
+				OR a.frist_type LIKE concat('%',#{search},'%')
+				OR a.second_type LIKE concat('%',#{search},'%')
+				OR a.party_b_name LIKE concat('%',#{search},'%')
+			</if>
+		</where>
+		ORDER BY a.end_time desc
+	</select>
+	
+	<select id="findAllList" resultType="ContractAccount">
+		SELECT 
+			<include refid="contractAccountColumns"/>
+		FROM view_contract_account a
+		<include refid="contractAccountJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!--由上级id获取分类列表-->
+	<select id="findTypeByParentId" parameterType="String" resultType="Map">
+		select 
+			a.id AS "id",
+			a.name AS "name"
+		from
+			btg_contract_account_type AS a
+		where
+			a.parent_id = #{parentId}
+	</select>
+	
+	<!--由id获取合同台账分类-->
+	<select id="getContractAccountTypeById" parameterType="String" resultType="String">
+		select
+			a.name
+		from
+			btg_contract_account_type AS a
+		where
+			a.id = #{id}
+	</select>
+</mapper>

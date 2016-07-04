@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.common.oauth2.dao.ClientDao">
+	
+	<sql id="clientColumns">
+		a.id,
+		a.client_name,
+		a.client_id,
+		a.client_secret,
+		a.available
+	</sql>
+	
+	<select id="get" resultType="Client">
+		SELECT 
+		<include refid="clientColumns"/>
+		FROM oauth2_client a
+		WHERE a.client_id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Client">
+		SELECT 
+		<include refid="clientColumns"/>
+		FROM oauth2_client a
+		<if test="clientSecret != null">
+			a.client_secret = #{clientSecret}
+		</if>
+		${sqlMap.dsf}
+		ORDER BY a.id DESC
+	</select>
+	
+</mapper>

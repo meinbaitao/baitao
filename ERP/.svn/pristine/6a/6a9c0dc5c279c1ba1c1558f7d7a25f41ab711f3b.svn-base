@@ -1,0 +1,843 @@
+package com.bt.modules.project.web;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.bt.common.exceptions.BusinessException;
+import com.bt.modules.activiti.constants.ActivitiConstants;
+import com.bt.modules.area.entity.Province;
+import com.bt.modules.area.service.ProvinceService;
+import com.bt.modules.project.entity.Project;
+import com.bt.modules.project.entity.Subproject;
+import com.bt.modules.project.service.ProjectService;
+import com.bt.modules.project.service.SubProjectService;
+import com.bt.modules.utils.CommonStatus;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.CacheUtils;
+import com.thinkgem.jeesite.common.utils.IdGen;
+import com.thinkgem.jeesite.common.utils.SpringContextHolder;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.act.service.ActAccessTaskDirectService;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.sys.dao.DictDao;
+import com.thinkgem.jeesite.modules.sys.entity.Dict;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.service.SystemService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 一级项目信息
+ * 
+ * @author xjp
+ * @version 2015-8-1
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/project")
+public class ProjectController extends BaseController {
+
+	private static DictDao dictDao = SpringContextHolder.getBean(DictDao.class);
+
+	public static final String CACHE_DICT_MAP = "dictMap";
+
+	/**
+	 * 一级项目Service
+	 */
+	@Autowired
+	private ProjectService projectService;
+
+	/**
+	 * 二级项目Service
+	 */
+	@Autowired
+	private SubProjectService subProjectService;
+
+	@Autowired
+	private SystemService systemService;
+
+	/**
+	 * 获取区域信息
+	 */
+	@Autowired
+	private ProvinceService provinceService;
+
+	@Autowired
+	private ActTaskService actTaskService; // 流程
+	@Autowired
+	private ActAccessTaskDirectService actAccessTaskDirectService; // 流程
+
+	/**
+	 * 分页查询一级项目信息
+	 * 
+	 * @param project
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @return
+	 */
+	// @RequiresPermissions("project:view")
+	@RequestMapping(value = { "list", "" })
+	public String list(Project project, HttpServletRequest request,
+			HttpServletResponse response, Model model) {
+		// 查询主项列表，如果有名称参数则带入名称参数查询列表
+		Page<Project> page = projectService.findPage(new Page<Project>(request,
+				response), project);
+		model.addAttribute("page", page);
+		return "modules/project/projectList";
+		// Page<Project> page = projectService.findMyProjects(new
+		// Page<Project>(request, response), project);
+		// model.addAttribute("page", page);
+		// return "modules/project/findMyProjects";
+	}
+
+	@RequestMapping(value = "findMyProjects")
+	public String findMyProjects(Project project, HttpServletRequest request,
+			HttpServletResponse response, Model model) {
+		project.setCreateBy(UserUtils.getUser());
+		Page<Project> page = projectService.findMyProjects(new Page<Project>(
+				request, response), project);
+		model.addAttribute("page", page);
+		return "modules/project/findMyProjects";
+	}
+
+	@RequestMapping(value = "findUnAuditProjects")
+	public String findUnAuditProjects(Project project,
+			HttpServletRequest request, HttpServletResponse response,
+			Model model) {
+		project.setCreateBy(UserUtils.getUser());
+		Page<Project> page = projectService.findUnAuditProjects(
+				new Page<Project>(request, response), project);
+		model.addAttribute("page", page);
+		return "modules/project/findUnAuditProjects";
+	}
+
+	@RequestMapping(value = "findAuditDoneProjects")
+	public String findAuditDoneProjects(Project project,
+			HttpServletRequest request, HttpServletResponse response,
+			Model model) {
+		project.setCreateBy(UserUtils.getUser());
+		Page<Project> page = projectService.findAuditDoneProjects(
+				new Page<Project>(request, response), project);
+		model.addAttribute("page", page);
+		return "modules/project/findAuditDoneProjects";
+	}
+
+	/**
+	 * 跳转添加页面
+	 * 
+	 * @param project
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "form")
+	public String form(Project project, Model model) {
+		project.setId(IdGen.uuid());
+		model.addAttribute("project", project);
+		model.addAttribute("flag", "add");
+		return "modules/project/projectForm";
+	}
+
+	/**
+	 * 跳转查看、修改页面
+	 * 
+	 * @param project
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "view")
+	public String view(Project project, HttpServletRequest request, Model model) {
+		if (StringUtils.isEmpty(project.getId())) {
+			project.setId(request.getParameter("projectId"));
+		}
+		Project projects = projectService.get(project);
+		projects.setSubList(subProjectService.findByProjectIdList(project
+				.getId()));
+		// 查询一级项目信息
+		model.addAttribute("project", projects);
+		model.addAttribute("flag", "view");
+		// 查询二级项目信息
+		return "modules/project/projectForm";
+	}
+
+	/**
+	 * 跳转：填写项目信息、填写成本信息、填写设计信息页面、修改项目人员信息
+	 * 
+	 * @param project
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "projectinfo")
+	public String projectInfo(Project project, HttpServletRequest request,
+			HttpServletResponse response, Model model) {
+		String type = request.getParameter("type");
+		String statusFlag = request.getParameter("statusFlag");// 状态标识 0：未填写
+																// 1：全部
+		model.addAttribute("statusFlag", statusFlag);
+		Page<Project> page = null;
+		if ("0".equals(statusFlag)) {
+			if ("1".equals(type)) {
+				project.setGeneralManagerAid("");
+			} else if ("2".equals(type)) {
+				project.setCostManagerBid("");
+				project.setCostOfficerBid("");
+				project.setCostLeaderBid("");
+			} else if ("3".equals(type)) {
+				project.setDesignLeaderBid("");
+			}
+		}
+		project.setWorkflowstatus(CommonStatus.WORK_FLOW_END);
+		if ("5".equals(type)) {
+			project.setDesignLeaderBid(UserUtils.getUser().getId());
+			// 根据设计主管id获取项目list
+			// 当前用户id=设计主管id
+			page = projectService.findPageByDesignLeaderBid(new Page<Project>(
+					request, response), project);
+			// page.setList(projectService.findListByDesignLeaderBid(project));
+		} else if ("4".equals(type)) {
+			page = projectService.findPageByStatus(new Page<Project>(request,
+					response), project);
+		} else {
+			//剩余类型的菜单需要数据权限过滤，需要调用特定方法添加条件
+			page = projectService.findPageByStatusOnData(new Page<Project>(request, response), project);
+		}
+		model.addAttribute("page", page);
+		// 判断是进入哪个菜单
+		if ("1".equals(type)) {
+			return "modules/project/addProjectManager";
+		} else if ("2".equals(type)) {
+			return "modules/project/addCostManager";
+
+		} else if ("3".equals(type)) {
+			// 填写设计主管
+			if (page != null && page.getList() != null) {
+				for (Project pro : page.getList()) {
+					if (pro != null) {
+						pro.setDesignLeaderBid(UserUtils.getUserNameById(pro
+								.getDesignLeaderBid()));
+					}
+				}
+			}
+			return "modules/project/addDesignManager";
+		} else if ("4".equals(type)) {
+			return "modules/project/personList";
+		} else if ("5".equals(type)) {
+			// 填写设计师
+			model.addAttribute("subproject", new Subproject());
+			return "modules/project/addDesignSupervisor";
+		} else if ("6".equals(type)) {
+			// 修改项目人员信息
+			return "modules/project/updateProjectPersonnel";
+		} else if ("7".equals(type)) {
+			// 修改项目二级信息
+			if (StringUtils.isEmpty(project.getId())) {
+				project.setId(request.getParameter("projectId"));
+			}
+			Project projects = projectService.get(project);
+			projects.setSubList(subProjectService.findByProjectIdList(project
+					.getId()));
+			// 查询一级项目信息
+			model.addAttribute("project", projects);
+			return "modules/project/updateProjectForm";
+		} else {
+			return "";
+		}
+	}
+
+	/**
+	 * 填写项目信息
+	 * 
+	 * @param project
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "addproject")
+	public String addProject(Project project, HttpServletRequest request,
+			RedirectAttributes redirectAttributes) {
+		String[] array = project.getId().split(",");
+		// 修改一级项目信息
+		User user = UserUtils.getUser();
+		project.setUpdateBy(user);
+		project.setUpdateDate(new Date());
+		project.setGeneralManagerAid(project.getGeneralManagerAid() == null ? ""
+				: project.getGeneralManagerAid().split(",")[0]);
+		project.setRegionalManagerAid(project.getRegionalManagerAid() == null ? ""
+				: project.getRegionalManagerAid().split(",")[0]);
+		project.setLocalManagerAid(project.getLocalManagerAid() == null ? ""
+				: project.getLocalManagerAid().split(",")[0]);
+		if (array != null && array.length > 0) {
+			for (int i = 0; i < array.length; i++) {
+				project.setId(array[i]);
+				projectService.addProject(project);
+			}
+		}
+		projectService.addProject(project);
+		addMessage(redirectAttributes, "填写项目信息成功");
+		return "redirect:" + adminPath + "/project/projectinfo?type=1";
+	}
+
+	/**
+	 * 填写成本信息
+	 * 
+	 * @param project
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "addcost")
+	public String addCost(Project project, HttpServletRequest request,
+			RedirectAttributes redirectAttributes) {
+		String[] array = project.getId().split(",");
+		// 修改一级项目信息
+		User user = UserUtils.getUser();
+		project.setUpdateBy(user);
+		project.setUpdateDate(new Date());
+		project.setCostManagerBid(project.getCostManagerBid() == null ? ""
+				: project.getCostManagerBid().split(",")[0]);
+		project.setCostOfficerBid(project.getCostOfficerBid() == null ? ""
+				: project.getCostOfficerBid().split(",")[0]);
+		project.setCostLeaderBid(project.getCostLeaderBid() == null ? ""
+				: project.getCostLeaderBid().split(",")[0]);
+		if (array != null && array.length > 0) {
+			for (int i = 0; i < array.length; i++) {
+				project.setId(array[i]);
+				projectService.addcost(project);
+			}
+		}
+		addMessage(redirectAttributes, "填写成本信息成功");
+		return "redirect:" + adminPath + "/project/projectinfo?type=2";
+	}
+
+	/**
+	 * 填写设计主管
+	 * 
+	 * @param project
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "adddesign")
+	public String addDesign(Project project, HttpServletRequest request,
+			RedirectAttributes redirectAttributes) {
+		String[] array = project.getId().split(",");
+		// 修改一级项目信息
+		User user = UserUtils.getUser();
+		project.setUpdateBy(user);
+		project.setUpdateDate(new Date());
+		// project.setDesigner(project.getDesigner()==null?"":project.getDesigner().split(",")[0]);
+		project.setDesignLeaderBid(project.getDesignLeaderBid() == null ? ""
+				: project.getDesignLeaderBid());
+		if (array != null && array.length > 0) {
+			for (int i = 0; i < array.length; i++) {
+				project.setId(array[i]);
+				projectService.adddesign(project);
+			}
+		}
+		addMessage(redirectAttributes, "填写设计主管成功");
+		return "redirect:" + adminPath + "/project/projectinfo?type=3";
+	}
+
+	/**
+	 * 填写设计师
+	 * 
+	 * @param project
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "addDesigner")
+	public String addDesigner(Subproject subproject,
+			HttpServletRequest request, RedirectAttributes redirectAttributes) {
+		String ids = request.getParameter("checkedIds");
+		String[] array = ids.split(",");
+		// 修改一级项目信息
+		User user = UserUtils.getUser();
+		subproject.setUpdateBy(user);
+		subproject.setUpdateDate(new Date());
+		subproject.setDesignLeaderBid(user.getId());
+		subproject.setDesigner(subproject.getDesigner() == null ? ""
+				: subproject.getDesigner().split(",")[0]);
+		// project.setDesignLeaderBid(project.getDesignLeaderBid()==null?"":project.getDesignLeaderBid().split(",")[0]);
+		if (array != null && array.length > 0) {
+			for (int i = 0; i < array.length; i++) {
+				subproject.setId(array[i]);
+				subProjectService.adddesigner(subproject);
+			}
+		}
+		addMessage(redirectAttributes, "填写设计师成功");
+		return "redirect:" + adminPath + "/project/projectinfo?type=5";
+	}
+
+	/**
+	 * 修改项目人员信息
+	 * 
+	 * @param project
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "updateProjectPersonnel")
+	public String updateProjectPersonnel(Project project,
+			HttpServletRequest request, RedirectAttributes redirectAttributes) {
+		String[] array = project.getId().split(",");
+		User user = UserUtils.getUser();
+		project.setUpdateBy(user);
+		project.setUpdateDate(new Date());
+		project.setProjectManagerBid(project.getProjectManagerBid()); // 项目负责人
+		project.setRegionalManagerBid(project.getRegionalManagerBid()); // 区域经理
+		project.setPcDirectorBid(project.getPcDirectorBid()); // 运营经理
+		project.setCoordinatorLeaderBid(project.getCoordinatorLeaderBid()); // 运营主管
+		project.setOperationSpecialistBid(project.getOperationSpecialistBid()); // 运营专员
+		project.setMaterialStaffBid(project.getMaterialStaffBid()); // 材料员
+		project.setConstructStaffBid(project.getConstructStaffBid()); // 施工员
+		project.setAdminstaffbid(project.getAdminstaffbid()); // 行政专员
+		if (array != null && array.length > 0) {
+			for (int i = 0; i < array.length; i++) {
+				project.setId(array[i]);
+				projectService.updateProjectPersonnel(project);
+			}
+		}
+		addMessage(redirectAttributes, "修改项目人员信息成功");
+		return "redirect:" + adminPath + "/project/projectinfo?type=6";
+	}
+
+	/**
+	 * 根据省ID查询下级目录ID
+	 * 
+	 * @param id
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "queryarea", "" })
+	public List<Province> queryList(String id, HttpServletRequest request,
+			HttpServletResponse response, Model model) {
+		String projectId = request.getParameter("id");
+		Province province = new Province();
+		province.setParentid(projectId);
+		return provinceService.findList(province);
+	}
+
+	/**
+	 * 读取数据字典信息
+	 * 
+	 * @param type
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "querydictlist", "" })
+	public static List<Dict> getDictList(HttpServletRequest request) {
+		String type = request.getParameter("type");
+		@SuppressWarnings("unchecked")
+		Map<String, List<Dict>> dictMap = (Map<String, List<Dict>>) CacheUtils
+				.get(CACHE_DICT_MAP);
+		if (dictMap == null) {
+			dictMap = Maps.newHashMap();
+			for (Dict dict : dictDao.findAllList(new Dict())) {
+				List<Dict> dictList = dictMap.get(dict.getType());
+				if (dictList != null) {
+					dictList.add(dict);
+				} else {
+					dictMap.put(dict.getType(), Lists.newArrayList(dict));
+				}
+			}
+			CacheUtils.put(CACHE_DICT_MAP, dictMap);
+		}
+		List<Dict> dictList = dictMap.get(type);
+		if (dictList == null) {
+			dictList = Lists.newArrayList();
+		}
+		return dictList;
+	}
+
+	/**
+	 * 添加项目信息
+	 * 
+	 * @param project
+	 *            一级项目实体bean
+	 * @param redirectAttributes
+	 *            返回会话语句
+	 * @return
+	 * @throws BusinessException 
+	 */
+	@Transactional(readOnly = false)
+	@RequestMapping(value = "save")
+	public String save(Project project, RedirectAttributes redirectAttributes) throws BusinessException {
+		// 添加一级项目
+//		projectService.save(project);
+		projectService.insert(project);
+
+		// 添加二级项目
+		saveUpdateSubproject(project);
+		// 点保存重新启动流程
+		// actAccessTaskDirectService.completeTask(project.getWorkflowid(), "1",
+		// "", UserUtils.getUser().getLoginName());
+		addMessage(redirectAttributes, "保存项目成功");
+		return "redirect:" + adminPath + "/project/view?projectId="
+				+ project.getId();
+	}
+
+	private void saveUpdateSubproject(Project project) {
+		List<Subproject> list = project.getSubList();
+		User user = UserUtils.getUser();
+		if (null != list) {
+			for (Subproject subProject : list) {
+				//新增二级项目
+				if (StringUtils.isEmpty(subProject.getId())
+						&& StringUtils.isNotEmpty(subProject.getHouseType())
+						&& StringUtils.isNotEmpty(subProject.getBuildingDisplayName())) {
+					subProject.setId(IdGen.uuid());
+					subProject.setProjectId(project.getId());
+
+					// amend by 许俊雄20160401
+					// 为了保证楼栋的唯一编号，系统在保存楼栋的时候
+					// 维护一个系统唯一的隐藏楼栋编号
+					// 逻辑代码不应该放在控制层，不便维护。--不重构。许俊雄
+					String buildName = subProject.getBuildingDisplayName();
+					subProject
+							.setBuildingDisplayName(buildName.contains("#") ? buildName
+									: buildName + "#");
+					subProject.setBuilding(systemService
+							.getSeqNextVal(SubProjectService.SUB_SEQ) + "");
+
+					subProjectService.save(subProject);
+					
+				//更新二级项目操作
+				}else if(StringUtils.isNotEmpty(subProject.getId())){
+					subProject.setUpdateBy(user);
+					subProject.setUpdateDate(new Date());
+					// amend by 许俊雄20160401
+					// 为了保证楼栋的唯一编号，系统在保存楼栋的时候
+					// 维护一个系统唯一的隐藏楼栋编号
+					// 逻辑代码不应该放在控制层，不便维护。--不重构。许俊雄
+					String buildName = subProject.getBuildingDisplayName();
+					subProject
+							.setBuildingDisplayName(buildName.contains("#") ? buildName
+									: buildName + "#");
+					/*
+					 * if (subProject.getBuilding().lastIndexOf("#") == -1) { //
+					 * 栋号里面没有填#号的 自动补充
+					 * subProject.setBuilding(subProject.getBuilding() + "#"); }
+					 */
+					subProjectService.update(subProject);
+				}
+			}
+		}
+	}
+
+	/**
+	 * 修改楼栋信息
+	 * 
+	 * @param project
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@Transactional(readOnly = false)
+	@RequestMapping(value = "updateby")
+	public String updateby(Project project, HttpServletRequest request,
+			RedirectAttributes redirectAttributes) {
+		// 修改一级项目信息
+		User user = UserUtils.getUser();
+		project.setUpdateBy(user);
+		project.setUpdateDate(new Date());
+		projectService.traceUpdateUser(project);
+
+		// 添加二级项目
+		saveUpdateSubproject(project);
+		/*List<Subproject> list = project.getSubList();
+		if (null != list) {
+			for (Subproject subProject : list) {
+				if (StringUtils.isNotEmpty(subProject.getId())) {
+					subProject.setUpdateBy(user);
+					subProject.setUpdateDate(new Date());
+					// amend by 许俊雄20160401
+					// 为了保证楼栋的唯一编号，系统在保存楼栋的时候
+					// 维护一个系统唯一的隐藏楼栋编号
+					// 逻辑代码不应该放在控制层，不便维护。--不重构。许俊雄
+					String buildName = subProject.getBuildingDisplayName();
+					subProject
+							.setBuildingDisplayName(buildName.contains("#") ? buildName
+									: buildName + "#");
+					
+					 * if (subProject.getBuilding().lastIndexOf("#") == -1) { //
+					 * 栋号里面没有填#号的 自动补充
+					 * subProject.setBuilding(subProject.getBuilding() + "#"); }
+					 
+					subProjectService.update(subProject);
+				}
+				if (StringUtils.isEmpty(subProject.getId())
+						&& StringUtils.isNotEmpty(subProject.getHouseType())
+						&& StringUtils.isNotEmpty(subProject.getBuildingDisplayName())) {
+					subProject.setId(IdGen.uuid());
+					subProject.setProjectId(project.getId());
+					// amend by 许俊雄20160401
+					// 为了保证楼栋的唯一编号，系统在保存楼栋的时候
+					// 维护一个系统唯一的隐藏楼栋编号
+					// 逻辑代码不应该放在控制层，不便维护。--不重构。许俊雄
+					String buildName = subProject.getBuildingDisplayName();
+					subProject
+							.setBuildingDisplayName(buildName.contains("#") ? buildName
+									: buildName + "#");
+					//如果是新增的二级项目信息的话就需要生成id
+					subProject.setBuilding(systemService
+							.getSeqNextVal(SubProjectService.SUB_SEQ) + "");
+					
+					 * if (subProject.getBuilding().lastIndexOf("#") == -1) { //
+					 * 栋号里面没有填#号的 自动补充
+					 * subProject.setBuilding(subProject.getBuilding() + "#"); }
+					 
+					subProjectService.save(subProject);
+				}
+			}
+		}*/
+
+		// 保存编辑时删除的行
+		String delId = request.getParameter("delId");
+		subProjectService.delete(delId);
+
+		addMessage(redirectAttributes, "修改项目成功");
+		return "redirect:" + adminPath + "/project/list/";
+	}
+
+	/**
+	 * 修改项目信息
+	 * 
+	 * @param project
+	 * @param redirectAttributes
+	 * @return
+	 * @throws BusinessException 
+	 */
+	@Transactional(readOnly = false)
+	@RequestMapping(value = "update")
+	public String update(Project project, HttpServletRequest request,
+			RedirectAttributes redirectAttributes) throws BusinessException {
+		// 修改一级项目信息
+		User user = UserUtils.getUser();
+		project.setUpdateBy(user);
+		project.setUpdateDate(new Date());
+		if (project != null) {
+			projectService.update(project);
+		}
+		// 添加二级项目
+		saveUpdateSubproject(project);
+		/*List<Subproject> list = project.getSubList();
+		if (null != list) {
+			for (Subproject subProject : list) {
+				if (StringUtils.isNotEmpty(subProject.getId())) {
+					subProject.setUpdateBy(user);
+					subProject.setUpdateDate(new Date());
+					// amend by 许俊雄20160401
+					// 为了保证楼栋的唯一编号，系统在保存楼栋的时候
+					// 维护一个系统唯一的隐藏楼栋编号
+					// 逻辑代码不应该放在控制层，不便维护。--不重构。许俊雄
+					String buildName = subProject.getBuildingDisplayName();
+					subProject
+							.setBuildingDisplayName(buildName.contains("#") ? buildName
+									: buildName + "#");
+					
+					 * if (subProject.getBuilding().lastIndexOf("#") == -1) { //
+					 * 栋号里面没有填#号的 自动补充
+					 * subProject.setBuilding(subProject.getBuilding() + "#"); }
+					 
+					subProjectService.update(subProject);
+				}
+				if (StringUtils.isEmpty(subProject.getId())
+						&& StringUtils.isNotEmpty(subProject.getHouseType())
+						&& StringUtils.isNotEmpty(subProject.getBuildingDisplayName())) {
+					subProject.setId(IdGen.uuid());
+					subProject.setProjectId(project.getId());
+					// amend by 许俊雄20160401
+					// 为了保证楼栋的唯一编号，系统在保存楼栋的时候
+					// 维护一个系统唯一的隐藏楼栋编号
+					// 逻辑代码不应该放在控制层，不便维护。--不重构。许俊雄
+					String buildName = subProject.getBuildingDisplayName();
+					subProject
+							.setBuildingDisplayName(buildName.contains("#") ? buildName
+									: buildName + "#");
+					//如果是新增的二级项目信息的话就需要生成id
+					subProject.setBuilding(systemService
+							.getSeqNextVal(SubProjectService.SUB_SEQ) + "");
+					
+					 * if (subProject.getBuilding().lastIndexOf("#") == -1) { //
+					 * 栋号里面没有填#号的 自动补充
+					 * subProject.setBuilding(subProject.getBuilding() + "#"); }
+					 
+					subProjectService.save(subProject);
+				}
+			}
+		}*/
+
+		// 保存编辑时删除的行
+		String delId = request.getParameter("delId");
+		subProjectService.delete(delId);
+
+		addMessage(redirectAttributes, "修改项目成功");
+		return "redirect:" + adminPath + "/project/list/";
+	}
+
+	/**
+	 * 删除一级项目信息、二级项目信息
+	 * 
+	 * @param project
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@Transactional(readOnly = false)
+	@RequestMapping(value = "delete")
+	public String delete(Project project, HttpServletRequest request,
+			RedirectAttributes redirectAttributes) {
+
+		String projectIds = request.getParameter("projectId");
+		// 1、删除主项目
+		projectService.delFlag(projectIds);
+
+		// 2.删除主项目时是否需要删除对应的二级项目
+		subProjectService.delFlag(projectIds);
+
+		addMessage(redirectAttributes, "删除项目成功");
+		return "redirect:" + adminPath + "/project/list/";
+	}
+
+	/**
+	 * 项目启动流程
+	 * 
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping(value = { "startworkflow" })
+	public String startWorkflow(HttpServletRequest request,
+			HttpServletResponse response, Model model) {
+		// 获取项目ID
+		String projectId = request.getParameter("projectId");
+
+		// 根据运营主管ID获取登录名
+		String coordinatorLeaderBidName = "";
+
+		// 根据项目ID获取运营主管ID
+		Project pro = projectService.get(projectId);
+
+		if (null != pro) {
+			coordinatorLeaderBidName = systemService.getUser(
+					pro.getCoordinatorLeaderBid()).getLoginName();
+		}
+
+		// 创建一个新的流程
+		Map<String, Object> variable = new HashMap<String, Object>();
+		variable.put("operation_director", coordinatorLeaderBidName);
+		variable.put(ActivitiConstants.PERSIST_BEAN_NAME,
+				ProjectService.BEAN_NAME);
+		variable.put(ActivitiConstants.PRIMARY_KEY, projectId);
+		//设置流程的标题
+		String title = pro.getName();
+		String actID = actTaskService.startProcess("ProjectManagementFlow",
+				"btg_project", "workflow_id", title, variable);
+		Project project = new Project();
+		project.setId(projectId);
+		project.setWorkflowid(actID);
+		project.setWorkflowstatus(CommonStatus.WORK_FLOW_OPEN);
+		projectService.updateWorkflow(project);
+		return project.getId();
+	}
+
+	/**
+	 * ajax 由id取项目
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping(value = "getProjectById")
+	public Map<String, String> getProjectById(HttpServletRequest request) {
+		String projectId = request.getParameter("projectId");
+		Map<String, String> map = projectService.getPersonList(projectId);
+		map.put("design_leader_info",
+				UserUtils.getUserNameById(map.get("design_leader")));
+		return map;
+	}
+	/**
+	 * 根据名称获取相应的项目信息
+	 * @param request
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping(value = "getProjectByName")
+	public Map<String, Object> getProjectByName(HttpServletRequest request) {
+		String name = request.getParameter("name");
+		Project project = projectService.getProjectByName(name);
+		Map<String, Object> map = new HashMap<String,Object>();
+		map.put("project", project);
+		return map;
+	}
+
+	/**
+	 * ajax 由项目一级id取二级项目
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping(value = "getSubProjectById")
+	public List<Subproject> getSubProjectById(HttpServletRequest request) {
+		String projectId = request.getParameter("projectId");
+		return subProjectService.findByProjectIdList(projectId);
+	}
+
+	/**
+	 * 根据一级项目ID获取二级项目列表数据
+	 * @return
+	 */
+	@RequestMapping(value = "getSubByProID")
+	@ResponseBody
+	public List<Map<String,Object>> getSubByProID(HttpServletRequest request, HttpServletResponse response){
+		String proID = request.getParameter("proID");
+		List<Map<String, Object>> listSub = subProjectService.getSubByProID(proID);
+		return listSub;
+	}
+	/**
+	 * 根据户型获取二级项目列表数据
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping(value = "getSubByHouseType")
+	@ResponseBody
+	public List<Map<String,Object>> getSubByHouseType(HttpServletRequest request, HttpServletResponse response){
+		String proID = request.getParameter("proID");
+		String houseType = request.getParameter("houseType");
+		List<Map<String, Object>> listSub = subProjectService.getSubByHouseType(proID,houseType);
+		return listSub;
+	}
+	
+	/**
+	 * 获取添加行需要的项目数据
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping(value = "listPro")
+	@ResponseBody
+	public Map<String,Object> listPro(
+			HttpServletRequest request,
+			HttpServletResponse response){
+		//项目列表数据
+		List<Map<String, Object>> listMap = projectService.gbProByName();
+		Map<String,Object> map = new HashMap<String,Object>();
+		map.put("listMap", listMap);
+		return map;
+	}
+}

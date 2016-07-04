@@ -1,0 +1,168 @@
+package com.bt.modules.contract.service;
+
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bt.modules.contract.dao.ConContainDetailDao;
+import com.bt.modules.contract.dao.ContractAccountDao;
+import com.bt.modules.contract.entity.ConContainDetail;
+import com.bt.modules.contract.entity.ContractDetail;
+import com.bt.modules.supplier.dao.SupplierDao;
+import com.bt.modules.utils.SeriesNumberUtils;
+import com.thinkgem.jeesite.common.persistence.CrudDao;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.IdGen;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+
+/**
+ * 
+ * @author yhh
+ *	合同Service
+ * @param <D>
+ * @param <T>
+ */
+public abstract class ConContainDetailService<D extends ConContainDetailDao<T>, DetailD extends CrudDao<DetailT>, 
+	T extends ConContainDetail<T, DetailT>, DetailT extends ContractDetail<DetailT>> extends CrudService<D, T> {
+
+	/**
+	 * 持久层对象
+	 */
+	@Autowired
+	protected D dao;
+	
+	@Autowired
+	protected DetailD detailDao;
+	
+	@Autowired
+	private ContractAccountDao contractAccountDao;
+	
+	@Autowired
+	private SupplierDao supplierDao;
+	
+	/**
+	 * 判断表头是否存在
+	 * @param id
+	 * @return
+	 */
+	public boolean isExist(String id){
+		T entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = dao.get(id);
+		}
+		if(entity == null){
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * 判断明细是否存在
+	 * @param id
+	 * @return
+	 */
+	public boolean isExistDetail(String id){
+		DetailT entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = detailDao.get(id);
+		}
+		if(entity == null){
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * 批量删除明细
+	 * @param ids
+	 */
+	@Transactional(readOnly = false)
+	public void batchDeleteDetails(String ids){
+		if(StringUtils.isNotEmpty(ids)){
+			String[] array =ids.split(",");
+			if(array !=null && array.length>0){
+				for(int i=0;i<array.length;i++){
+					String id = array[i];
+					detailDao.delete(id);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * 保存合同及明细
+	 * @param base
+	 * @param delId
+	 */
+	@Transactional(readOnly = false)
+	public void save(T base) {
+		//判断对象是否已存在
+		if(isExist(base.getId())){
+			base.setIsNewRecord(false);
+//			if(base.getContractNo().equals("待定")){
+//				String seriesnumber = createSeriesnumber(base);
+//				base.setContractNo(seriesnumber);
+//			}
+			super.save(base);
+		}else{
+			base.setIsNewRecord(true);
+			super.save(base);
+		}
+		
+		//添加明细
+		List<DetailT> list = base.getDetailList();
+		if(null != list){
+			for(DetailT detail:list){
+				if(StringUtils.isNotBlank(detail.getId())){
+					detail.setContractId(base.getId());
+					detailDao.update(detail);
+				}
+				if(!StringUtils.isNotBlank(detail.getId())){
+					detail.setId(IdGen.uuid());
+					detail.setContractId(base.getId());
+					detailDao.insert(detail);
+				}
+				
+			}
+		}
+		
+		//保存编辑时删除的行
+		batchDeleteDetails(base.getDelIds());
+	}
+	
+	/**
+	 * 生成合同编号
+	 * @param entity
+	 * @return
+	 */
+	public String createSeriesnumber(T entity){
+		String contractType = entity.getContractType();
+		String fristType = entity.getFristType();
+		String secondType = entity.getSecondType();
+		String partyBCode = entity.getPartyBCode();
+		String prefix = "";
+		if(StringUtils.isNotBlank(contractType)){
+			contractType = contractAccountDao.getContractAccountTypeById(contractType);
+			prefix = contractType;
+		}
+		if(StringUtils.isNotBlank(fristType)){
+			fristType = contractAccountDao.getContractAccountTypeById(fristType);
+			prefix = prefix + fristType + "-";
+		}
+		if(StringUtils.isNotBlank(secondType)){
+			secondType = contractAccountDao.getContractAccountTypeById(secondType);
+			prefix = prefix + secondType + "-";
+		}
+		
+		if(StringUtils.isNotBlank(partyBCode)){
+			prefix = prefix + partyBCode + "-";
+		}
+		String date = DateUtils.getDate("yyyyMMdd");
+		int count = dao.getTodayCount(date);
+		String number = SeriesNumberUtils.createSeriesNumber(prefix,date, count);
+		return number;
+	}
+}

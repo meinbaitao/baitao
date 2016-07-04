@@ -1,0 +1,496 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.logistics.service;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bt.modules.finance.entity.TransportationSettlement;
+import com.bt.modules.finance.service.TransportationSettlementService;
+import com.bt.modules.logistics.dao.LogisticsSendDao;
+import com.bt.modules.logistics.entity.LogisticsSend;
+import com.bt.modules.orbom.entity.OrderBomBase;
+import com.bt.modules.production.entity.Production;
+import com.bt.modules.production.service.ProductionService;
+import com.bt.modules.project.entity.Project;
+import com.bt.modules.utils.CommonStatus;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.IdGen;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 物流管理（发货通知单）Service
+ * @author xiaocai
+ * @version 2016-1-14
+ */
+@Service
+@Transactional(readOnly = true)
+public class LogisticsSendService extends CrudService<LogisticsSendDao, LogisticsSend> {
+
+	@Autowired
+	private TransportationSettlementService transportationSettlementService;
+	
+	@Autowired
+	private LogisticsSendDao logisticsSendDao;
+	@Autowired
+	private ProductionService productionService;
+	
+	/**
+	 * 加工单被全部驳回之后单据(有待客户确认)
+	 * @param listProductionIds
+	 * @return
+	 */
+	public List<String> returnSendUtils(List<String> listProductionIds){
+		LogisticsSend ls = new LogisticsSend();
+		ls.setGbStr("lsID");
+		ls.setIds(listProductionIds);
+//		List<LogisticsSend> listGroupByIDs = this.getListLogisticsSendByCondition(ls);
+		
+		return null;
+	}
+	
+	/**
+	 * 下料单数据处理
+	 * @param listProductionIds
+	 * @param productionStatus
+	 * @param logisticsSendChangeStatus
+	 * @return	已经完全收货的下料单ids
+	 */
+	public List<String> orderBomBaseReceiveUtils(List<String> listProductionIds){
+		Production production = new Production(); 
+		production.setIds(listProductionIds);
+		production.setGlfpGB("obbaseid");
+		List<Production> listP = productionService.getListByProduction(production);	//获取本次收货的所有加工单所关联的下料单
+		List<String> obbIds = new ArrayList<String>();
+		int countBox = 0;
+		int receiveCount = 0;
+		for(Production p:listP){
+			p.setStatus("");
+			countBox = productionService.countOrderBase(p);		//下单总数
+			receiveCount = productionService.receiveCount(p);	//已收总数
+			if(countBox==receiveCount){
+				String obbId = p.getOrderBomBase().getId();
+				int countManuf =  productionService.countManufSettlement(obbId);
+				if (!(countManuf>0)) {
+					obbIds.add(p.getOrderBomBase().getId());
+				}	
+			}
+		}
+		return obbIds;
+	}
+	
+	/**
+	 * 对相应的加工单对应的发货通知进行状态的修改
+	 * @param listProductionIds 加工单的ids
+	 */
+	@Transactional(readOnly = false)
+	public void logisticsSendStatusUtils(List<String> listProductionIds,String productionStatus,String logisticsSendChangeStatus){
+		if(listProductionIds.size()==0){
+			return;
+		}
+//		List<LogisticsSend> listReturn = new ArrayList<LogisticsSend>();
+		Map<String,LogisticsSend> returnMap = new HashMap<String, LogisticsSend>();
+		Map<String,LogisticsSend> noSendFinshMap = new HashMap<String, LogisticsSend>();	//没有操作完全的数据
+		Production production = new Production();
+		production.setGtEqVal(productionStatus);
+		
+		LogisticsSend logisticsSend = new LogisticsSend();
+		logisticsSend.setProduction(production);
+		logisticsSend.setGbStr("lsID");
+		logisticsSend.setIds(listProductionIds);
+		List<LogisticsSend> listUpdate = this.getListLogisticsSendByCondition(logisticsSend);	//被修改的全部数据
+		for(LogisticsSend ls:listUpdate){
+			ls.setProduction(production);
+			
+			production.setGtEqVal("");
+			production.setLtVal(productionStatus);
+			ls.setProduction(production);
+			int notSendBox = this.countBoxByCondition(ls);
+			if(notSendBox==0){
+				returnMap.put(ls.getId(), ls);
+			}else{
+				noSendFinshMap.put(ls.getId(), ls);
+			}
+		}
+		//已完全操作完成的数据修改
+		this.lsSendFinshStatusUpdate(logisticsSendChangeStatus, returnMap);
+		//没被完全操作完成的数据状态修改
+		this.lsNoSendFinshStatusUpdate(logisticsSendChangeStatus, noSendFinshMap);
+	}
+	/**
+	 * 完全操作完成的数据状态修改
+	 */
+	public void lsSendFinshStatusUpdate(String logisticsSendChangeStatus,Map<String,LogisticsSend> returnMap){
+		//未被操作完全的数据修改
+		LogisticsSend ls;
+		for(String key:returnMap.keySet()){	//
+			ls = returnMap.get(key);
+			ls.setStatus(logisticsSendChangeStatus);
+			ls.setFactSendDate(DateUtils.getDate());
+			ls.setUpdateDate(new Date());
+			this.update(ls);
+		}
+	}
+	/**
+	 * 没被完全操作完成的数据状态修改
+	 */
+	public void lsNoSendFinshStatusUpdate(String logisticsSendChangeStatus,Map<String,LogisticsSend> noSendFinshMap){
+		//未被操作完全的数据修改
+		String changStatus="";
+		if(CommonStatus.LOGISTICS_YFH.equals(logisticsSendChangeStatus)){
+			changStatus = CommonStatus.LOGISTICS_BFFH;
+		}else if(CommonStatus.LOGISTICS_YSH.equals(logisticsSendChangeStatus)){
+			changStatus = CommonStatus.LOGISTICS_BFSH;
+		}
+		LogisticsSend ls;
+		for(String key:noSendFinshMap.keySet()){	
+			ls = noSendFinshMap.get(key);
+			ls.setStatus(changStatus);
+			ls.setFactSendDate(DateUtils.getDate());
+			ls.setUpdateDate(new Date());
+			this.update(ls);
+		}
+	}
+	/**
+	 * 2015-12-10
+	 * 根据条件获取对应的物流单数据
+	 * @return
+	 */
+	public List<LogisticsSend> getListLogisticsSendByCondition(LogisticsSend logisticsSend){
+		List<LogisticsSend> list = logisticsSendDao.getListLogisticsSendByCondition(logisticsSend);
+		if(list==null){
+			list = new ArrayList<LogisticsSend>();
+		}
+		return list;
+	}
+	/**
+	 * 根据物流ID获取相应的二级详情
+	 * @param lid
+	 * @return
+	 */
+	public List<LogisticsSend> getLogisticsReceiveDetail(String lid,String projectName){
+		LogisticsSend logisticsSend = new LogisticsSend(lid);
+		Project project = new Project();
+		project.setName(projectName);
+		logisticsSend.setGbStr("getByID");
+		logisticsSend.setProject(project);
+		Production production = productionService.productionDataUserUtils(new Production());
+		logisticsSend.setProduction(production);
+		List<LogisticsSend> listLS = this.getLogisticsSendDetail(logisticsSend);
+		List<LogisticsSend> returnList = new ArrayList<LogisticsSend>();
+//		Production production;
+		int sendCount = 0;
+		for(LogisticsSend ls:listLS){
+			production = new Production();
+			production.setSub(ls.getSub());
+			production.setProject(ls.getProject());
+			production.setSupp(ls.getSupp());
+			production.setLogisticsSend(ls);
+			OrderBomBase orderBomBase = new OrderBomBase();	//加入下料单类型
+			orderBomBase.setOrderType(ls.getOrderBomBase().getOrderType());
+			production.setOrderBomBase(orderBomBase);
+			sendCount = productionService.sendCount(production);
+			if(sendCount>0){
+				ls.getExtraData().put("hasCarWaitSendCount", productionService.hasCarWaitSendCount(production));
+				ls.getExtraData().put("sendCount", sendCount);
+				
+				returnList.add(ls);
+			}
+		}
+		return returnList;
+	}
+	public List<LogisticsSend> getLogisticsSendDetail(String lid,String projectName){
+		LogisticsSend logisticsSend = new LogisticsSend(lid);
+		Project project = new Project();
+		project.setName(projectName);
+		logisticsSend.setGbStr("getByID");
+		logisticsSend.setProject(project);
+		Production production = productionService.productionDataUserUtils(new Production());
+		logisticsSend.setProduction(production);
+		List<LogisticsSend> listLS = this.getLogisticsSendDetail(logisticsSend);
+		List<LogisticsSend> returnList = new ArrayList<LogisticsSend>();
+//		Production production;
+		int hasCarWaitSendCount = 0;
+		for(LogisticsSend ls:listLS){
+			production = new Production();
+			production.setSub(ls.getSub());
+			production.setProject(ls.getProject());
+			production.setSupp(ls.getSupp());
+			production.setLogisticsSend(ls);
+			OrderBomBase orderBomBase = new OrderBomBase();	//加入下料单类型
+			orderBomBase.setOrderType(ls.getOrderBomBase().getOrderType());
+			production.setOrderBomBase(orderBomBase);
+			hasCarWaitSendCount = productionService.hasCarWaitSendCount(production);
+			if(hasCarWaitSendCount>0){
+				ls.getExtraData().put("hasCarWaitSendCount", hasCarWaitSendCount);
+				ls.getExtraData().put("sendCount", productionService.sendCount(production));
+				
+				returnList.add(ls);
+			}
+		}
+		return returnList;
+	}
+	/**
+	 * 根据条件获取物流的详情数据
+	 * @param logisticsSend
+	 * @return
+	 */
+	public List<LogisticsSend> getLogisticsSendDetail(LogisticsSend logisticsSend){
+		List<LogisticsSend> listLS = logisticsSendDao.getLogisticsSendDetail(logisticsSend);
+		if(listLS==null){
+			listLS = new ArrayList<LogisticsSend>();
+		}
+		return listLS;
+	}
+	
+	/**
+	 * 新增数据
+	 * @param logisticsSend
+	 */
+	@Transactional(readOnly = false)
+	public void insert(LogisticsSend logisticsSend) {
+		logisticsSend.setCreateBy(UserUtils.getUser());
+		logisticsSend.setCreateDate(new Date());
+		logisticsSend.setUpdateDate(new Date());
+		logisticsSendDao.insert(logisticsSend);
+	}
+	/**
+	 * 修改数据
+	 * @param logisticsSend
+	 */
+	@Transactional(readOnly = false)
+	public void update(LogisticsSend logisticsSend) {
+		//发货通知单完全收货,生成运费结算单
+		if(logisticsSend.getStatus().equals(CommonStatus.LOGISTICS_YFH)){
+			createTransportationSettlement(logisticsSend);
+		}
+		
+		logisticsSendDao.update(logisticsSend);
+	}
+	
+/*	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+	/**
+	 * 由发货通知单,生成运费结算单,结算明细
+	 * @param logisticsSend
+	 */
+	@Transactional(readOnly=false)
+	public void createTransportationSettlement(LogisticsSend logisticsSend){
+		//由发货通知单,生成结算单,结算明细
+		String logisticSendId = logisticsSend.getId();
+		TransportationSettlement settlement = transportationSettlementService.createSettlementWithPrice(logisticSendId);
+		if(null != settlement){
+			//保存结算单,结算明细
+			String settlementId = IdGen.uuid();
+			settlement.setId(settlementId);
+			settlement.setIsNewRecord(true);
+			transportationSettlementService.save(settlement);
+		}
+		
+ 	}
+/*	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX*/
+	
+	/**
+	 * 发货信息汇总
+	 * @param page
+	 * @param logisticsSend
+	 * @return
+	 */
+	public Page<LogisticsSend> sendDataSummary(Page<LogisticsSend> page, LogisticsSend logisticsSend,String projectName) {
+		Project project = new Project();
+		project.setName(projectName);
+		logisticsSend.setProject(project);
+		Production production = productionService.productionDataUserUtils(new Production());
+		logisticsSend.setProduction(production);
+		logisticsSend.setPage(page);
+		//对列表数据进行分页处理
+		List<LogisticsSend> listLS = logisticsSendDao.sendDataSummary(logisticsSend);
+		for(LogisticsSend ls : listLS){
+//			ls.setStatus("");
+//			ls.setGtVal(CommonStatus.LOGISTICS_DFH);
+			ls.getExtraData().put("countBox", this.countBoxByCondition(ls));	//统计对应的项目下面的计划发货箱数
+			ls.getExtraData().put("actualSendCount", this.actualSendCount(ls));
+		}
+		page.setList(listLS);
+		return page;
+	}
+	/**
+	 * 已派车未发货
+	 * @param page
+	 * @param logisticsSend
+	 * @return
+	 */
+	public Page<LogisticsSend> confirmSendList(Page<LogisticsSend> page, LogisticsSend logisticsSend) {
+		//返回相应的列表数据
+		Production production = productionService.productionDataUserUtils(new Production());//new Production();
+		production.setStatus(CommonStatus.PRODUCTION_YPCWF);	//已派车未发
+		logisticsSend.setProduction(production);
+		logisticsSend.setPage(page);
+		//对列表数据进行分页处理
+		List<LogisticsSend> listLS = logisticsSendDao.sendReceiveList(logisticsSend);
+		for(LogisticsSend ls : listLS){
+			ls.setProduction(production);
+			ls.setStatus("");
+			ls.setGtVal(CommonStatus.LOGISTICS_DFH);
+			ls.getExtraData().put("hasCarWaitSendCount", this.hasCarWaitSendCount(ls));
+		}
+		page.setList(listLS);
+		return page;
+	}
+	/**
+	 * 在途中的数据
+	 * @param page
+	 * @param logisticsSend
+	 * @return
+	 */
+	public Page<LogisticsSend> confirmReceiveList(Page<LogisticsSend> page, LogisticsSend logisticsSend) {
+		//相应的人员条件
+		Production production = productionService.productionDataUserUtils(new Production());
+		production.setStatus(CommonStatus.PRODUCTION_DSH);
+		logisticsSend.setProduction(production);
+		logisticsSend.setPage(page);
+		//对列表数据进行分页处理
+		List<LogisticsSend> listLS = logisticsSendDao.sendReceiveList(logisticsSend);
+		for(LogisticsSend ls : listLS){
+			ls.setProduction(production);
+			ls.setStatus("");
+			ls.setGtVal(CommonStatus.PRODUCTION_DSH);
+			ls.getExtraData().put("sendCount", this.sendCount(ls));
+		}
+		page.setList(listLS);
+		return page;
+	}
+	/**
+	 * 已派车未发货的数据
+	 * @param ls
+	 * @return
+	 */
+	public int hasCarWaitSendCount(LogisticsSend ls){
+		Production production = ls.getProduction();//new Production();
+		production.setStatus(CommonStatus.PRODUCTION_YPCWF);
+		ls.setProduction(production);
+		return this.countBoxByCondition(ls);
+	}
+	/**
+	 * 已发货在途中
+	 * @param ls
+	 * @return
+	 */
+	public int sendCount(LogisticsSend ls){
+		Production production = ls.getProduction();//new Production();
+		production.setStatus(CommonStatus.PRODUCTION_DSH);
+		ls.setProduction(production);
+		return this.countBoxByCondition(ls);
+	}
+	/**
+	 * 实际发货箱数
+	 * @param ls
+	 * @return
+	 */
+	public int actualSendCount(LogisticsSend ls){
+		Production production = new Production();
+		production.setGtEqVal(CommonStatus.PRODUCTION_DSH);
+		ls.setProduction(production);
+		return this.countBoxByCondition(ls);
+	}
+	/**
+	 * 根据物流单统计对应的箱数
+	 * @param ls
+	 * @return
+	 */
+	public int countBoxByCondition(LogisticsSend ls){
+		return logisticsSendDao.countBoxByCondition(ls);
+	}
+	/**
+	 * 根据发货单ID获取箱的数据
+	 * @param lsID
+	 * @return
+	 */
+	public List<Map<String,Object>> getBoxsBylsID(String lsID){
+		List<Map<String,Object>> listMap = logisticsSendDao.getBoxsBylsID(lsID);
+		return listMap;
+	}
+	
+	/**
+	 * 获取列表数据给到事故单界面
+	 * @param logisticsSend
+	 * @return
+	 */
+	public List<LogisticsSend> getListToAccident(LogisticsSend logisticsSend) {
+		List<LogisticsSend> listLS = logisticsSendDao.getListToAccident(logisticsSend);
+		if(listLS==null||listLS.size()==0){
+			listLS = new ArrayList<LogisticsSend>();
+		}
+		return listLS;
+	}
+	/**
+	 * 根据编号获取对应的数据
+	 * @param seriesnumber
+	 * @return
+	 */
+	public LogisticsSend getBySeriesnumber(String seriesnumber){
+		LogisticsSend logisticsSend = new LogisticsSend();
+		logisticsSend.setSeriesnumber(seriesnumber);
+		logisticsSend = logisticsSendDao.getOne(logisticsSend);
+		if(logisticsSend==null){
+			logisticsSend = new LogisticsSend();
+		}
+		return logisticsSend;
+	}
+	
+	/**
+	 * end
+	 */
+	
+	public LogisticsSend get(String id) {
+		return super.get(id);
+	}
+	
+	public List<LogisticsSend> findList(LogisticsSend logisticsSend) {
+		return super.findList(logisticsSend);
+	}
+	
+	public Page<LogisticsSend> findPage(Page<LogisticsSend> page, LogisticsSend logisticsSend) {
+		return super.findPage(page, logisticsSend);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(LogisticsSend logisticsSend) {
+		super.save(logisticsSend);
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(LogisticsSend logisticsSend) {
+		super.delete(logisticsSend);
+	}
+	
+	/**
+	 * 获取当天新增的数据数量
+	 * @param date
+	 * @return
+	 */
+	public int getTodayCount(Date date){
+		if(date==null)
+			date = new Date();
+		return logisticsSendDao.getTodayCount(date);
+	}
+	/**
+	 * 获取当前年份的总数
+	 * @return
+	 */
+	public int getThisYearCount(Date date){
+		if(date==null)
+			date = new Date();
+		return logisticsSendDao.getThisYearCount(date);
+	}
+	
+}

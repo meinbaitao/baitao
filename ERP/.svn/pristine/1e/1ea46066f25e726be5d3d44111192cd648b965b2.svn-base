@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  
+  <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script type="text/javascript" src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" />
+  <script type="text/javascript" src="js/multiselect.min.js"></script>
+	  
+	  <script type="text/javascript">
+		$(document).ready(function() {
+			$('#multiselect').multiselect();
+		});
+	</script>
+  
+  
+  
+</head>
+
+<body>
+		
+		<div id="demo" >
+			<div class="row">
+				<div class="col-sm-5">
+					<select name="from[]" id="multiselect" class="form-control" size="8" multiple="multiple">
+						<option value="1" data-position="1">Item 1</option>
+						<option value="2" data-position="2">Item 5</option>
+						<option value="2" data-position="3">Item 2</option>
+						<option value="2" data-position="4">Item 4</option>
+						<option value="3" data-position="5">Item 3</option>
+					</select>
+				</div>
+				
+				<div class="col-sm-2">
+					<button type="button" id="multiselect_rightAll" class="btn btn-block"><i class="glyphicon glyphicon-forward"></i></button>
+					<button type="button" id="multiselect_rightSelected" class="btn btn-block"><i class="glyphicon glyphicon-chevron-right"></i></button>
+					<button type="button" id="multiselect_leftSelected" class="btn btn-block"><i class="glyphicon glyphicon-chevron-left"></i></button>
+					<button type="button" id="multiselect_leftAll" class="btn btn-block"><i class="glyphicon glyphicon-backward"></i></button>
+				</div>
+				
+				<div class="col-sm-5">
+					<select name="to[]" id="multiselect_to" class="form-control" size="8" multiple="multiple">
+						<option value="11" data-position="11">Item 11</option>
+						<option value="12" data-position="12">Item 15</option>
+						<option value="12" data-position="13">Item 12</option>
+						<option value="12" data-position="14">Item 14</option>
+						<option value="13" data-position="15">Item 13</option>
+					</select>
+				</div>
+			</div>
+	
+		</div>
+
+	
+</div>
+</body>
+
+</html>

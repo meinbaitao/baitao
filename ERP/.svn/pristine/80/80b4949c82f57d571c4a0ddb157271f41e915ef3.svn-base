@@ -1,0 +1,32 @@
+package com.bt.modules.activiti.constants;
+
+/**
+ * 流程变量名称
+ * @author 许俊雄
+ * @since 20160516
+ *
+ */
+public enum VariablesRoleEnum {
+	VAR_PROJECT_RESPON("project_responsible_people"),//项目负责人
+	VAR_AREA_MANAGER("area_manager"),//区域经理
+	VAR_QUANLITY_SECUR("quality_security_office"),//质安员
+	VAR_COST_RESPON("cost_responsible_person"),//成本负责人
+	VAR_COST_LEADER("costing_leader"),//成本组长
+	VAR_COST_DIRECTOR("costing_director}")//成本主管
+	;
+	private String name;
+
+	private VariablesRoleEnum(String name) {
+		this.name = name;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	// 用法
+	public static void main(String[] args) {
+		System.out.println(VariablesRoleEnum.VAR_PROJECT_RESPON.getName());
+		System.out.println(VariablesRoleEnum.VAR_PROJECT_RESPON.toString());
+	}
+}

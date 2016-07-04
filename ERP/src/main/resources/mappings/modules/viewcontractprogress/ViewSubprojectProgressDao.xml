@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.viewcontractprogress.dao.ViewSubprojectProgressDao">
+    
+	<sql id="viewSubprojectProgressColumns">
+		a.subid AS "subid",
+		a.projectid AS "projectid",
+		a.subhousetype AS "subhousetype",
+		a.subbuilding AS "subbuilding",
+		a.buildingDisplayName AS "buildingDisplayName",
+		a.subastone AS "subastone",
+		a.showtype AS "showtype",
+		a.materialtype AS "materialtype",
+		a.planstartdate AS "planstartdate",
+		a.planenddate AS "planenddate",
+		a.designstartdate AS "designstartdate",
+		a.stoneorderdate AS "stoneorderdate",
+		a.skeletonorderdate AS "skeletonorderdate",
+		a.pendantorderdate AS "pendantorderdate",
+		a.stoneedate AS "stoneedate",
+		a.skeletonedate AS "skeletonedate",
+		a.pendantedate AS "pendantedate",
+		a.design_complete_date AS "designCompleteDate",
+		a.stone_complete_date AS "stoneCompleteDate",
+		a.skeleton_complete_date AS "skeletonCompleteDate",
+		a.pendant_complete_date AS "pendantCompleteDate",
+		a.showdesigner AS "showdesigner",
+		a.designer_mobile AS "designerMobile",
+		a.stone_actual_area AS "stoneActualArea",
+		a.workclass AS "workclass",
+		a.larbomoney AS "larbomoney",
+		a.stone_actual_date AS "stoneActualDate",
+		a.skeleton_actual_date AS "skeletonActualDate",
+		a.pendant_actual_date AS "pendantActualDate",
+		a.workshiftdate AS "workshiftdate",
+		a.completedate AS "completedate",
+		a.estimate_revenue AS "estimateRevenue"
+	</sql>
+	
+	<sql id="viewSubprojectProgressJoins">
+	</sql>
+    
+	<select id="get" resultType="ViewSubprojectProgress">
+		SELECT 
+			<include refid="viewSubprojectProgressColumns"/>
+		FROM view_subproject_progress a
+		<include refid="viewSubprojectProgressJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="ViewSubprojectProgress">
+		SELECT 
+			<include refid="viewSubprojectProgressColumns"/>
+		FROM view_subproject_progress a
+		<include refid="viewSubprojectProgressJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ViewSubprojectProgress">
+		SELECT 
+			<include refid="viewSubprojectProgressColumns"/>
+		FROM view_subproject_progress a
+		<include refid="viewSubprojectProgressJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+		<!-- 根据一级项目ID关联查询二级项目信息 -->
+	<select id="findByProjectIdList" resultType="ViewSubprojectProgress">
+		SELECT 
+			<include refid="viewSubprojectProgressColumns"/>
+		FROM view_subproject_progress a
+		<include refid="viewSubprojectProgressJoins"/>
+    	<where>
+			a.projectid=#{projectid}			
+		</where>
+		
+	</select>
+	<insert id="insert">
+		INSERT INTO view_subproject_progress(
+			subid,
+			projectid,
+			subhousetype,
+			subbuilding,
+			buildingDisplayName,
+			subastone,
+			showtype,
+			materialtype,
+			planstartdate,
+			planenddate,
+			designstartdate,
+			stoneorderdate,
+			skeletonorderdate,
+			pendantorderdate,
+			stoneedate,
+			skeletonedate,
+			pendantedate,
+			design_complete_date,
+			stone_complete_date,
+			skeleton_complete_date,
+			pendant_complete_date,
+			showdesigner,
+			designer_mobile,
+			stone_actual_area,
+			workclass,
+			larbomoney,
+			stone_actual_date,
+			skeleton_actual_date,
+			pendant_actual_date,
+			workshiftdate,
+			completedate,
+			estimate_revenue
+		) VALUES (
+			#{subid},
+			#{projectid},
+			#{subhousetype},
+			#{subbuilding},
+			#{buildingDisplayName},
+			#{subastone},
+			#{showtype},
+			#{materialtype},
+			#{planstartdate},
+			#{planenddate},
+			#{designstartdate},
+			#{stoneorderdate},
+			#{skeletonorderdate},
+			#{pendantorderdate},
+			#{stoneedate},
+			#{skeletonedate},
+			#{pendantedate},
+			#{designCompleteDate},
+			#{stoneCompleteDate},
+			#{skeletonCompleteDate},
+			#{pendantCompleteDate},
+			#{showdesigner},
+			#{designerMobile},
+			#{stoneActualArea},
+			#{workclass},
+			#{larbomoney},
+			#{stoneActualDate},
+			#{skeletonActualDate},
+			#{pendantActualDate},
+			#{workshiftdate},
+			#{completedate},
+			#{estimateRevenue}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE view_subproject_progress SET 	
+			subid = #{subid},
+			projectid = #{projectid},
+			subhousetype = #{subhousetype},
+			subbuilding = #{subbuilding},
+			buildingDisplayName = #{buildingDisplayName},
+			subastone = #{subastone},
+			showtype = #{showtype},
+			materialtype = #{materialtype},
+			planstartdate = #{planstartdate},
+			planenddate = #{planenddate},
+			designstartdate = #{designstartdate},
+			stoneorderdate = #{stoneorderdate},
+			skeletonorderdate = #{skeletonorderdate},
+			pendantorderdate = #{pendantorderdate},
+			stoneedate = #{stoneedate},
+			skeletonedate = #{skeletonedate},
+			pendantedate = #{pendantedate},
+			design_complete_date = #{designCompleteDate},
+			stone_complete_date = #{stoneCompleteDate},
+			skeleton_complete_date = #{skeletonCompleteDate},
+			pendant_complete_date = #{pendantCompleteDate},
+			showdesigner = #{showdesigner},
+			designer_mobile = #{designerMobile},
+			stone_actual_area = #{stoneActualArea},
+			workclass = #{workclass},
+			larbomoney = #{larbomoney},
+			stone_actual_date = #{stoneActualDate},
+			skeleton_actual_date = #{skeletonActualDate},
+			pendant_actual_date = #{pendantActualDate},
+			workshiftdate = #{workshiftdate},
+			completedate = #{completedate},
+			estimate_revenue = #{estimateRevenue}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM view_subproject_progress
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,151 @@
+/**
+] * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.project.dao;
+
+
+import java.util.List;
+import java.util.Map;
+
+
+import com.thinkgem.jeesite.common.persistence.CrudDao;
+import com.thinkgem.jeesite.common.persistence.annotation.MyBatisDao;
+import com.bt.modules.project.entity.Project;
+
+/**
+ * 项目信息DAO接口
+ * @author yhh
+ * @version 2015-08-01
+ */
+@MyBatisDao
+public interface ProjectDao extends CrudDao<Project> {
+	
+	/**
+	 * 返回多表数据临时集合
+	 * @return
+	 */
+    public List<Map<String, Object>> findProjectByLoginName(Project project);
+    
+    
+    /**
+     * 查询所有的一级项目名称
+     * @return
+     */
+    public List<Project> findByProjectName(Project project);
+    
+    /**
+     * 根据二级项目ID反查一级项目信息
+     * @return
+     */
+	public Project findBysubProjectId(Map<String, Object> map);
+	
+	/**
+	 * 由项目名获取项目 
+	 * @param project
+	 * @return
+	 */
+	public Project getByProjeceName(Project project);
+	
+	/**
+	 * 项目信息填写
+	 */
+	public void addProject(Project project);
+	
+	/**
+	 * 成本信息填写
+	 */
+	public void addcost(Project project);
+	
+	/**
+	 * 设计主管填写
+	 */
+	public void adddesign(Project project);
+	
+	/**
+	 * 修改项目人员信息
+	 * @param project
+	 */
+	public void updateProjectPersonnel(Project project);
+	
+	/**
+	 * 根据条件对名字进行分组
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> gbProByName(Map<String,Object> map);
+	/**
+	 * 根据条件对项目数据进行分组
+	 * @param project
+	 * @return
+	 */
+	public List<Project> gbProjectByCondition(Project project);
+	
+	/**
+	 * 修改流程状态
+	 * @param project
+	 */
+	public void updateWorkflow(Project project);
+	
+	/**
+	 * 查询人员汇总
+	 * @param id
+	 * @return
+	 */
+	public Map<String,String> getPersonList(String id);
+	
+	/**
+	 * 根据条件对名字进行分组
+	 * @param map
+	 * @return
+	 */
+	public List<Map<String, Object>> getProAttachmentList(Map<String,Object> map);
+	
+	/**
+	 * 根据设计主管Id 筛选 获取项目list
+	 * @param designLeaderBid
+	 * @return
+	 */
+	public List<Project> findListByDesignLeaderBid(Project project);
+	
+	public List<Project> findListByStatus(Project project);
+	
+	/**
+	 * 更新信息
+	 * @param project
+	 */
+	public void traceUpdateUser(Project project);
+	/**
+	 * 我创建的工程
+	 * @param project
+	 * @return
+	 */
+	public List<Project> findMyProjects(Project project);
+
+	/**
+	 * 未审核的工程
+	 * @param project
+	 * @return
+	 */
+	public List<Project> findUnAuditProjects(Project project);
+
+	/**
+	 * 我审核过的工程
+	 * @param project
+	 * @return
+	 */
+	public List<Project> findAuditDoneProjects(Project project);
+	
+	/**
+	 * 与项目人员相关项目
+	 * @param project
+	 * @return
+	 */
+	public List<Project> getListForProject(Project project);
+	
+	/**
+	 * 与加工厂人员相关
+	 * @param project
+	 * @return
+	 */
+	public List<Project> getListForProjectByJGC(Project project);
+}

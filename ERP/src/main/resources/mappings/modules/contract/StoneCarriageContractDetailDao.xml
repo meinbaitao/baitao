@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.StoneCarriageContractDetailDao">
+    
+	<sql id="stoneCarriageContractDetailColumns">
+		a.id AS "id",
+		a.contract_id AS "contractId",
+		a.seriesnumber AS "seriesnumber",
+		a.start_addr AS "startAddr",
+		a.province AS "province",
+		a.city AS "city",
+		a.past_city AS "pastCity",
+		a.company_city AS "companyCity",
+		a.kilometre AS "kilometre",
+		a.company_price AS "companyPrice",
+		a.past_price AS "pastPrice",
+		a.pre_tax_full_car_price AS "preTaxFullCarPrice",
+		a.after_tax_full_car_price AS "afterTaxFullCarPrice",
+		a.pre_tax_split_price AS "preTaxSplitPrice",
+		a.after_tax_split_price AS "afterTaxSplitPrice",
+		a.pre_tax_light_price AS "preTaxLightPrice",
+		a.after_tax_light_price AS "afterTaxLightPrice",
+		a.duration AS "duration"
+	</sql>
+	
+	<sql id="stoneCarriageContractDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="StoneCarriageContractDetail">
+		SELECT 
+			<include refid="stoneCarriageContractDetailColumns"/>
+		FROM btg_stone_carriage_contract_detail a
+		<include refid="stoneCarriageContractDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="StoneCarriageContractDetail">
+		SELECT 
+			<include refid="stoneCarriageContractDetailColumns"/>
+		FROM btg_stone_carriage_contract_detail a
+		<include refid="stoneCarriageContractDetailJoins"/>
+		<where>
+			
+			<if test="contractId != null and contractId != ''">
+				AND a.contract_id = #{contractId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		order by a.seriesnumber
+	</select>
+	
+	<select id="findAllList" resultType="StoneCarriageContractDetail">
+		SELECT 
+			<include refid="stoneCarriageContractDetailColumns"/>
+		FROM btg_stone_carriage_contract_detail a
+		<include refid="stoneCarriageContractDetailJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_stone_carriage_contract_detail(
+			id,
+			contract_id,
+			seriesnumber,
+			start_addr,
+			province,
+			city,
+			past_city,
+			company_city,
+			kilometre,
+			company_price,
+			past_price,
+			pre_tax_full_car_price,
+			after_tax_full_car_price,
+			pre_tax_split_price,
+			after_tax_split_price,
+			pre_tax_light_price,
+			after_tax_light_price,
+			duration
+		) VALUES (
+			#{id},
+			#{contractId},
+			#{seriesnumber},
+			#{startAddr},
+			#{province},
+			#{city},
+			#{pastCity},
+			#{companyCity},
+			#{kilometre},
+			#{companyPrice},
+			#{pastPrice},
+			#{preTaxFullCarPrice},
+			#{afterTaxFullCarPrice},
+			#{preTaxSplitPrice},
+			#{afterTaxSplitPrice},
+			#{preTaxLightPrice},
+			#{afterTaxLightPrice},
+			#{duration}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_stone_carriage_contract_detail SET 	
+			contract_id = #{contractId},
+			seriesnumber = #{seriesnumber},
+			start_addr = #{startAddr},
+			province = #{province},
+			city = #{city},
+			past_city = #{pastCity},
+			company_city = #{companyCity},
+			kilometre = #{kilometre},
+			company_price = #{companyPrice},
+			past_price = #{pastPrice},
+			pre_tax_full_car_price = #{preTaxFullCarPrice},
+			after_tax_full_car_price = #{afterTaxFullCarPrice},
+			pre_tax_split_price = #{preTaxSplitPrice},
+			after_tax_split_price = #{afterTaxSplitPrice},
+			pre_tax_light_price = #{preTaxLightPrice},
+			after_tax_light_price = #{afterTaxLightPrice},
+			duration = #{duration}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_stone_carriage_contract_detail
+		WHERE id = #{id}
+	</update>
+	<!-- 根据起运地址进行分组 -->
+	<select id="getGroupByStartAddress" resultType="StoneCarriageContractDetail">
+		select 
+				<include refid="stoneCarriageContractDetailColumns"/>
+				from btg_stone_carriage_contract_detail a 
+			left join btg_stone_carriage_contract_base sccb on sccb.id=a.contract_id
+		where (1=1)
+			 and to_days(sccb.start_time) &lt;= to_days(now())
+			 and to_days(sccb.end_time)   &gt;= to_days(now())
+		group by a.start_addr
+	</select>
+	
+</mapper>

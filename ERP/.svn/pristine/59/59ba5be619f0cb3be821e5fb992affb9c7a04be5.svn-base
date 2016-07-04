@@ -1,0 +1,278 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.finance.entity;
+
+import java.util.List;
+
+import org.hibernate.validator.constraints.Length;
+
+import com.bt.modules.contract.entity.Laborcontract;
+import com.thinkgem.jeesite.common.persistence.DataEntity;
+
+/**
+ * 劳务结算Entity
+ * @author yhh
+ * @version 2015-12-15
+ */
+public class LaborSettlement extends DataEntity<LaborSettlement> {
+	
+	private static final long serialVersionUID = 1L;
+	private String seriesnumber;		// 结算单号
+//	private String laborContract;		// 劳务合同
+	private String houseType;		// 户型
+	private String building;		// 楼栋
+	private String buildingsDisName;
+	private String jiaEndDate;		// 甲方合同竣工时间
+	private String startDate;		// 开工日期
+	private String endDate;		// 竣工时间
+	private String duration;		// 持续时间
+	private String isOffline;		// 是否线下结算
+	private String contractPrice;		// 合同价
+	private String price;		// 总金额
+	private String priceDifference;		// 价格差
+	private String priceDifferenceRatio;		// 价格差异率
+	private String statue;		// 付款状态
+	private String paymentSeriesnumber;		// 付款通知单号
+	private String paymentType;		// 付款方式
+	private String paymentDate;		// 付款日期
+	
+	private String contractNo;
+	private String projectName;
+	private String partyBName;
+	
+	private String contractscopeadjust;		// 施工承包范围补充或调整
+	
+	private String search;		//搜索关键字
+	private String aboutUser;   //劳务相关人员
+	
+	private Laborcontract laborContract;	//对应劳务合同
+	
+	private List<LaborSettlementDetail> detailList;	//结算明细
+	
+	public LaborSettlement() {
+		super();
+	}
+
+	public LaborSettlement(String id){
+		super(id);
+	}
+
+	@Length(min=0, max=64, message="结算单号长度必须介于 0 和 64 之间")
+	public String getSeriesnumber() {
+		return seriesnumber;
+	}
+
+	public void setSeriesnumber(String seriesnumber) {
+		this.seriesnumber = seriesnumber;
+	}
+	
+//	@Length(min=0, max=64, message="劳务合同长度必须介于 0 和 64 之间")
+//	public String getLaborContract() {
+//		return laborContract;
+//	}
+//
+//	public void setLaborContract(String laborContract) {
+//		this.laborContract = laborContract;
+//	}
+	
+	
+	@Length(min=0, max=64, message="户型长度必须介于 0 和 64 之间")
+	public String getHouseType() {
+		return houseType;
+	}
+
+	public Laborcontract getLaborContract() {
+		return laborContract;
+	}
+
+	public void setLaborContract(Laborcontract laborContract) {
+		this.laborContract = laborContract;
+	}
+
+	public void setHouseType(String houseType) {
+		this.houseType = houseType;
+	}
+	
+	@Length(min=0, max=64, message="楼栋长度必须介于 0 和 64 之间")
+	public String getBuilding() {
+		return building;
+	}
+
+	public void setBuilding(String building) {
+		this.building = building;
+	}
+	
+	public String getBuildingsDisName() {
+		return buildingsDisName;
+	}
+	
+	public void setBuildingsDisName(String buildingsDisName) {
+		this.buildingsDisName = buildingsDisName;
+	}
+	
+	@Length(min=0, max=32, message="甲方合同竣工时间长度必须介于 0 和 32 之间")
+	public String getJiaEndDate() {
+		return jiaEndDate;
+	}
+
+	public void setJiaEndDate(String jiaEndDate) {
+		this.jiaEndDate = jiaEndDate;
+	}
+	
+	@Length(min=0, max=32, message="开工日期长度必须介于 0 和 32 之间")
+	public String getStartDate() {
+		return startDate;
+	}
+
+	public void setStartDate(String startDate) {
+		this.startDate = startDate;
+	}
+	
+	@Length(min=0, max=32, message="竣工时间长度必须介于 0 和 32 之间")
+	public String getEndDate() {
+		return endDate;
+	}
+
+	public void setEndDate(String endDate) {
+		this.endDate = endDate;
+	}
+	
+	@Length(min=0, max=32, message="持续时间长度必须介于 0 和 32 之间")
+	public String getDuration() {
+		return duration;
+	}
+
+	public void setDuration(String duration) {
+		this.duration = duration;
+	}
+	
+	@Length(min=0, max=8, message="是否线下结算长度必须介于 0 和 8 之间")
+	public String getIsOffline() {
+		return isOffline;
+	}
+
+	public void setIsOffline(String isOffline) {
+		this.isOffline = isOffline;
+	}
+	
+	@Length(min=0, max=18, message="合同价长度必须介于 0 和 18 之间")
+	public String getContractPrice() {
+		return contractPrice;
+	}
+
+	public void setContractPrice(String contractPrice) {
+		this.contractPrice = contractPrice;
+	}
+	
+	@Length(min=0, max=18, message="总金额长度必须介于 0 和 18 之间")
+	public String getPrice() {
+		return price;
+	}
+
+	public void setPrice(String price) {
+		this.price = price;
+	}
+	
+	@Length(min=0, max=18, message="价格差长度必须介于 0 和 18 之间")
+	public String getPriceDifference() {
+		return priceDifference;
+	}
+
+	public void setPriceDifference(String priceDifference) {
+		this.priceDifference = priceDifference;
+	}
+	
+	@Length(min=0, max=32, message="价格差异率长度必须介于 0 和 32 之间")
+	public String getPriceDifferenceRatio() {
+		return priceDifferenceRatio;
+	}
+
+	public void setPriceDifferenceRatio(String priceDifferenceRatio) {
+		this.priceDifferenceRatio = priceDifferenceRatio;
+	}
+	
+	@Length(min=0, max=8, message="付款状态长度必须介于 0 和 8 之间")
+	public String getStatue() {
+		return statue;
+	}
+
+	public void setStatue(String statue) {
+		this.statue = statue;
+	}
+	
+	@Length(min=0, max=64, message="付款通知单号长度必须介于 0 和 64 之间")
+	public String getPaymentSeriesnumber() {
+		return paymentSeriesnumber;
+	}
+
+	public void setPaymentSeriesnumber(String paymentSeriesnumber) {
+		this.paymentSeriesnumber = paymentSeriesnumber;
+	}
+	
+	@Length(min=0, max=64, message="付款方式长度必须介于 0 和 64 之间")
+	public String getPaymentType() {
+		return paymentType;
+	}
+
+	public void setPaymentType(String paymentType) {
+		this.paymentType = paymentType;
+	}
+	
+	@Length(min=0, max=64, message="付款日期长度必须介于 0 和 64 之间")
+	public String getPaymentDate() {
+		return paymentDate;
+	}
+
+	public void setPaymentDate(String paymentDate) {
+		this.paymentDate = paymentDate;
+	}
+
+	public String getContractNo() {
+		return contractNo;
+	}
+
+	public void setContractNo(String contractNo) {
+		this.contractNo = contractNo;
+	}
+
+	public String getProjectName() {
+		return projectName;
+	}
+
+	public void setProjectName(String projectName) {
+		this.projectName = projectName;
+	}
+
+	public String getPartyBName() {
+		return partyBName;
+	}
+
+	public void setPartyBName(String partyBName) {
+		this.partyBName = partyBName;
+	}
+
+	public List<LaborSettlementDetail> getDetailList() {
+		return detailList;
+	}
+
+	public void setDetailList(List<LaborSettlementDetail> detailList) {
+		this.detailList = detailList;
+	}
+
+	public String getSearch() {
+		return search;
+	}
+
+	public void setSearch(String search) {
+		this.search = search;
+	}
+	
+	public String getContractscopeadjust() {
+		return contractscopeadjust;
+	}
+	
+	public void setContractscopeadjust(String contractscopeadjust) {
+		this.contractscopeadjust = contractscopeadjust;
+	}
+}

@@ -1,0 +1,512 @@
+$(function(){	
+	/**
+	 * 点击项目,带出人员信息
+	 */
+	$("#projectList tr td a[flag='projectName']").live("click",function(){
+//		debugger;
+		var projectId = this.getAttribute("value");
+		var url = "/a/project/getProjectById?projectId="+projectId;
+		startUp.getData(url,function(data){
+			var array="";
+			var designers= data.designer
+			if(designers){
+				var designerss = new Array();
+				designerss = designers.split(",")
+				
+				var designerphones = data.designer_phone?data.designer_phone:"";
+				var designerphoness = new Array();
+				designerphoness = designerphones.split(",")
+							
+				for(i=0;i<designerss.length;i++){
+					array += designerss[i] + "-" + designerphoness[i]+"<br/>";
+				}
+			}
+			
+			var personList = "";
+			var personList="<tr class='personListTable'><td style='width:50px;'>项目负责人</td><td style='width:80px;'>"+dealWithUndefined(data.project_manager)+'-'+dealWithUndefined(data.project_manager_phone)+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>区域经理</td><td style='width:80px;'>"+dealWithUndefined(data.regional_manager)+'-'+dealWithUndefined(data.regional_manager_phone)+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>运营经理</td><td style='width:80px;'>"+dealWithUndefined(data.pc_director)+'-'+dealWithUndefined(data.pc_director_phone)+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>运营主管</td><td style='width:80px;'>"+dealWithUndefined(data.coordinator_leader)+'-'+dealWithUndefined(data.coordinator_leader_phone)+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>运营专员</td><td style='width:80px;'>"+dealWithUndefined(data.operation_specialist)+'-'+dealWithUndefined(data.operation_specialist_phone)+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>甲方项目总经理</td><td style='width:80px;'>"+dealWithUndefined(data.general_manager)+'-'+dealWithUndefined(data.general_manager_phone)+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>甲方项目区域总经理</td><td style='width:80px;'>"+dealWithUndefined(data.regional_manageraid)+'-'+dealWithUndefined(data.regional_manager_phone)+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>甲方现场跟进人</td><td style='width:80px;'>"+dealWithUndefined(data.local_manager)+'-'+dealWithUndefined(data.local_manager_phone)+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>材料员</td><td style='width:80px;'>"+dealWithUndefined(data.material_staff)+'-'+dealWithUndefined(data.material_staff_phone)+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>施工员</td><td style='width:80px;'>"+dealWithUndefined(data.construct_staff)+'-'+dealWithUndefined(data.construct_staff_phone)+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>成本负责人</td><td style='width:80px;'>"+dealWithUndefined(data.cost_manager)+'-'+dealWithUndefined(data.cost_manager_phone)+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>成本组长</td><td style='width:80px;'>"+dealWithUndefined(data.cost_officer)+'-'+dealWithUndefined(data.cost_officer_phone)+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>成本主管</td><td style='width:80px;'>"+dealWithUndefined(data.cost_leader)+'-'+dealWithUndefined(data.cost_leader_phone)+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>设计师</td><td style='width:80px;'>"+array+"</td></tr>\
+									<tr class='personListTable'><td style='width:50px;'>设计主管</td><td style='width:80px;'>"+dealWithUndefined(data.design_leader_info)+"</td></tr>";
+			$("#personList").html("");
+			$("#personList").html(personList);
+		});
+	});
+	/**
+	 * 点击添加项目
+	 */
+	$("#addProject").on("click",function(){
+		 window.location.href=startUp.getRootPath()+"/a/project/form";
+	});
+	
+	/**
+	 * 点击添加项目
+	 */
+	$("#listProject").on("click",function(){
+		 window.location.href=startUp.getRootPath()+"/a/project/list";
+	});
+	
+	$("#editBtn").on("click",function(){
+		if(!validateBuilding()){
+			return;
+		}
+		//锁屏验证提交表单
+		submitWValidLoading($("#inputForm"));
+	});
+	//判断 楼栋号+户型 不能重复
+	function validateBuilding(){
+		$("span[name*='buildingTips']").remove();	//清空原有的提示
+		var buildings = $("td[name*='buildingDisplayName']");
+//		alert(buildings.length);
+		var map = {};
+//		$.each(buildings,function(i,item){
+		for(var i=0;i<buildings.length;i++){	//循环全部楼栋号
+			var b = $(buildings[i]);
+			var building = $.trim(b.html());
+			var houseType = $.trim(b.prevAll("td[name*='houseType']").html());
+			if(building.indexOf("input")>=0){	//点击形成输入框的获取输入框的值
+				building = b.find("input").val();
+				houseType = b.prevAll().children("input[name*='houseType']").val();
+			}
+//			alert("位置"+building.lastIndexOf("#"));
+			if((building.lastIndexOf("#")+1)==building.length){	//将在末尾的#去掉
+				building = building.substring(0,building.length-1);
+			}
+//			alert("building"+building);
+			var key = building+houseType;
+//			alert("building"+building+"houseType"+houseType);
+			if(key in map){	//判断 楼栋号+户型 是否已存在
+				if(b.html().indexOf("input")>=0){
+					b.find("input").focus();
+				}else{
+					b.trigger("click");
+				}
+				b.append("<span name='buildingTips' class='red'>操作失败，此楼栋号重复</span>");
+				return false;
+			}else{
+				map[key] = building; 
+			}
+		}
+//		});
+		return true;
+	}
+	
+	/**
+	 * 省市区级联
+	 */
+	$("#province").on("select2-opening",function(){
+		provinceCitytown("cc508e3293504948ab98d499c8e4d488a896","province");
+	});
+	
+	/**
+	 * 市区级联
+	 */
+	$("#city").on("select2-opening",function(){
+		var parentId =  $("#province").val();
+		provinceCitytown(parentId,"city");
+	});
+	
+	/**
+	 * 市区级联
+	 */
+	$("#town").on("select2-opening",function(){
+		var parentId =  $("#city").val();
+		provinceCitytown(parentId,"town");
+	});
+	
+	/**
+	 * 调用省市区服务
+	 */
+	function provinceCitytown(parentId,type){
+		var url ="/a/project/queryarea?id="+parentId;
+		if(parentId){
+			startUp.getAsyncData(url,function(data){
+				var town =$("#"+type);
+				town.text("");
+				town.append("<option value='-1'>===请选择===</option>");
+				$.each(data, function(idx,item){
+					var option ="<option value='"+item.provinceid+"'>"+item.provincename+"</option>";
+					town.append(option);
+				});
+			});
+		}
+	}
+	
+	/**
+	 * 绑定数据字典下拉框
+	 */
+	$("#subProjectList tr td>select").live("select2-opening",function(){
+		var type = this.getAttribute("tag");
+		if(type){
+			var url ="/a/project/querydictlist?type="+type;
+			var obj =this;
+			startUp.getAsyncData(url,function(data){
+				var str =$(obj);
+				str.text("");
+				str.append("<option value=''>请选择</option>");
+				$.each(data, function(idx,item){
+					var option ="<option value='"+item.value+"'>"+item.label+"</option>";
+					str.append(option);
+				});	
+			});
+		}
+	});
+	
+	$(document).ready(function() {
+		var province =$("#province").val();
+		var city =$("#city").val();
+		var town =$("#town").val();
+		if(province ){
+			provinceCitytown("cc508e3293504948ab98d499c8e4d488a896","province");
+			provinceCitytown(province,"city");
+			provinceCitytown(city,"town");
+			$("#province").select2("val", province);
+			$("#city").select2("val", city);
+			$("#town").select2("val", town);
+		}
+		
+	});
+	
+	/**
+	 * 绑定下拉框
+	 */
+	$(".div_right ul li label>select").on("click",function(){
+		var type = this.value;
+		var phone = this.getAttribute("phone");
+		if(type){
+			var array = type.split(",");
+			//$("#"+this.id).val(array[0]);
+			$("#"+phone).val(array[1]);
+		}
+	});
+	
+	/**
+	 * 提交
+	 */
+	$("#submitProject").on("click",function(){
+		var falg = $("input[name='chkproject']").is(':checked');
+		var lists =$("input[name='chkproject']:checked");
+		var ids="";
+		if(!falg){
+			window.alertx("请选择需要填写的项目!");
+			return;
+		}
+		$.each(lists, function(idx,item){
+			ids =ids+item.id+",";
+		});
+		if(ids){
+			ids=ids.substring(0,ids.lastIndexOf(","));
+			$("#projectId").val(ids);
+		}
+		$("#addprojectForm").submit();
+	});
+	
+	/**
+	 * 查找复选框
+	 */
+	var table_obj= function(This){
+		 var table;
+		  if($(This).attr("target")!==undefined){
+			   table="#"+$(This).attr("target");
+		   }else{
+			   table=".table-eidt"; 
+		   }
+		  return table;
+	 };
+	
+	/**
+	 * 删除Tab
+	 */
+	$("#tr_project_del,.tr_project_del").bind("click",function(){
+		var table=table_obj(this);
+		var ids="";
+		var checkTr =$(table+" tbody tr td").find("input[type=checkbox]:checked");
+		if(checkTr.length>0){
+			checkTr.each(function(idx,item){
+				ids =ids+item.id+",";
+				$(this).parents("tr").remove();
+			})
+			if(ids){
+				ids=ids.substring(0,ids.lastIndexOf(","));
+				$("#delId").val(ids);
+			}
+		}else{
+			window.alertx("选择需要删除的行!");
+		}
+   })
+	
+   /**
+	 * 删除项目
+	 */
+	$("#deleteProject").live("click",function(){
+		var falg = $("input[name='chkproject']").is(':checked');
+		var ids ="";
+		if(falg){
+			window.confirmx('确认要删除该项目吗？',function(){
+				var lists =$("input[name='chkproject']:checked");
+				$.each(lists, function(idx,item){
+					ids =ids+item.id+",";
+				});
+				if(ids){
+					ids=ids.substring(0,ids.lastIndexOf(","));
+					var url="/a/project/delete";
+					window.location.href=startUp.getRootPath()+url+"?projectId="+ids;
+				}
+			});
+		}else{
+			window.alertx("请选择需要删除的项目!");
+		}
+	});
+	
+	
+	/**
+	 * 进入流程的项目不能被删除
+	 * 许俊雄
+	 */
+	$("input[name='chkproject']").bind("change",function(){
+		var falg = $("input[name='chkproject']").is(':checked');
+		var hide = false;
+		if(falg){
+			var lists =$("input[name='chkproject']:checked");
+			$.each(lists, function(idx,item){
+				if($(item).attr('data_status')){
+					hide = true;
+				}
+			});
+		}else{
+			hide = false;
+		}
+		if(hide){
+			$('#deleteProject').slideUp();
+		}else{
+			$('#deleteProject').slideDown();
+		}
+	});
+	
+	/**
+	 * 点击查询二级项目信息列表
+	 */
+	$("#querySubProjectList").live("click",function(){
+		var projectId=this.getAttribute("thisTagertId");
+		var isOpen = $("#project"+projectId).siblings("tr[pid=project"+projectId+"]");
+		if(isOpen && isOpen.length>0){
+			//判断有下级数据则删除数据并不请求后台
+			isOpen.remove();
+			return;
+		}
+		if(!projectId){
+			projectId=$("#querySubProjectList")[0].getAttribute("thisTagertId");
+		}
+		var url ="/a/project/getSubProjectById?projectId="+projectId;
+		startUp.getData(url,function(data){
+			 var projectlist =$("#project"+projectId);
+			 $("#project"+projectId).siblings("[pid=project"+projectId+"]").remove();
+			 $.each(data, function(idx,item){
+				 var showStatus=item.showStatus?item.showStatus:"";
+				 var showdesigner=item.showdesigner?item.showdesigner:"";
+				 var showdesignLeader=item.showdesignLeader?item.showdesignLeader:"";
+				 var designerMobile=item.designerMobile?item.designerMobile:"";
+				 var tr ="<tr pid='project"+projectId+"' id='"+item.id+"' class='active' haschild='true' previd='' islastone='true' depth='2'>"+
+				 		 "<td class='td_fr'>└<input type='checkbox' name='checkdbox' id='"+item.id+"'></td>"+
+	                     "<td>"+item.houseType+"</td>"+
+	                     //amend 许俊雄 20160406"<td>"+item.building+"</td>"+
+	                     "<td>"+item.buildingDisplayName+"</td>"+
+			             "<td >"+showStatus+"</td>"+
+			             "<td >"+showdesignLeader+"</td>"+
+			             "<td >"+showdesigner+"</td>"+
+			             "<td >"+designerMobile+"</td>"+
+			             "</tr>";
+				 projectlist.after(tr);
+			 });
+		});
+	});
+	
+	
+	/**
+	 * 启动流程
+	 */
+	$("#startWorkflow").on("click",function(){
+		if(!validateBuildings()){
+			return;
+		}	
+		var projectId = $("#projectId").val();
+		var url ="/a/project/startworkflow?projectId="+projectId;
+		startUp.getData(url,function(data){
+			window.alertx("提交项目成功！");
+			window.location.href=startUp.getRootPath()+"/a/project/list";
+		});
+	});
+	
+	
+	function validateBuildings(){
+		var buildings = $("td[name*='buildingDisplayName']");
+		if(buildings.length == 0){
+			$("span[name*='mes']").remove();
+			$("#mes").append("<span name='mes' class='red'>操作失败，未填写明细信息！</span>");
+			return false;
+		}else{
+			return true;
+		}
+	}
+	/**
+	 * 点击查看流程图
+	 */
+	$("#showWorkflowImg").on("click",function(){
+		var wfId = $("#workflowid").val();
+		var wfStatus =$("#workflowstatus").val();
+		if(parseInt(wfStatus)==4){
+			showTraceDiagramInHistory(wfId);
+		}else{
+			showTraceDiagramInRuntime(wfId);
+		}	
+	});
+	
+	/**
+	 * 审核通过
+	 */
+	$("#okWorkflow").on("click",function(){
+		var wfId = $("#workflowid").val();
+		var wfStatus =$("#workflowstatus").val();
+		var url = "/a/act/access/task/direct/complete";
+		var json ='{"processInstanceId":"'+wfId+'","approval":"1","rejectBackReason":""}';
+		startUp.postActData(url,json,"application/json",function(data){
+			window.alertx("审核成功！");
+			window.location.href=startUp.getRootPath()+"/a/project/list";
+		});
+	});
+
+	try{
+		//是否存在指定函数 
+		if (typeof(eval(bindRejectEvent)) == "function") {
+	    	/**
+	    	 * 审核驳回
+	    	 */
+	    	bindRejectEvent($("#retrunWorkflow"), 'editApplyForm', callbackWhenActionDone, $("#workflowid").val());
+	    }
+	}catch (e) {
+		// TODO: handle exception
+	}
+	
+
+	/**
+	 * 流程轨迹
+	 */
+	$("#showWorkflowAuditHistory").on("click", function(){
+		var wfId = $("#workflowid").val();
+		showFlowAuditHistoryTrace(wfId);
+	});
+	
+	/**
+	 * 点击签收
+	 */
+	$("#signWorkflow").on("click",function(){
+		var wfId = $("#workflowid").val();
+		var url = "/a/act/access/task/direct/claim/"+wfId;
+		startUp.getData(url,function(data){
+			$("#signWorkflow").attr("disabled","disabled");
+			$("#okWorkflow").removeAttr("disabled");
+			$("#retrunWorkflow").removeAttr("disabled");
+		});
+	});
+	
+	$("#statusFlag").live("change",function(){
+		//debugger;
+		$("#searchForm").submit();
+	});
+	
+	$(document).ready(function() {
+		var wfId = $("#workflowid").val();
+		var wfStatus =$("#workflowstatus").val();
+		if(wfId && wfStatus){
+			$(".startWorkflow").css("display","none");
+			$("#showWorkflowImg").removeAttr("disabled");
+			$("#showWorkflowAuditHistory").removeAttr("disabled");
+			$("#editBtn").attr("disabled","disabled");
+			if(wfStatus=="1" || wfStatus=="2"){
+
+				var url = "/a/act/access/task/direct/isCandidateUser/"+wfId;
+				startUp.postData(url,{},function(data){
+					if(!data){
+						$("#signWorkflow").attr("disabled","disabled");
+						var url = "/a/act/access/task/direct/isAssigneeUser/"+wfId;
+						startUp.getData(url,function(data){
+
+							if(!data){
+								$("#okWorkflow").attr("disabled", "disabled");
+								$("#retrunWorkflow").attr("disabled", "disabled");
+							}else{
+								$("#editBtn").attr("disabled","disabled");
+								var url = "/a/act/access/task/direct/getTaskForm/"+wfId;
+								$.ajax({
+									url : startUp.getRootPath()+url,
+									type : "GET",
+									success : function(data) {
+										if(data){
+											$("#editBtn").removeAttr("disabled");
+											$("#okWorkflow").removeAttr("disabled");
+											$("#retrunWorkflow").attr("disabled", "disabled");
+										}else{
+											$("#okWorkflow").removeAttr("disabled");
+											$("#retrunWorkflow").removeAttr("disabled");
+										}
+									}
+								});
+							}
+						});
+
+					}else{
+						$("#signWorkflow").removeAttr("disabled");
+						$("#okWorkflow").attr("disabled", "disabled");
+						$("#retrunWorkflow").attr("disabled", "disabled");
+					}
+				});
+
+			}
+		}else{		
+			//如果流程没有启动，则显示 返回、保存、提交按钮
+			$("#signWorkflow").attr("disabled","disabled");
+			$("#showWorkflowImg").attr("disabled","disabled");
+			$("#showWorkflowAuditHistory").attr("disabled","disabled");
+			$(".startWorkflow").css("display","none");
+			var flag =$("#flag").val();
+			if(flag=="view"){
+				$(".startWorkflow").css("display","block");
+			}
+			$("#okWorkflow").attr("disabled","disabled");
+			$("#retrunWorkflow").attr("disabled","disabled");
+		}
+
+		if(wfId && wfStatus=="4"){
+			$("#signWorkflow").attr("disabled","disabled");
+			$("#editBtn").attr("disabled","disabled");
+			$("#okWorkflow").attr("disabled","disabled");
+			$("#retrunWorkflow").attr("disabled","disabled");
+			$(".startWorkflow").css("display","none");
+		}
+	});
+	/**
+	 * 打开页面查看当前登录用户是否在流程用户组中
+	 */
+	$(document).ready(function() {
+		var right = $(".div_right").text();
+		if(!right){
+			$("#contentTable").removeClass("width-75").addClass("width-98");
+		}
+	});
+	
+});
+
+
+function callbackWhenActionDone(){
+	window.location.href=startUp.getRootPath()+"/a/project/list";
+}

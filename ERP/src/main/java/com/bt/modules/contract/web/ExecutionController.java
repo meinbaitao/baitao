@@ -1,0 +1,185 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.contract.web;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.common.utils.IdGen;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.bt.modules.contract.entity.Execution;
+import com.bt.modules.contract.service.ExecutionService;
+import com.bt.modules.qualityitem.entity.Qualityitem;
+
+/**
+ * 施工班组Controller
+ * @author yhh
+ * @version 2015-08-04
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/contract/execution")
+public class ExecutionController extends BaseController {
+
+	@Autowired
+	private ExecutionService executionService;
+	
+	@ModelAttribute
+	public Execution get(@RequestParam(required=false) String id) {
+		Execution entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = executionService.get(id);
+		}
+		if (entity == null){
+			entity = new Execution();
+		}
+		return entity;
+	}
+	
+	@RequestMapping(value = "list")
+	public String list(Execution execution, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<Execution> page = executionService.findPage(new Page<Execution>(request, response), execution); 
+		model.addAttribute("page", page);
+		return "modules/contract/executionList";
+	}
+	
+	@ResponseBody
+	@RequestMapping(value="list2labor")
+	public Map<String,Object> list2labor(HttpServletRequest request, HttpServletResponse response){
+		Map<String,Object> map = new HashMap<String,Object>();
+		List<Execution> list = new ArrayList<Execution>();
+		Execution execution = new Execution();
+		String projectId = request.getParameter("projectId");
+		String exeScope  = request.getParameter("exeScope");
+		
+		//临时将项目id存放于exe的id
+		execution.setId(projectId);
+		execution.setExeType(exeScope);
+		list = executionService.findListForLabor(execution);
+		map.put("list", list);
+		
+		return map;
+	}
+
+	@RequestMapping(value = "form")
+	public String form(Execution execution, Model model) {
+		//判断是否为新记录
+		if(execution.getIsNewRecord()){
+			execution.setId(IdGen.uuid());
+		}else{
+			model.addAttribute("flag","view");
+		}
+		
+		model.addAttribute("maxNo", executionService.getmaxNo());
+		model.addAttribute("execution", execution);
+		return "modules/contract/executionForm";
+	}
+
+	@RequestMapping(value = "save")
+	public String save(Execution execution, Model model, RedirectAttributes redirectAttributes) {
+		executionService.save(execution);
+		addMessage(redirectAttributes, "保存成功");
+		return "redirect:"+Global.getAdminPath()+"/contract/execution/list";
+	}
+	
+	@RequestMapping(value = "delete")
+	public String delete(Execution execution, RedirectAttributes redirectAttributes) {
+		executionService.delete(execution);
+		addMessage(redirectAttributes, "删除施工班组成功");
+		return "redirect:"+Global.getAdminPath()+"/contract/execution/list";
+	}
+
+	
+	@ResponseBody
+	@RequestMapping(value="getById")
+	public Execution getById(Execution execution,HttpServletRequest request, HttpServletResponse response){
+		execution.setId(request.getParameter("id"));
+		return executionService.get(execution);
+	}
+	
+	@ResponseBody
+	@RequestMapping(value="getByExelevel")
+	public Map<String,Object> getByExelevel(HttpServletRequest request, HttpServletResponse response){
+		Map<String,Object> map = new HashMap<String,Object>();
+		Execution execution = new Execution();
+		String parm = request.getParameter("exeLevel");
+		if(null != parm && !StringUtils.equals("", parm)){
+			execution.setExeLevel(parm);
+			execution = executionService.getByExelevel(execution);
+			if(null != execution){
+				map.put("levelCoefficient", execution.getLevelCoefficient());
+			}else{
+				map.put("levelCoefficient", "");
+			}
+		}
+		
+		return map;
+	}
+	
+	
+	
+	@ResponseBody
+	@RequestMapping(value="getByName")
+	public Execution getByName(Execution execution,HttpServletRequest request, HttpServletResponse response){
+		execution.setName(request.getParameter("name"));
+		return executionService.getByName(execution);
+	}
+	
+	
+	@ResponseBody
+	@RequestMapping(value="byCtype")
+	public Map<String,Object> byName(HttpServletRequest request, HttpServletResponse response){
+		Map<String,Object> map = new HashMap<String,Object>();
+		Execution execution = new Execution();
+		execution.setId(request.getParameter("ctype"));
+//		execution = executionService.getByName(execution);
+		execution = executionService.get(execution);
+		
+		map.put("execution", execution);
+		
+		return map;
+	}
+	
+	@ResponseBody
+	@RequestMapping(value="getByPersonNum")
+	public Map<String,Object> getByPersonNum(HttpServletRequest request, HttpServletResponse response){
+		Map<String,Object> map = new HashMap<String,Object>();
+		String id = request.getParameter("id");
+		String personNum = request.getParameter("personNum");
+		Execution execution = new Execution();
+		execution.setPersonNum(personNum);
+//		execution = executionService.getByName(execution);
+		execution = executionService.getByPersonNum(execution);
+		if(null != execution && !execution.getId().equals(id)){
+			map.put("existExe", "true");
+		}else{
+			map.put("existExe", "flase");
+		}
+		return map;
+	}
+	
+	@ResponseBody
+	@RequestMapping(value="getByType")
+	public List<Execution> getByType(Execution execution,HttpServletRequest request, HttpServletResponse response){
+		execution.setStatus("executionStatus_white");
+		execution.setExeType(request.getParameter("type"));
+		return executionService.findList(execution);
+	}
+}

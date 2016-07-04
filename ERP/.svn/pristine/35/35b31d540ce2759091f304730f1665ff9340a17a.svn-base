@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.execution.dao.ScheduleDao">
+    
+	<sql id="scheduleColumns">
+		a.id AS "id",
+		a.Project_ID AS "projectId",
+		a.SubProject_ID AS "subProjectId",
+		a.AccumulateRevenue AS "accumulaterevenue",
+		a.AccumulateVisa AS "accumulatevisa",
+		a.AmountRatio AS "amountratio",
+		a.visaCount AS "visaCount",
+		a.Revenue AS "revenue",
+		a.RevenueRatio AS "revenueRatio",
+		a.SkelentonPlanRatio AS "skelentonplanratio",
+		a.SkeletonCompRatio AS "skeletoncompratio",
+		a.StonePlanRatio AS "stoneplanratio",
+		a.StoneCompRatio AS "stonecompratio",
+		a.Status AS "status",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="scheduleJoins">
+	</sql>
+    
+	<select id="get" resultType="Schedule">
+		SELECT 
+			<include refid="scheduleColumns"/>
+		FROM btg_exe_schedule a
+		<include refid="scheduleJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Schedule">
+		SELECT 
+			<include refid="scheduleColumns"/>
+		FROM btg_exe_schedule a
+		<include refid="scheduleJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Schedule">
+		SELECT 
+			<include refid="scheduleColumns"/>
+		FROM btg_exe_schedule a
+		<include refid="scheduleJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_exe_schedule(
+			id,
+			Project_ID,
+			SubProject_ID,
+			AccumulateRevenue,
+			AccumulateVisa,
+			AmountRatio,
+			visaCount,
+			Revenue,
+			RevenueRatio,
+			SkelentonPlanRatio,
+			SkeletonCompRatio,
+			StonePlanRatio,
+			StoneCompRatio,
+			Status,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{projectId},
+			#{subProjectId},
+			#{accumulaterevenue},
+			#{accumulatevisa},
+			#{amountratio},
+			#{visaCount},
+			#{revenue},
+			#{revenueRatio},
+			#{skelentonplanratio},
+			#{skeletoncompratio},
+			#{stoneplanratio},
+			#{stonecompratio},
+			#{status},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_exe_schedule SET 	
+			AccumulateRevenue =#{accumulaterevenue},
+			AccumulateVisa =#{accumulatevisa},
+			AmountRatio =#{amountratio},
+			visaCount=#{visaCount},
+			Revenue=#{revenue},
+			RevenueRatio=#{revenueRatio},
+			SkelentonPlanRatio=#{skelentonplanratio},
+			SkeletonCompRatio=#{skeletoncompratio},
+			StonePlanRatio=#{stoneplanratio},
+			StoneCompRatio=#{stonecompratio},
+			Status=#{status},
+			update_by=#{updateBy.id},
+			update_date=#{updateDate},
+			remarks =#{remarks},
+			del_flag =#{delFlag}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_exe_schedule SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<insert id="saveMap" parameterType="java.util.Map">
+		INSERT INTO btg_schedule_mapping(
+			id,
+			subproject_id,
+			schedule_id,
+			facade_id
+		) VALUES (
+			#{mapId},
+			#{subProjectId},
+			#{scheduleId},
+			#{facadeId}
+		)
+	</insert>
+	
+	<select id="findRevenueRatio" resultType="Schedule">		
+		SELECT 
+			SUM(total.Revenue) AS "accumulaterevenue",
+			SUM(total.visaCount) AS "accumulatevisa" 
+		from (SELECT * from (
+			SELECT
+					sub.id AS "id",
+		 			IFNULL(t1.Revenue,0) as "Revenue",
+		 			IFNULL(t1.visaCount,0) as "visaCount"
+			from (
+					SELECT @rowid:=@rowid+1 as rowid,t.* FROM btg_exe_schedule t,(SELECT @rowid:=0) as init ORDER BY t.update_date DESC) t1
+			LEFT JOIN btg_schedule_mapping sm on sm.schedule_id=t1.id
+			LEFT JOIN btg_project_mapping pm on pm.subproject_id=sm.subproject_id
+		  LEFT JOIN btg_pro_subproject sub on sub.id=pm.subproject_id
+		  <where>
+			pm.project_id=#{projectId}
+			and
+			sub.del_flag =#{delFlag}
+		  </where>
+			ORDER BY t1.rowid) t2
+		GROUP BY t2.id) total
+	</select>
+	
+	<select id="findScheduleDetail" resultType="Schedule">
+		SELECT 
+			<include refid="scheduleColumns"/>
+		FROM btg_exe_schedule a
+		LEFT JOIN btg_schedule_mapping sm on sm.schedule_id =a.id
+	  	<where> 
+		  sm.subproject_id=#{subProjectId}
+		    and
+		  a.del_flag =#{delFlag}
+		</where>
+		ORDER BY a.update_date DESC
+	</select>
+	
+</mapper>

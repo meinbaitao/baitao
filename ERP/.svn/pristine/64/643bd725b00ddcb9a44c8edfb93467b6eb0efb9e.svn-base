@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.cost.dao.VolumeControlDetailDao">
+    
+	<sql id="volumeControlDetailColumns">
+		a.id AS "id",
+		a.volume_control_id AS "volumeControlId",
+		a.type AS "type",
+		a.name AS "name",
+		a.alias AS "alias",
+		a.series_number AS "seriesNumber",
+		a.length AS "length",
+		a.width AS "width",
+		a.height AS "height",
+		a.model AS "model",
+		a.version AS "version",
+		a.loss_rate AS "lossRate",
+		a.quantity_one AS "quantityOne",
+		a.loss_amount AS "lossAmount",
+		a.quantity_two AS "quantityTwo",
+		a.uweight AS "uweight",
+		a.unit AS "unit",
+		a.comment AS "comment",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="volumeControlDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="VolumeControlDetail">
+		SELECT 
+			<include refid="volumeControlDetailColumns"/>
+		FROM btg_volume_control_detail a
+		<include refid="volumeControlDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="VolumeControlDetail">
+		SELECT 
+			<include refid="volumeControlDetailColumns"/>
+		FROM btg_volume_control_detail a
+		<include refid="volumeControlDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="volumeControlId != null and volumeControlId != ''">
+				AND a.volume_control_id = #{volumeControlId} 
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				order by a.series_number
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="VolumeControlDetail">
+		SELECT 
+			<include refid="volumeControlDetailColumns"/>
+		FROM btg_volume_control_detail a
+		<include refid="volumeControlDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_volume_control_detail(
+			id,
+			volume_control_id,
+			type,
+			name,
+			alias,
+			series_number,
+			length,
+			width,
+			height,
+			model,
+			version,
+			loss_rate,
+			quantity_one,
+			loss_amount,
+			quantity_two,
+			uweight,
+			unit,
+			comment,
+			del_flag
+		) VALUES (
+			#{id},
+			#{volumeControlId},
+			#{type},
+			#{name},
+			#{alias},
+			#{seriesNumber},
+			#{length},
+			#{width},
+			#{height},
+			#{model},
+			#{version},
+			#{lossRate},
+			#{quantityOne},
+			#{lossAmount},
+			#{quantityTwo},
+			#{uweight},
+			#{unit},
+			#{comment},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_volume_control_detail SET 	
+			volume_control_id = #{volumeControlId},
+			type = #{type},
+			name = #{name},
+			alias = #{alias},
+			series_number = #{seriesNumber},
+			length = #{length},
+			width = #{width},
+			height = #{height},
+			model = #{model},
+			version = #{version},
+			loss_rate = #{lossRate},
+			quantity_one = #{quantityOne},
+			loss_amount = #{lossAmount},
+			quantity_two = #{quantityTwo},
+			uweight = #{uweight},
+			unit = #{unit},
+			comment = #{comment}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_volume_control_detail SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="deleteByVId">
+		UPDATE btg_volume_control_detail SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE volume_control_id = #{volumeControlId} 
+	</update>
+	
+</mapper>

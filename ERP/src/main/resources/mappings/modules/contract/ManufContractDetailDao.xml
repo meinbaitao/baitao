@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.ManufContractDetailDao">
+	
+	<sql id="manufContractDetailColumns">
+		a.id AS "id",
+		a.contract_id AS "contractId",
+		a.province AS "province",
+		a.manuf_name AS "manufName",
+		a.size AS "size",
+		a.stone_type as "stoneType",
+		a.standard_name AS "standardName",
+		a.manuf_detail AS "manufDetail",
+		a.model AS "model",
+		a.unit AS "unit",
+		a.standard_price AS "standardPrice",
+		a.contract_price AS "contractPrice",
+		a.price_with_tax AS "priceWithTax",
+		a.price_difference AS "priceDifference",
+		a.remark AS "remark"
+	</sql>
+	
+	<sql id="manufContractDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="ManufContractDetail">
+		SELECT 
+			<include refid="manufContractDetailColumns"/>
+		FROM btg_manuf_contract_detail a
+		<include refid="manufContractDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="ManufContractDetail">
+		SELECT 
+			<include refid="manufContractDetailColumns"/>
+		FROM btg_manuf_contract_detail a
+		<include refid="manufContractDetailJoins"/>
+		<where>
+			<if test="contractId != null and contractId != ''">
+				AND a.contract_id = #{contractId} 
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		order by a.manuf_name desc
+	</select>
+	
+	<select id="findAllList" resultType="ManufContractDetail">
+		SELECT 
+			<include refid="manufContractDetailColumns"/>
+		FROM btg_manuf_contract_detail a
+		<include refid="manufContractDetailJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_manuf_contract_detail(
+			id,
+			contract_id,
+			province,
+			manuf_name,
+			size,
+			stone_type,
+			standard_name,
+			manuf_detail,
+			model,
+			unit,
+			standard_price,
+			contract_price,
+			price_with_tax,
+			price_difference,
+			remark
+		) VALUES (
+			#{id},
+			#{contractId},
+			#{province},
+			#{manufName},
+			#{size},
+			#{stoneType},
+			#{standardName},
+			#{manufDetail},
+			#{model},
+			#{unit},
+			#{standardPrice},
+			#{contractPrice},
+			#{priceWithTax},
+			#{priceDifference},
+			#{remark}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_manuf_contract_detail SET 	
+			contract_id = #{contractId},
+			province = #{province},
+			manuf_name = #{manufName},
+			size = #{size},
+			stone_type = #{stoneType},
+			standard_name = #{standardName},
+			manuf_detail = #{manufDetail},
+			model = #{model},
+			unit = #{unit},
+			standard_price = #{standardPrice},
+			contract_price = #{contractPrice},
+			price_with_tax = #{priceWithTax},
+			price_difference = #{priceDifference},
+			remark = #{remark}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_manuf_contract_detail
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

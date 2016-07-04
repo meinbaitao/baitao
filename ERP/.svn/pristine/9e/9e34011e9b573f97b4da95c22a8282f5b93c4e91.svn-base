@@ -1,0 +1,435 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.contract.service;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.IdGen;
+import com.bt.modules.contract.entity.BtgConJiaContractDetail;
+import com.bt.modules.contract.entity.Laborcontract;
+import com.bt.modules.contract.entity.LaborcontractAccount;
+import com.bt.modules.contract.dao.LaborcontractAccountDao;
+import com.bt.modules.finance.entity.LaborSettlement;
+import com.bt.modules.utils.MathUtil;
+
+/**
+ * 劳务台账Service
+ * @author yhh
+ * @version 2015-12-22
+ */
+@Service
+@Transactional(readOnly = true)
+public class LaborcontractAccountService extends CrudService<LaborcontractAccountDao, LaborcontractAccount> {
+
+	@Autowired
+	private LaborcontractAccountDao accountDao;
+//	@Autowired
+//	private LaborcontractService laborContractService;	//劳务合同
+	@Autowired
+	private JiaContractService jiaContractService;	//甲方合同
+	@Autowired
+	private BtgConJiaContractDetailService jiaContractDetailService;	//甲方合同明细
+	
+	
+	/**
+	 * 由劳务合同id获取劳务台账记录
+	 * @param laborContractId
+	 * @return
+	 */
+	public LaborcontractAccount getByLaborContractId(String laborContractId) {
+		return accountDao.getByLaborContractId(laborContractId);
+	}
+	
+	public List<LaborcontractAccount> findList(LaborcontractAccount laborcontractAccount) {
+		List<LaborcontractAccount> list = super.findList(laborcontractAccount);
+		return list;
+	}
+
+	@Transactional(readOnly = false)
+	public List<LaborcontractAccount> listHandler(List<LaborcontractAccount> list){
+		for(LaborcontractAccount single : list){
+			String contractPrice = single.getContractPrice();		//合同总价
+//			String qualityRatioFrist = single.getQualityRatioFrist();		//质保金比例1
+//			String qualityRatioSecond = single.getQualityRatioSecond();		//质保金比例2
+//			String finishDate = single.getFinishDate();		//竣工日期
+//			String qualityPayDateFristDuration = single.getQualityPayDateFristDuration();		//质保金1有效期
+//			String qualityPayDateSecondDuration = single.getQualityPayDateSecondDuration();		//质保金2有效期
+			String finishRatio = single.getFinishRatio();		//产值进度
+			String settlementPrice = single.getSettlementPrice();		//实际结算
+			String qualityPayFrist = single.getQualityPayFrist();			//质保金1
+			String qualityPaySecond = single.getQualityPaySecond();		//质保金2
+			String qualityPayDateFrist = single.getQualityPayDateFrist();		//质保金1到期
+			String qualityPayDateSecond = single.getQualityPayDateSecond();		//质保金2到期
+			String finishPrice = single.getFinishPrice();		//累计完工
+			String qualityPayShould = "0";		//应付质保金
+			String qualityPayNotYet = "0";		//未到期质保金
+			String schedulePayShould = "0";		//应付进度款
+			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+			/*			//累计完工,取最新产值进度,实际结算为空则取合同价
+			if(StringUtils.isNotBlank(valueSchduled)){
+				if(StringUtils.isNotBlank(settlementPrice)){
+					finishPrice = MathUtil.mul(settlementPrice, valueSchduled);
+					finishPrice = MathUtil.mul(finishPrice, "0.01");
+				}else{
+					finishPrice = MathUtil.mul(contractPrice, valueSchduled);
+					finishPrice = MathUtil.mul(finishPrice, "0.01");
+				}
+				single.setFinishPrice(finishPrice);
+				single.setFinishRatio(valueSchduled);
+			}
+			//如果质保金额为空,则进入计算
+			if(null == qualityPayFrist && null == qualityPaySecond){
+				//如实际劳务结算额大于０，且竣工日期大于Ｏ,则质保金日期为竣工日期+质保金条款期限，
+				//	应付质保金等于实际劳务结算额*质保金比例，否则应付质保金为０
+				if(null != finishDate && null != settlementPrice){
+					try {
+						Date date = format.parse(finishDate);
+						//质保金到期日期1
+						if(StringUtils.isNotBlank(qualityPayDateFristDuration)){
+							long durationFrist = Long.parseLong(qualityPayDateFristDuration)*1000*60*60*24*365;
+							long time=date.getTime()+durationFrist;
+							qualityPayDateFrist = format.format(new Date(time));
+						}
+						//质保金到期日期2
+						if(StringUtils.isNotBlank(qualityPayDateSecondDuration)){
+							long durationSecond = Long.parseLong(qualityPayDateSecondDuration)*1000*60*60*24*365;
+							long time=date.getTime()+durationSecond;
+							qualityPayDateSecond =  format.format(new Date(time));
+						}
+						//质保金额1
+						if(StringUtils.isNotBlank(qualityRatioFrist)){
+							double ratio = Double.parseDouble(qualityRatioFrist);
+							double settlement = Double.parseDouble(settlementPrice);
+							double price = settlement * ratio / 100;
+							qualityPayFrist = String.valueOf(price);
+						}
+						//质保金额2
+						if(StringUtils.isNotBlank(qualityRatioSecond)){
+							double ratio = Double.parseDouble(qualityRatioSecond);
+							double settlement = Double.parseDouble(settlementPrice);
+							double price = settlement * ratio / 100;
+							qualityPaySecond = String.valueOf(price);
+						}
+					} catch (ParseException e) {
+						e.printStackTrace();
+					}
+				}
+				single.setQualityPayFrist(qualityPayFrist);
+				single.setQualityPaySecond(qualityPaySecond);
+				single.setQualityPayDateFrist(qualityPayDateFrist);
+				single.setQualityPayDateSecond(qualityPayDateSecond);
+			}
+*/			
+		//当下应付质保金
+			if(StringUtils.isNotBlank(qualityPayDateFrist) && StringUtils.isNotBlank(qualityPayDateSecond)){
+				try{
+					Date dateFrist = format.parse(qualityPayDateFrist);
+					Date dateSecond = format.parse(qualityPayDateSecond);
+					boolean validFrist = checkDateValid(format, dateFrist); 
+					boolean validSecond = checkDateValid(format, dateSecond);
+					if(!validFrist){
+						qualityPayShould = MathUtil.sumString(qualityPayShould,qualityPayFrist);
+					}else{
+						qualityPayNotYet = MathUtil.sumString(qualityPayNotYet, qualityPayFrist);
+					}
+					if(!validSecond){
+						qualityPayShould = MathUtil.sumString(qualityPayShould, qualityPaySecond);
+					}else{
+						qualityPayNotYet = MathUtil.sumString(qualityPayNotYet, qualityPaySecond);
+					}
+					
+					//累计产值
+					if(StringUtils.isNotBlank(finishRatio)){
+						double ratio = Double.parseDouble(finishRatio);
+						String sumPriceTemp = null;
+						if(StringUtils.isNotBlank(settlementPrice)){
+							sumPriceTemp = settlementPrice;
+						}else{
+							sumPriceTemp = contractPrice;
+						}
+						double sumPrice = Double.parseDouble(sumPriceTemp);
+						double price = sumPrice * ratio / 100;
+						finishPrice = String.valueOf(price);
+						schedulePayShould = MathUtil.subString(finishPrice, qualityPayShould);
+						schedulePayShould = MathUtil.subString(finishPrice, qualityPayNotYet);
+					}
+					
+					single.setIsNewRecord(false);
+					single.setQualityPayShould(qualityPayShould);
+					single.setQualityPayNotYet(qualityPayNotYet);
+					single.setSchedulePayShould(schedulePayShould);
+				}catch(ParseException e){
+					e.printStackTrace();
+				}
+			}
+			
+			
+		}
+		
+		batchSave(list);
+		return list;
+	}
+	
+	@Transactional(readOnly = false)
+	public Page<LaborcontractAccount> findPage(Page<LaborcontractAccount> page, 
+			LaborcontractAccount laborcontractAccount) {
+		laborcontractAccount.setPage(page);
+		List<LaborcontractAccount> list = findList(laborcontractAccount);
+		list = listHandler(list);
+		page.setList(list);
+		return page;
+	}
+	/**
+	 * 批量保存
+	 * @param list
+	 */
+	@Transactional(readOnly = false)
+	public void batchSave(List<LaborcontractAccount> list){
+		if(null != list){
+			for(LaborcontractAccount entity : list){
+				save(entity);
+			}
+		}
+	}
+	/**
+	 * 验证日期是否有效
+	 * @param format
+	 * @param date
+	 * @return
+	 */
+	public boolean checkDateValid(SimpleDateFormat format, Date date){
+		boolean valid = true;
+		Date now = new Date();
+		long timeNow = now.getTime();
+		long time = date.getTime();
+		if(timeNow > time){
+			valid = false;
+		}
+		return valid;
+	}
+	/**
+	 * 周报更新(累计完工款)
+	 * @param laborContractAccount
+	 * @param finishRatio
+	 */
+	@Transactional(readOnly = false)
+	public void updateFromWeekLyReport(LaborcontractAccount account, String finishRatio){
+		String contractPrice = account.getContractPrice();		//合同总价
+		String settlementPrice = account.getSettlementPrice();		//实际结算
+		String finishPrice = account.getFinishPrice();		//累计完工
+		String qualityPayShould = account.getQualityPayShould();		//到期质保金
+		String qualityPayNotYet = account.getQualityPayNotYet();		//未到期质保金
+		String schedulePayShould = account.getSchedulePayShould();		//应付进度款
+		
+		String price = "0";
+		//累计完工,取最新产值进度,实际结算为空则取合同价
+		if(StringUtils.isNotBlank(finishRatio)){
+			if(StringUtils.isNotBlank(settlementPrice)){
+				price = settlementPrice;
+			}else{
+				price = contractPrice;
+			}
+			finishPrice = MathUtil.mul(price, finishRatio);
+			finishPrice = MathUtil.mul(finishPrice, "0.01");
+			schedulePayShould = MathUtil.subString(finishPrice, qualityPayShould);
+			schedulePayShould = MathUtil.subString(finishPrice, qualityPayNotYet);
+			
+			account.setFinishPrice(finishPrice);
+			account.setFinishRatio(finishRatio);
+			account.setSchedulePayShould(schedulePayShould);
+			account.setIsNewRecord(false);
+			save(account);
+		}
+		
+	}
+	/**
+	 * 甲方合同更新(质保金到期日期,竣工日期)
+	 * @param laborContract
+	 * @param finishDate
+	 */
+	@Transactional(readOnly = false)
+	public void updateFromJiaContract(BtgConJiaContractDetail jiaContractDetail){
+		//劳务合同
+		Laborcontract contract = new Laborcontract();
+		String projectId = jiaContractService.get(jiaContractDetail.getContractId()).getProjectId();
+		String buildings = jiaContractDetail.getSubprojectId();
+		String finishDate = jiaContractDetail.getEndDate();
+		contract.setProjectId(projectId);
+		contract.setBuildings(buildings);
+		contract = getLaborContractByJiaContract(contract);
+		//劳务台账
+		if(null != contract){
+			String laborcontractId = contract.getId();
+			LaborcontractAccount account = getByLaborContractId(laborcontractId);
+			account = updateAccountDate(account, contract, finishDate);
+			account.setIsNewRecord(false);
+			save(account);
+		}
+		
+		
+	}
+	/**
+	 * 劳务合同更新(质保金到期日期,竣工日期)
+	 * @param laborContract
+	 */
+	public void updateFromLaborContract(Laborcontract	 laborContract){
+		String laborContractId = laborContract.getId();
+		LaborcontractAccount account = getByLaborContractId(laborContractId);
+		BtgConJiaContractDetail jiaContractDetail = getJiaContractByLaborContract(laborContract);
+		if(null != jiaContractDetail){
+			String finishDate = jiaContractDetail.getEndDate();
+			account = updateAccountDate(account, laborContract, finishDate);
+			account.setIsNewRecord(false);
+			save(account);
+		}
+		
+	}
+	/**
+	 * 竣工日期,质保金有效期update
+	 * @param account
+	 * @param contract
+	 * @param finishDate
+	 * @return
+	 */
+	public LaborcontractAccount updateAccountDate(LaborcontractAccount account,Laborcontract contract, String finishDate){
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+		
+		String qualityPayDateFrist = null, qualityPayDateSecond = null;		
+		if(null != finishDate && null != contract){
+			try {
+				Date date = format.parse(finishDate);
+				String qualityPayDateFristDuration = contract.getQualityPayDateFrist();	//质保金1有效期
+				String qualityPayDateSecondDuration = contract.getQualityPayDateSecond();		//质保金2有效期
+				//质保金到期日期1
+				if(StringUtils.isNotBlank(qualityPayDateFristDuration)){
+					long durationFrist = Long.parseLong(qualityPayDateFristDuration)*1000*60*60*24*365;
+					long time=date.getTime()+durationFrist;
+					qualityPayDateFrist = format.format(new Date(time)); //质保金1到期
+				}
+				//质保金到期日期2
+				if(StringUtils.isNotBlank(qualityPayDateSecondDuration)){
+					long durationSecond = Long.parseLong(qualityPayDateSecondDuration)*1000*60*60*24*365;
+					long time=date.getTime()+durationSecond;
+					qualityPayDateSecond =  format.format(new Date(time));	//质保金2到期
+				}
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		account.setFinishDate(finishDate);
+		account.setQualityPayDateFrist(qualityPayDateFrist);
+		account.setQualityPayDateSecond(qualityPayDateSecond);
+		return account;
+	}
+	/**
+	 * 劳务结算更新(质保金金额,累计产值)
+	 * @param laborSettlement
+	 */
+	@Transactional(readOnly = false)
+	public void updateFromLaborSettlement(LaborSettlement laborSettlement){
+		String settlementPrice = laborSettlement.getPrice();	//实际结算款
+		
+		LaborcontractAccount account = getByLaborContractId(laborSettlement.getLaborContract().getId());
+		if(null != account){
+			String qualityRatioFrist = account.getQualityRatioFrist();			//质保金比例1
+			String qualityRatioSecond = account.getQualityRatioSecond();		//质保金比例2
+			String finishRatio = account.getFinishRatio();			//产值比例
+			String finishPrice = account.getFinishPrice();		//累计产值
+			String qualityPayShould = account.getQualityPayShould();		//到期质保金
+			String qualityPayNotYet = account.getQualityPayNotYet();		//未到期质保金
+			String schedulePayShould = account.getSchedulePayShould();		//应付进度款
+			String qualityPayFrist = "0";
+			String qualityPaySecond = "0";
+			
+			if(StringUtils.isNotBlank(settlementPrice)){
+				//质保金额1
+				if(StringUtils.isNotBlank(qualityRatioFrist)){
+					double ratio = Double.parseDouble(qualityRatioFrist);
+					double settlement = Double.parseDouble(settlementPrice);
+					double price = settlement * ratio / 100;
+					qualityPayFrist = String.valueOf(price);
+				}
+				//质保金额2
+				if(StringUtils.isNotBlank(qualityRatioSecond)){
+					double ratio = Double.parseDouble(qualityRatioSecond);
+					double settlement = Double.parseDouble(settlementPrice);
+					double price = settlement * ratio / 100;
+					qualityPaySecond = String.valueOf(price);
+				}
+				//累计产值
+				if(StringUtils.isNotBlank(finishRatio)){
+					double ratio = Double.parseDouble(finishRatio);
+					double settlement = Double.parseDouble(settlementPrice);
+					double price = settlement * ratio / 100;
+					finishPrice = String.valueOf(price);
+					schedulePayShould = MathUtil.subString(finishPrice, qualityPayShould);
+					schedulePayShould = MathUtil.subString(finishPrice, qualityPayNotYet);
+				}
+			}
+			
+			account.setIsNewRecord(false);
+			account.setQualityPayFrist(qualityPayFrist);
+			account.setQualityPaySecond(qualityPaySecond);
+			account.setFinishPrice(finishPrice);
+			account.setSchedulePayShould(schedulePayShould);
+			save(account);
+		}
+		
+	}
+	/**
+	 * 由劳务合同id,楼栋竣工日期,插入劳务台账
+	 * @param contract
+	 * @param finishDate
+	 */
+	@Transactional(readOnly = false)
+	public void createByLaborContract(String contractId){
+		LaborcontractAccount account = new LaborcontractAccount();
+		account.setIsNewRecord(true);
+		account.setId(IdGen.uuid());
+		account.setLaborcontractId(contractId);
+		save(account);
+	}
+	/**
+	 * 由劳务合同获取甲方合同楼栋信息
+	 * @param laborContract
+	 * @return
+	 */
+	public BtgConJiaContractDetail getJiaContractByLaborContract(Laborcontract laborContract){
+		return accountDao.getJiaContractByLaborContract(laborContract);
+	}
+	/**
+	 * 由甲方合同楼栋信息获取劳务合同
+	 * @param laborContract
+	 * @return
+	 */
+	public Laborcontract getLaborContractByJiaContract(Laborcontract laborContract){
+		return accountDao.getLaborContractByJiaContract(laborContract);
+	}
+	
+	public LaborcontractAccount get(String id) {
+		return super.get(id);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(LaborcontractAccount laborcontractAccount) {
+		super.save(laborcontractAccount);
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(LaborcontractAccount laborcontractAccount) {
+		super.delete(laborcontractAccount);
+	}
+	
+}

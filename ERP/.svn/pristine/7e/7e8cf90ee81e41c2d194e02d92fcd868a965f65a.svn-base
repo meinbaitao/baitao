@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.execution.dao.ScheduleimageDao">
+    
+	<sql id="scheduleimageColumns">
+		a.id AS "id",
+		a.subproject_id AS "subprojectId",
+		a.projectupdate_id AS "projectupdateId",
+		a.picturesouth AS "picturesouth",
+		a.picturenorth AS "picturenorth",
+		a.pictureeast AS "pictureeast",
+		a.picturewest AS "picturewest",
+		a.picturesoutheast As "picturesoutheast";		
+		a.picturenortheast As "picturenortheast";		
+		a.picturesouthwest As "picturesouthwest";	
+		a.picturenorthwest As "picturenorthwest";	
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="scheduleimageJoins">
+	</sql>
+    
+	<select id="get" resultType="Scheduleimage">
+		SELECT 
+			<include refid="scheduleimageColumns"/>
+		FROM btg_exe_scheduleimage a
+		<include refid="scheduleimageJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Scheduleimage">
+		SELECT 
+			<include refid="scheduleimageColumns"/>
+		FROM btg_exe_scheduleimage a
+		<include refid="scheduleimageJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Scheduleimage">
+		SELECT 
+			<include refid="scheduleimageColumns"/>
+		FROM btg_exe_scheduleimage a
+		<include refid="scheduleimageJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_exe_scheduleimage(
+			id,
+			subproject_id,
+			projectupdate_id,
+			picturesouth,
+			picturenorth,
+			pictureeast,
+			picturewest,
+			picturesoutheast,
+			picturenortheast,
+			picturesouthwest,
+			picturenorthwest,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{subprojectId},
+			#{projectupdateId},
+			#{picturesouth},
+			#{picturenorth},
+			#{pictureeast},
+			#{picturewest},
+			#{picturesoutheast},
+			#{picturenortheast},
+			#{picturesouthwest},
+			#{picturenorthwest},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_exe_scheduleimage SET 	
+			subproject_id = #{subprojectId},
+			projectupdate_id = #{projectupdateId},
+			picturesouth = #{picturesouth},
+			picturenorth = #{picturenorth},
+			pictureeast = #{pictureeast},
+			picturewest = #{picturewest},
+			picturesoutheast = #{picturesoutheast},
+			picturenortheast = #{picturenortheast},
+			picturesouthwest = #{picturesouthwest},
+			picturenorthwest = #{picturenorthwest},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_exe_scheduleimage SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

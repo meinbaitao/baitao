@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.common.oauth2.dao.UserClientAuthDao">
+	
+	<sql id="UserClientAuthColumns">
+		a.id,
+		a.user_id,
+		a.client_id,
+		a.role_ids
+	</sql>
+	
+	<select id="getByClientUser"  resultType="UserClientAuth" parameterType="UserClientAuth">
+		SELECT 
+		<include refid="UserClientAuthColumns"/>
+		FROM sys_user_client_roles a
+		WHERE a.client_id = #{clientId} 
+		AND  a.user_id = #{userId};
+	</select>
+	
+</mapper>

@@ -1,0 +1,261 @@
+package com.bt.modules.utils;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.web.multipart.MultipartFile;
+
+import com.bt.common.exceptions.BusinessException;
+import com.bt.modules.attachment.dao.AttachmentDao;
+import com.bt.modules.attachment.entity.Attachment;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.utils.IdGen;
+import com.thinkgem.jeesite.common.utils.SpringContextHolder;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+
+/**
+ * 文件上传工具类
+ * @author xjp
+ * @date 2015-8-17
+ */
+public class UploadUtils {
+	
+	/**
+	 * 注入附件信息
+	 */
+	private static AttachmentDao attachmentDao = SpringContextHolder.getBean(AttachmentDao.class);
+	
+	/**
+	 * 上传下载文件夹
+	 */
+	public static final String BASE_PATH = "upload";
+	
+	/**
+	 * 上传绝对路径:跟目录
+	 */
+	public static final String BASE_DIR = "userfiles.basedir";
+	
+	/**
+	 * 最大文件大小
+	 */
+	private String maxSize = Global.getConfig("web.maxUploadSize");
+	
+	
+	public UploadUtils() {
+		
+	}
+	
+	
+	/**
+	 * 上传文件
+	 * @param request
+	 * @param servletRequest
+	 * @return
+	 */
+	public String uploadFile(MultipartFile multipart,HttpServletRequest request,String dirName,String uploadType) throws BusinessException{
+		FileOutputStream outs =null;
+		InputStream is = null;
+		String info = "";
+		try{
+			//获取当前上下文
+			String contextPath = request.getContextPath();
+			
+			//获取上下文和域名后面一节 如：/contract/stoneCarriageContractBase   去掉前面：/wanfang/a/
+			String uri = request.getRequestURI().replace(contextPath+Global.getAdminPath(), "");
+			if(StringUtils.contains(uri,"upload")){
+				uri =uri.substring(0,uri.lastIndexOf("/"));
+			}
+			
+			//获取绝对路径根路径：D:/dm
+			String baseDir = Global.getConfig(BASE_DIR);
+			
+			//获取上传文件名
+			String fileName =multipart.getOriginalFilename();
+			if(StringUtils.isEmpty(fileName)){
+				fileName  = request.getParameter("file");
+			}
+			
+			//获取文件后缀
+			String type = fileName.substring(fileName.lastIndexOf(".")+1,fileName.length());
+			
+			//日期
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+			String ymd = sdf.format(new Date());
+			
+			StringBuilder sb = new StringBuilder();
+			//D:/dm
+			sb.append(baseDir+File.separator);
+			//upload
+			sb.append(BASE_PATH+File.separator);
+			//如：contract/stoneCarriage
+			sb.append(dirName+File.separator);
+			//如：D:/dm/upload/contract/stoneCarriage/yyyyMMdd/
+			sb.append(ymd+File.separator);
+			
+			//创建文件夹
+			File saveDirFile = new File(sb.toString());
+			if (!saveDirFile.exists()) {
+				saveDirFile.mkdirs();
+			}
+			
+			//做验证校验
+			info = validateField(request,multipart,saveDirFile);
+			//如果没返回错误信息则验证通过
+			if(StringUtils.isBlank(info)){
+				int readByte = 0;
+				//打开源文件
+				is = multipart.getInputStream();
+				//打开目标文件的输出流
+				outs = new FileOutputStream(saveDirFile+File.separator+multipart.getOriginalFilename());
+				byte[] buf = new byte[1024];
+				// 一次读取1024个字节，当readByte为-1时表示文件已经读取完毕
+				while ((readByte = is.read(buf)) != -1) {
+					// 将读取的字节流写入到输出流
+					outs.write(buf, 0, readByte);
+				}
+				String attachmentId = IdGen.uuid();
+				Attachment attachment = new Attachment();
+				attachment.setId(attachmentId);
+				attachment.setAttachAddress(sb.toString()); //服务器存放地址
+				attachment.setName(fileName);  //上传附件名称(带后缀)
+				attachment.setAttachType(type); //上传附件类型
+				attachment.setType(uploadType); //上传类型：如合同上传则是合同ID，下料单上传则是下料单ID
+				attachment.setAttachUrl(uri);	//下载地址
+				attachment.setIsNewRecord(true); //新增数据
+				attachment.preInsert();//获取创建人创建时间
+				
+				//TODO 特殊情况添加一个施工图上传类型字段 
+				String processChartType = request.getParameter("processChartType");
+				if(StringUtils.isNotBlank(processChartType)){
+					//施工图类型
+					attachment.setProcessChartType(processChartType);
+				}
+				
+				attachmentDao.insert(attachment);
+				return attachmentId;
+			}
+		}catch(Exception e){
+			throw new BusinessException();
+		}finally{
+			if(null !=is){
+				try {
+					is.close();
+				} catch (IOException e) {
+					 e.printStackTrace();
+				}
+			}
+			if(null !=outs){
+				try {
+					outs.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return info;
+	}
+	
+	
+	/**
+	 * 下载附件
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	public void download(HttpServletRequest request, HttpServletResponse response) {
+		//获取附件ID
+		String id = request.getParameter("id");
+		//根据ID去查询下载信息
+		Attachment attachment = attachmentDao.get(id);
+		
+		if(null !=attachment){
+			//设置返回页头信息
+			response.setCharacterEncoding("utf-8");
+			response.setContentType("multipart/form-data");
+			response.setHeader("Content-Disposition", "attachment;fileName="+attachment.getName());
+			String userAgent = request.getHeader("User-Agent");
+			try {
+				if(userAgent.contains("Firefox")){
+						response.setHeader("Content-Disposition", "attachment;fileName*="+ URLEncoder.encode(attachment.getName(), "UTF-8"));
+				}else{
+						response.setHeader("Content-Disposition", "attachment;fileName="+ URLEncoder.encode(attachment.getName(), "UTF-8"));
+				}
+			} catch (UnsupportedEncodingException e1) {
+				e1.printStackTrace();
+			}
+			
+			InputStream inputStream = null;
+			OutputStream os =null;
+			try {
+				//获取文件绝对路径   如：D:/dm\\upload\contract/stoneCarriage\20160526\xxx.jpg
+				String path = attachment.getAttachAddress()+attachment.getName();
+				
+				inputStream = new FileInputStream(new File(path));
+				os = response.getOutputStream();
+				byte[] b = new byte[2048];
+				int length;
+				while ((length = inputStream.read(b)) > 0) {
+					os.write(b, 0, length);
+				}
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				if (null != inputStream) {
+					try {
+						inputStream.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				if (null != os) {
+					try {
+						os.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+	
+	
+	/**
+	 * 上传验证,并初始化文件目录
+	 * 
+	 * @param request
+	 */
+	private String validateField(HttpServletRequest request,MultipartFile file,File saveDirFile) {
+		String errorInfo = "";
+		String contentType = request.getContentType();
+		if (file == null || !contentType.startsWith("multipart")) {
+			// TODO
+			//System.out.println("请求不包含multipart/form-data流");
+			errorInfo = "请求不包含multipart/form-data流";
+		} else if (Integer.parseInt(maxSize) < file.getSize()) {
+			// TODO
+			//System.out.println("上传文件大小超出文件最大大小");
+			errorInfo = "上传文件大小超出文件最大大小[" + maxSize + "]";
+		} else if (!saveDirFile.isDirectory()) {// 检查目录
+			// TODO
+			errorInfo = "上传目录[" + saveDirFile.getPath() + "]不存在";
+		}else if (file !=null && StringUtils.isEmpty(file.getOriginalFilename())) {// 检查目录
+			// TODO
+			errorInfo = "请选择文件";
+		}
+		return errorInfo;
+	}
+}

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.attachment.dao.AttachmentDao">
+    
+	<sql id="attachmentColumns">
+		a.id AS "id",
+		a.name AS "name",
+		a.attach_type AS "attachType",
+		a.attach_address AS "attachAddress",
+		a.attach_url AS "attachUrl",
+		a.type AS "type",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.process_chart_type AS "processChartType"
+	</sql>
+	
+	<sql id="attachmentJoins">
+	</sql>
+    
+	<select id="get" resultType="Attachment">
+		SELECT 
+			<include refid="attachmentColumns"/>
+		FROM btg_attachment a
+		<include refid="attachmentJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Attachment">
+		SELECT 
+			<include refid="attachmentColumns"/>
+		FROM btg_attachment a
+		<include refid="attachmentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Attachment">
+		SELECT 
+			<include refid="attachmentColumns"/>
+		FROM btg_attachment a
+		<include refid="attachmentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_attachment(
+			id,
+			name,
+			attach_type,
+			attach_address,
+			attach_url,
+			type,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			process_chart_type
+		) VALUES (
+			#{id},
+			#{name},
+			#{attachType},
+			#{attachAddress},
+			#{attachUrl},
+			#{type},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{processChartType}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_attachment SET 	
+			name = #{name},
+			attach_type = #{attachType},
+			attach_address = #{attachAddress},
+			attach_url = #{attachUrl},
+			type = #{type},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			process_chart_type = #{processChartType}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_attachment SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="deleteByType">
+		UPDATE btg_attachment SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE type = #{type}
+	</update>
+	
+	<select id="findAttachType" resultType="Attachment">
+		SELECT 
+			<include refid="attachmentColumns"/>
+		FROM btg_attachment a
+		<include refid="attachmentJoins"/>
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="type != null and type != ''">
+					AND a.type = #{type}
+			</if>
+	</select>
+	
+	<select id="findLikeAttachType" resultType="Attachment">
+		SELECT 
+			<include refid="attachmentColumns"/>
+		FROM btg_attachment a
+		<include refid="attachmentJoins"/>
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="type != null and type != ''">
+					AND a.type LIKE concat(#{type},'%')
+			</if>
+	</select>
+</mapper>

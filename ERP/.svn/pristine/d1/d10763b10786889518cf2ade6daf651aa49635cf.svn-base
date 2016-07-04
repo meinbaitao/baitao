@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.inventory.dao.InventoryPurchaseMappingDao">
+    
+	<sql id="inventoryPurchaseMappingColumns">
+		a.id AS "id",
+		a.inventory_id AS "inventoryId",
+		a.purchase_id AS "purchaseId"
+	</sql>
+	
+	<sql id="inventoryPurchaseMappingJoins">
+	</sql>
+    
+	<select id="get" resultType="InventoryPurchaseMapping">
+		SELECT 
+			<include refid="inventoryPurchaseMappingColumns"/>
+		FROM btg_inventory_purchase_mapping a
+		<include refid="inventoryPurchaseMappingJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="InventoryPurchaseMapping">
+		SELECT 
+			<include refid="inventoryPurchaseMappingColumns"/>
+		FROM btg_inventory_purchase_mapping a
+		<include refid="inventoryPurchaseMappingJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="InventoryPurchaseMapping">
+		SELECT 
+			<include refid="inventoryPurchaseMappingColumns"/>
+		FROM btg_inventory_purchase_mapping a
+		<include refid="inventoryPurchaseMappingJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_inventory_purchase_mapping(
+			id,
+			inventory_id,
+			purchase_id
+		) VALUES (
+			#{id},
+			#{inventoryId},
+			#{purchaseId}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_inventory_purchase_mapping SET 	
+			inventory_id = #{inventoryId},
+			purchase_id = #{purchaseId}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_inventory_purchase_mapping
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

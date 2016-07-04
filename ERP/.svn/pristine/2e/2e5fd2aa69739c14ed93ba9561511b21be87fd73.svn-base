@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.inventory.dao.StandingBookDetailDao">
+    
+	<sql id="standingBookDetailColumns">
+		a.id AS "id",
+		a.standing_book_id AS "standingBook.id",
+		a.inventory_id AS "inventory.id",
+		a.quantity AS "quantity",
+		a.mtono AS "mtono"
+	</sql>
+	
+	<sql id="standingBookDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="StandingBookDetail">
+		SELECT 
+			<include refid="standingBookDetailColumns"/>
+		FROM btg_standing_book_detail a
+		<include refid="standingBookDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="StandingBookDetail">
+		SELECT 
+			<include refid="standingBookDetailColumns"/>
+		FROM btg_standing_book_detail a
+		<include refid="standingBookDetailJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="StandingBookDetail">
+		SELECT 
+			<include refid="standingBookDetailColumns"/>
+		FROM btg_standing_book_detail a
+		<include refid="standingBookDetailJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_standing_book_detail(
+			id,
+			standing_book_id,
+			inventory_id,
+			quantity,
+			mtono
+		) VALUES (
+			#{id},
+			#{standingBook.id},
+			#{inventory.id},
+			#{quantity},
+			#{mtono}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_standing_book_detail SET 	
+			standing_book_id = #{standingBook.id},
+			inventory_id = #{inventory.id},
+			quantity = #{quantity},
+			mtono = #{mtono}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_standing_book_detail
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 领料记录 -->
+	<select id="getStandingBookDetailList" resultType="StandingBookDetail">
+		SELECT 
+			a.id AS "id",
+			a.standing_book_id AS "standingBook.id",
+			a.inventory_id AS "inventory.id",
+			ifnull(sum(a.quantity),0) AS "quantity",
+			a.mtono AS "mtono",
+			standingBook.tran_type AS "standingBook.tranType",
+			standingBook.sendee AS "standingBook.sendee",
+			standingBook.business_date AS "standingBook.businessDate",
+			standingBook.create_date AS "standingBook.createDate",
+			standingBook.remarks AS "standingBook.remarks",
+			ifnull(inventory.material_type,"") AS "inventory.materialType",
+			ifnull(inventory.material_id,"") AS "inventory.materialId",
+			ifnull(inventory.material_no,"") AS "inventory.materialNo",
+			ifnull(inventory.material_name,"") AS "inventory.materialName",
+			ifnull(inventory.quantity,"") AS "inventory.quantity",
+			sum(obdetail.count)/count(a.id) as "inventory.orderBomDetail.count",<!-- 除以重复的详细， -->
+			ifnull(obdetail.standard_desc,"") as "inventory.orderBomDetail.size",
+			ifnull(obdetail.unit,"") as "inventory.orderBomDetail.unit",
+			ifnull(obdetail.box_no,"") as "inventory.orderBomDetail.boxNo",
+			ifnull(obdetail.materiel_no,"") as "inventory.orderBomDetail.materielNo",
+			ifnull(obdetail.materiel_name,"") as "inventory.orderBomDetail.materielName",
+			ifnull(obdetail.standard_desc,"") as "inventory.orderBomDetail.standardDesc",
+			ifnull(obdetail.standard_radius,"") as "inventory.orderBomDetail.standardRadius",
+			ifnull(obdetail.standard_long,"") as "inventory.orderBomDetail.standardLong",
+			ifnull(obdetail.standard_width,"") as "inventory.orderBomDetail.standardWidth",
+			ifnull(obdetail.standard_depth,"") as "inventory.orderBomDetail.standardDepth",
+			ifnull(obdetail.process_chart_no,"") as "inventory.orderBomDetail.processChartNo",
+			ifnull(obdetail.remark,"") as "inventory.orderBomDetail.remark",
+			ifnull(obdetail.unit,"") as "inventory.orderBomDetail.unit",
+			ifnull(obbase.order_type,"") as "inventory.orderBomBase.orderType",
+			project.name as "inventory.project.name",
+			project.id as "inventory.project.id",
+			sub.id AS "inventory.sub.id",
+			sub.house_type AS "inventory.sub.houseType",
+			sub.building AS "inventory.sub.building",
+			sub.building_display_name AS "inventory.sub.buildingDisplayName",
+			subIn.id AS "standingBook.subIn.id",
+			subIn.house_type AS "standingBook.subIn.houseType",
+			subIn.building AS "standingBook.subIn.building",
+			subIn.building_display_name AS "standingBook.subIn.buildingDisplayName"
+		FROM  btg_standing_book_detail a
+			join btg_standing_book standingBook on standingBook.id=a.standing_book_id
+			join btg_inventory inventory on inventory.id=a.inventory_id
+			join btg_depot depot on depot.id=inventory.depot_id
+			left join btg_subproject sub on sub.id=depot.sub_id 
+			join btg_project project on project.id=depot.project_id 
+			join btg_order_bom_base obbase on obbase.sub_proj_id=depot.sub_id
+			join btg_order_bom_detail obdetail 
+								on obdetail.order_bom_id=obbase.id 
+								<!-- and obdetail.materiel_name=inventory.material_name -->
+								and obdetail.materiel_no=inventory.material_no
+			left join btg_depot depotIn on depotIn.id=standingBook.in_depot
+			left join btg_subproject subIn on subIn.id=depotIn.sub_id 
+			<!-- left join btg_depot depotOut on depotOut.id=standingBook.out_depot
+			left join btg_subproject subOut on subOut.id=depotOut.sub_id -->  
+		where (1=1) and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="standingBook != null and standingBook.sendee != null and standingBook.sendee!=''">
+				and standingBook.sendee=#{standingBook.sendee}
+			</if>
+			<if test="inventory != null and inventory.materialNo != null and inventory.materialNo!=''">
+				and inventory.material_no=#{inventory.materialNo}
+			</if> 
+			<if test="standingBook != null and standingBook.materialType != null and standingBook.materialType!=''">
+				and standingBook.material_type=#{standingBook.materialType}
+			</if>
+			<if test="standingBook != null and standingBook.seriesnumber != null and standingBook.seriesnumber!=''">
+				and standingBook.seriesnumber=#{standingBook.seriesnumber}
+			</if>
+			<if test="standingBook != null and standingBook.createBy != null and standingBook.createBy.id!=null and standingBook.createBy.id!=''">
+				and standingBook.create_by=#{standingBook.createBy.id}
+			</if>
+			<if test="inventory!=null and inventory.project != null and inventory.project.name != '' and inventory.project.name != null">
+				and project.name = #{inventory.project.name}
+			</if>
+			<!-- <if test="inventory!=null and inventory.sub != null and inventory.sub.building != '' and inventory.sub.building != null">
+				and subIn.building = #{inventory.sub.building}
+			</if> -->
+			<if test="standingBook!=null and standingBook.subIn != null and standingBook.subIn.building != '' and standingBook.subIn.building != null">
+				and subIn.building = #{standingBook.subIn.building}
+			</if>
+			
+					
+			<if test="gbStr != null and gbStr != '' and gbStr=='standingBook'">
+				<!-- group by standingBook.sendee,inventory.id -->
+				group by standingBook.sendee ,standingBook.in_depot,inventory.material_no
+			</if>
+			<if test="gbStr != null and gbStr != '' and gbStr=='standingBookID'">
+				group by standingBook.id
+			</if>
+			<if test="gbStr != null and gbStr != '' and gbStr=='inv'">
+				group by inventory.id
+			</if>
+	</select>
+	
+	<select id="countQuantityByCondition" resultType="int">
+		select ifnull(sum(a.quantity),0) 
+			from (
+				select sbdetail.quantity as quantity from btg_standing_book_detail sbdetail 
+					left join btg_standing_book standingBook on standingBook.id=sbdetail.standing_book_id
+					left join btg_inventory inventory on inventory.id=sbdetail.inventory_id
+					left join btg_depot depot on depot.id=inventory.depot_id
+					left join btg_subproject sub on sub.id=depot.sub_id
+					left join btg_project project on project.id=sub.project_id 
+					left join btg_depot depotIn on depotIn.id=standingBook.in_depot
+					where (1=1)
+						<if test="standingBook != null and standingBook.tranType != null and standingBook.tranType!=''">
+							and standingBook.tran_type=#{standingBook.tranType}
+						</if>
+						<if test="standingBook != null and standingBook.depotIn != null and standingBook.depotIn.id!=''">
+							and depotIn.id=#{standingBook.depotIn.id}
+						</if>
+						<if test="inventory!=null and inventory.project != null and inventory.project.name != '' and inventory.project.name != null">
+							and project.name = #{inventory.project.name}
+						</if>
+						<if test="inventory!=null and inventory.project != null and inventory.project.id != '' and inventory.project.id != null">
+							and project.id = #{inventory.project.id}
+						</if>
+						<if test="inventory!=null and inventory.sub != null and inventory.sub.id != '' and inventory.sub.id != null">
+							and sub.id = #{inventory.sub.id}
+						</if>
+						<if test="inventory!=null and inventory.sub != null and inventory.sub.building != '' and inventory.sub.building != null">
+							and sub.building = #{inventory.sub.building}
+						</if>
+						<if test="inventory!=null and inventory.materialNo != null and inventory.materialNo != ''">
+							and inventory.material_no = #{inventory.materialNo}
+						</if>
+						<if test="inventory!=null and inventory.materialName != null and inventory.materialName != ''">
+							and inventory.material_name = #{inventory.materialName}
+						</if>
+					group by sbdetail.id
+				) a
+	</select>
+	<!-- 获取对应材料的剩余量 -->
+	<select id="getSurplusByCondition" resultType="int">
+		select ifnull(sum(a.quantity),0) 
+			from (
+				select inventory.quantity as quantity
+					from btg_depot depot 
+						left join btg_project project on project.id=depot.project_id
+						left join btg_subproject sub on sub.id=depot.sub_id
+						left join btg_inventory inventory on inventory.depot_id=depot.id
+					where (1=1)
+						<if test="inventory!=null and inventory.project != null and inventory.project.name != '' and inventory.project.name != null">
+							and project.name = #{inventory.project.name}
+						</if>
+						<if test="inventory!=null and inventory.project != null and inventory.project.id != '' and inventory.project.id != null">
+							and project.id = #{inventory.project.id}
+						</if>
+						<if test="standingBook!=null and standingBook.subIn != null and standingBook.subIn.id != '' and standingBook.subIn.id != null">
+							and sub.id = #{standingBook.subIn.id}
+						</if>
+						<if test="standingBook!=null and standingBook.subIn != null and standingBook.subIn.building != '' and standingBook.subIn.building != null">
+							and sub.building = #{standingBook.subIn.building}
+						</if>
+						<if test="inventory!=null and inventory.materialNo != null and inventory.materialNo != ''">
+							and inventory.material_no = #{inventory.materialNo}
+						</if>
+						<if test="inventory!=null and inventory.materialName != null and inventory.materialName != ''">
+							and inventory.material_name = #{inventory.materialName}
+						</if>
+					group by inventory.id
+				) a
+	</select>
+	
+</mapper>

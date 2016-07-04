@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.ExecutionDao">
+    
+	<sql id="executionColumns">
+		a.id AS "id",
+		a.name AS "name",
+		a.exe_type AS "exeType",
+		a.exe_number AS "exeNumber",
+		a.person AS "person",
+		a.person_num AS "personNum",
+		a.person_tel AS "personTel",
+		a.bank AS "bank",
+		a.bank_num AS "bankNum",
+		a.bank_person AS "bankPerson",
+		a.exe_record AS "exeRecord",
+		a.exe_quality AS "exeQuality",
+		a.status AS "status",
+		a.exe_no            AS "exeNo",
+		a.exe_level         AS "exeLevel",
+		a.level_coefficient AS "levelCoefficient",
+		a.delegate		   AS "delegate",
+		a.delegate_num      AS "delegateNum",
+		a.delegate_tel      AS "delegateTel",
+		a.exe_erea          AS "exeErea", 
+		a.worker_from       AS "workerFrom",
+		a.want_erea         AS "wantErea",
+		a.evaluate_maxNum   AS "evaluateMaxNum",
+		a.skill_person      AS "skillPerson",
+		a.stone_bigNum      AS "stoneBigNum",
+		a.frame_bigNum      AS "frameBigNum",
+		a.frame_smallNum    AS "frameSmallNum",
+		a.stone_smallNum    AS "stoneSmallNum",
+		a.thirty_dayArea    AS "thirtyDayArea",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.code AS "code"
+	</sql>
+	
+	<sql id="executionJoins">
+	</sql>
+    
+	<select id="get" resultType="Execution">
+		SELECT 
+			<include refid="executionColumns"/>
+		FROM btg_con_execution a
+		<include refid="executionJoins"/>
+		WHERE a.id = #{id}
+	</select>
+    
+	<select id="getByName" resultType="Execution">
+		SELECT 
+			<include refid="executionColumns"/>
+		FROM btg_con_execution a
+		<include refid="executionJoins"/>
+		WHERE
+			a.del_flag = #{DEL_FLAG_NORMAL} and a.name = #{name}
+	</select>
+	
+	<select id="getmaxNo" resultType="String">
+		SELECT MAX(cast(SUBSTRING(t.exe_no,3) as SIGNED INTEGER))+1 as maxno FROM btg_con_execution t where t.exe_no is not null;
+	</select>
+	
+	<select id="getByPersonNum" resultType="Execution">
+		SELECT 
+			<include refid="executionColumns"/>
+		FROM btg_con_execution a
+		<include refid="executionJoins"/>
+		WHERE a.person_num = #{personNum} limit 1
+	</select>
+	
+	<select id="getByExelevel" resultType="Execution">
+		SELECT 
+			a.exe_level         AS "exeLevel        ",
+		    a.level_coefficient AS "levelCoefficient"
+		FROM btg_con_excution_level a
+		WHERE a.exe_level = #{exeLevel}
+	</select>
+    	
+	<select id="findList" resultType="Execution">
+		SELECT 
+			<include refid="executionColumns"/>
+		FROM btg_con_execution a
+		<include refid="executionJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="search != null and search != ''">
+				AND a.name LIKE concat('%',#{search},'%')
+				or a.exe_type LIKE concat('%',#{search},'%')
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status = #{status} 
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findListForLabor" resultType="Execution">
+		SELECT 
+			<include refid="executionColumns"/>
+		FROM
+		   btg_con_execution a JOIN btg_project_area_mapping mapping on a.exe_erea = mapping.area_name
+		   JOIN btg_project pro  ON pro.code = mapping.pro_code
+		<where>
+			1=1
+			<if test="id != null and id != ''">
+				AND pro.id = #{id} 
+			</if>
+			<if test="exeType != null and exeType != ''">
+				AND a.exe_type LIKE concat('%',#{exeType},'%')
+			</if>
+		</where>
+			ORDER BY a.update_date DESC
+	</select>
+	
+	<select id="findAllList" resultType="Execution">
+		SELECT 
+			<include refid="executionColumns"/>
+		FROM btg_con_execution a
+		<include refid="executionJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_con_execution(
+			id,
+			name,
+			exe_type,
+			exe_number,
+			person,
+			person_num,
+			person_tel,
+			bank,
+			bank_num,
+			bank_person,
+			exe_record,
+			exe_quality,
+			status,
+			exe_no           ,
+			exe_level        ,
+			level_coefficient,
+			delegate		 ,
+			delegate_num     ,
+			delegate_tel     ,
+			exe_erea         ,
+			worker_from      ,
+			want_erea        ,
+			evaluate_maxNum  ,
+			skill_person     ,
+			stone_bigNum     ,
+			frame_bigNum     ,
+			frame_smallNum   ,
+			stone_smallNum   ,
+			thirty_dayArea   ,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			code
+		) VALUES (
+			#{id},
+			#{name},
+			#{exeType},
+			#{exeNumber},
+			#{person},
+			#{personNum},
+			#{personTel},
+			#{bank},
+			#{bankNum},
+			#{bankPerson},
+			#{exeRecord},
+			#{exeQuality},
+			#{status},
+			#{exeNo			  },
+			#{exeLevel        },
+			#{levelCoefficient},
+			#{delegate		  }, 
+			#{delegateNum     },
+			#{delegateTel     },
+			#{exeErea         },
+			#{workerFrom      },
+			#{wantErea        },
+			#{evaluateMaxNum  },
+			#{skillPerson     },
+			#{stoneBigNum     },
+			#{frameBigNum     },
+			#{frameSmallNum   },
+			#{stoneSmallNum   },
+			#{thirtyDayArea   },
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{code}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_con_execution SET 	
+			name = #{name},
+			exe_type = #{exeType},
+			exe_number = #{exeNumber},
+			person = #{person},
+			person_num = #{personNum},
+			person_tel = #{personTel},
+			bank = #{bank},
+			bank_num = #{bankNum},
+			bank_person = #{bankPerson},
+			exe_record = #{exeRecord},
+			exe_quality = #{exeQuality},
+			status = #{status},
+			exe_no           =#{exeNo			  },
+			exe_level        =#{exeLevel        },
+			level_coefficient=#{levelCoefficient},
+			delegate		  =#{delegate		  }, 
+			delegate_num     =#{delegateNum     },
+			delegate_tel     =#{delegateTel     },
+			exe_erea         =#{exeErea         },
+			worker_from      =#{workerFrom      },
+			want_erea        =#{wantErea        },
+			evaluate_maxNum  =#{evaluateMaxNum  },
+			skill_person     =#{skillPerson     },
+			stone_bigNum     =#{stoneBigNum     },
+			frame_bigNum     =#{frameBigNum     },
+			frame_smallNum   =#{frameSmallNum   },
+			stone_smallNum   =#{stoneSmallNum   },
+			thirty_dayArea   =#{thirtyDayArea   },
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			code = #{code}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_con_execution SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

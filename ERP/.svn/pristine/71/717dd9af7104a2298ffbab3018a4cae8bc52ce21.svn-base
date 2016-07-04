@@ -1,0 +1,992 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.project.dao.ProjectDao">
+    
+	<sql id="projectColumns">
+		a.id AS "id",
+		a.name AS "name",
+		a.code AS "code",
+		a.location AS "location",
+		a.area_id AS "area.id",
+		a.province AS "province",
+		a.city AS "city",
+		a.town AS "town",
+		a.business_line AS "businessLine",
+		a.compy AS "compy",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.status AS "status",
+		a.project_manager_bid AS "projectManagerBid",
+		a.regional_manager_bid AS "regionalManagerBid",
+		a.pc_director_bid AS "pcDirectorBid",
+		a.coordinator_leader_bid AS "coordinatorLeaderBid",
+		a.operation_specialist_bid AS "operationSpecialistBid",
+		a.general_manager_aid AS "generalManagerAid",
+		a.regional_manager_aid AS "regionalManagerAid",
+		a.local_manager_aid AS "localManagerAid",
+		a.general_manager_mobile AS "generalManagerMobile",
+		a.regional_manager_mobile AS "regionalManagerMobile",
+		a.local_manager_mobile AS "localManagerMobile",
+		a.material_staff_bid AS "materialStaffBid",
+		a.construct_staff_bid AS "constructStaffBid",
+		a.material_staff_mobile AS "materialStaffMobile",
+		a.construct_staff_mobile AS "constructStaffMobile",
+		a.cost_manager_bid AS "costManagerBid",
+		a.cost_officer_bid AS "costOfficerBid",
+		a.cost_leader_bid AS "costLeaderBid",
+		a.cost_manager_mobile AS "costManagerMobile",
+		a.cost_officer_mobile AS "costOfficerMobile",
+		a.cost_leader_mobile AS "costLeaderMobile",
+		a.designer AS "designer",
+		a.design_leader_bid AS "designLeaderBid",
+		a.designer_mobile AS "designerMobile",
+		a.design_leader_mobile AS "designLeaderMobile",
+		a.report AS "report",
+		a.is_report AS "isReport",
+		a.is_attach_unit AS "isAttachUnit",
+		a.weekly_report_required AS "weeklyReportRequired",
+		a.attach_unit AS "attachUnit",
+		a.workflow_id AS "workflowid",
+		a.workflow_status AS "workflowstatus",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a5.name AS "area.name",
+		a.address AS "address",
+		a.adminstaff_bid AS "adminstaffbid"
+	</sql>
+	<sql id="projectGeneralInfoColumns">
+		a.id AS "id",
+			a.name AS "name",
+			a.code AS "code",
+			a.location AS "location",
+			a.area_id AS "area.id",
+			p5.ProvinceName AS "province",
+			c5.ProvinceName AS "city",
+			t5.ProvinceName AS "town",
+			d.label AS "businessLine",
+			a.compy AS "compy",
+			a.start_time AS "startTime",
+			a.end_time AS "endTime",
+			a.project_manager_bid AS "projectManagerBid",
+			a.regional_manager_bid AS "regionalManagerBid",
+			a.pc_director_bid AS "pcDirectorBid",
+			a.coordinator_leader_bid AS "coordinatorLeaderBid",
+			a.operation_specialist_bid AS "operationSpecialistBid",
+			a.general_manager_aid AS "generalManagerAid",
+			a.regional_manager_aid AS "regionalManagerAid",
+			a.local_manager_aid AS "localManagerAid",
+			a.general_manager_mobile AS "generalManagerMobile",
+			a.regional_manager_mobile AS "regionalManagerMobile",
+			a.local_manager_mobile AS "localManagerMobile",
+			a.material_staff_bid AS "materialStaffBid",
+			a.construct_staff_bid AS "constructStaffBid",
+			a.material_staff_mobile AS "materialStaffMobile",
+			a.construct_staff_mobile AS "constructStaffMobile",
+			um.name AS "costManagerBid",
+			uo.name AS "costOfficerBid",
+			ul.name AS "costLeaderBid",
+			a.cost_manager_mobile AS "costManagerMobile",
+			a.cost_officer_mobile AS "costOfficerMobile",
+			a.cost_leader_mobile AS "costLeaderMobile",
+			ud.name AS "designer",
+			a.design_leader_bid AS "designLeaderBid",
+			a.designer_mobile AS "designerMobile",
+			a.design_leader_mobile AS "designLeaderMobile",
+			a.report AS "report",
+			a.is_report AS "isReport",
+			a.is_attach_unit AS "isAttachUnit",
+			a.weekly_report_required AS "weeklyReportRequired",
+			a.workflow_id AS "workflowid",
+			a.workflow_status AS "workflowstatus",
+			a.attach_unit AS "attachUnit",
+			up.name AS "showProjectManagerBid",
+			ur.name AS "showRegionalManagerBid",
+			udb.name AS "showPcDirectorBid",
+			uc.name AS "showCoordinatorLeaderBid",
+			uos.name AS "showOperationSpecialistBid",
+			ums.name AS "showMaterialStaffBid",
+			ucs.name AS "showConstructStaffBid",
+			uab.name AS "showAdminstaffbid"
+	</sql>
+	
+	<sql id="projectJoins">
+		LEFT JOIN sys_area a5 ON a5.id = a.area_id
+	</sql>
+	
+	<sql id="joins">
+		LEFT JOIN sys_province p5 ON p5.ProvinceID = a.province
+		LEFT JOIN sys_province c5 ON c5.ProvinceID = a.city
+		LEFT JOIN sys_province t5 ON t5.ProvinceID = a.town
+		LEFT JOIN sys_dict d ON d.value = a.business_line
+		LEFT JOIN sys_user um ON um.id = a.cost_manager_bid
+		LEFT JOIN sys_user uo ON uo.id = a.cost_officer_bid
+		LEFT JOIN sys_user ul ON ul.id = a.cost_leader_bid
+		LEFT JOIN sys_user ud ON ud.id = a.designer
+		LEFT JOIN sys_user udl ON udl.id = a.design_leader_bid
+		
+		LEFT JOIN sys_user up ON up.id = a.project_manager_bid
+		LEFT JOIN sys_user ur ON ur.id = a.regional_manager_bid
+		LEFT JOIN sys_user udb ON udb.id = a.pc_director_bid
+		LEFT JOIN sys_user uc ON uc.id = a.coordinator_leader_bid
+		LEFT JOIN sys_user ums ON ums.id = a.material_staff_bid
+		LEFT JOIN sys_user ucs ON ucs.id = a.construct_staff_bid
+		LEFT JOIN sys_user uos ON uos.id = a.operation_specialist_bid
+		LEFT JOIN sys_user uab ON uab.id = a.adminstaff_bid
+	</sql>
+    
+	<select id="get" resultType="Project">
+		SELECT 
+		<include refid="projectColumns"/>
+		FROM btg_project a
+		<include refid="projectJoins"/>
+		WHERE a.id = #{id}
+	</select>
+    
+	<select id="getByProjeceName" resultType="Project">
+		SELECT 
+		    a.id AS "id",
+			ug.name AS "generalManagerAid",
+			a.cost_manager_bid AS "costManagerBid",
+			a.cost_leader_bid AS "costLeaderBid",
+			a.general_manager_mobile AS "generalManagerMobile"
+		FROM btg_project a
+		LEFT JOIN sys_user ug ON ug.id = a.general_manager_aid
+		WHERE 
+		 a.name = #{name}
+		 and
+		 a.del_flag = #{DEL_FLAG_NORMAL}
+	</select>
+	
+	<select id="findList" resultType="Project">
+		SELECT 
+			a.id AS "id",
+			a.name AS "name",
+			a.code AS "code",
+			a.location AS "location",
+			a.area_id AS "area.id",
+			p5.ProvinceName AS "province",
+			c5.ProvinceName AS "city",
+			t5.ProvinceName AS "town",
+			d.label AS "businessLine",
+			a.compy AS "compy",
+			a.start_time AS "startTime",
+			a.end_time AS "endTime",
+			a.project_manager_bid AS "projectManagerBid",
+			a.regional_manager_bid AS "regionalManagerBid",
+			a.pc_director_bid AS "pcDirectorBid",
+			a.coordinator_leader_bid AS "coordinatorLeaderBid",
+			a.operation_specialist_bid AS "operationSpecialistBid",
+			a.general_manager_aid AS "generalManagerAid",
+			a.regional_manager_aid AS "regionalManagerAid",
+			a.local_manager_aid AS "localManagerAid",
+			a.general_manager_mobile AS "generalManagerMobile",
+			a.regional_manager_mobile AS "regionalManagerMobile",
+			a.local_manager_mobile AS "localManagerMobile",
+			a.material_staff_bid AS "materialStaffBid",
+			a.construct_staff_bid AS "constructStaffBid",
+			a.material_staff_mobile AS "materialStaffMobile",
+			a.construct_staff_mobile AS "constructStaffMobile",
+			um.name AS "costManagerBid",
+			uo.name AS "costOfficerBid",
+			ul.name AS "costLeaderBid",
+			a.cost_manager_mobile AS "costManagerMobile",
+			a.cost_officer_mobile AS "costOfficerMobile",
+			a.cost_leader_mobile AS "costLeaderMobile",
+			ud.name AS "designer",
+			a.design_leader_bid AS "designLeaderBid",
+			a.designer_mobile AS "designerMobile",
+			a.design_leader_mobile AS "designLeaderMobile",
+			a.report AS "report",
+			a.is_report AS "isReport",
+			a.is_attach_unit AS "isAttachUnit",
+			a.weekly_report_required AS "weeklyReportRequired",
+			a.workflow_id AS "workflowid",
+			a.workflow_status AS "workflowstatus",
+			a.attach_unit AS "attachUnit",
+			up.name AS "showProjectManagerBid",
+			ur.name AS "showRegionalManagerBid",
+			udb.name AS "showPcDirectorBid",
+			uc.name AS "showCoordinatorLeaderBid",
+			uos.name AS "showOperationSpecialistBid",
+			ums.name AS "showMaterialStaffBid",
+			ucs.name AS "showConstructStaffBid",
+			uab.name AS "showAdminstaffbid"
+		FROM btg_project a
+		<include refid="joins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+				<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="workflowstatus != null and workflowstatus != ''">
+				and 
+				a.workflow_status=#{workflowstatus}
+			</if>
+			${sqlMap.dsf}
+		</where>
+		ORDER BY a.workflow_status ASC,a.update_date DESC
+	</select>
+	
+	<select id="findListByStatus" resultType="Project">
+		SELECT 
+			a.id AS "id",
+			a.name AS "name",
+			a.code AS "code",
+			a.location AS "location",
+			a.area_id AS "area.id",
+			p5.ProvinceName AS "province",
+			c5.ProvinceName AS "city",
+			t5.ProvinceName AS "town",
+			d.label AS "businessLine",
+			a.compy AS "compy",
+			a.start_time AS "startTime",
+			a.end_time AS "endTime",
+			a.project_manager_bid AS "projectManagerBid",
+			a.regional_manager_bid AS "regionalManagerBid",
+			a.pc_director_bid AS "pcDirectorBid",
+			a.coordinator_leader_bid AS "coordinatorLeaderBid",
+			a.operation_specialist_bid AS "operationSpecialistBid",
+			a.general_manager_aid AS "generalManagerAid",
+			a.regional_manager_aid AS "regionalManagerAid",
+			a.local_manager_aid AS "localManagerAid",
+			a.general_manager_mobile AS "generalManagerMobile",
+			a.regional_manager_mobile AS "regionalManagerMobile",
+			a.local_manager_mobile AS "localManagerMobile",
+			a.material_staff_bid AS "materialStaffBid",
+			a.construct_staff_bid AS "constructStaffBid",
+			a.material_staff_mobile AS "materialStaffMobile",
+			a.construct_staff_mobile AS "constructStaffMobile",
+			um.name AS "costManagerBid",
+			uo.name AS "costOfficerBid",
+			ul.name AS "costLeaderBid",
+			a.cost_manager_mobile AS "costManagerMobile",
+			a.cost_officer_mobile AS "costOfficerMobile",
+			a.cost_leader_mobile AS "costLeaderMobile",
+			ud.name AS "designer",
+			a.design_leader_bid AS "designLeaderBid",
+			a.designer_mobile AS "designerMobile",
+			a.design_leader_mobile AS "designLeaderMobile",
+			a.report AS "report",
+			a.is_report AS "isReport",
+			a.is_attach_unit AS "isAttachUnit",
+			a.weekly_report_required AS "weeklyReportRequired",
+			a.workflow_id AS "workflowid",
+			a.workflow_status AS "workflowstatus",
+			a.attach_unit AS "attachUnit",
+			up.name AS "showProjectManagerBid",
+			ur.name AS "showRegionalManagerBid",
+			udb.name AS "showPcDirectorBid",
+			uc.name AS "showCoordinatorLeaderBid",
+			uos.name AS "showOperationSpecialistBid",
+			ums.name AS "showMaterialStaffBid",
+			ucs.name AS "showConstructStaffBid",
+			uab.name AS "showAdminstaffbid"
+		FROM btg_project a
+		<include refid="joins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+				<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="workflowstatus != null and workflowstatus != ''">
+				and 
+				a.workflow_status=#{workflowstatus}
+			</if>
+			<if test="generalManagerAid == '' and generalManagerAid != null">
+				and 
+				(a.general_manager_aid = '' or ISNULL(general_manager_aid))
+			</if>
+			<if test="costManagerBid == '' and costManagerBid != null and costLeaderBid == '' and costLeaderBid != null and costOfficerBid == '' and costOfficerBid != null">
+				and (a.cost_manager_bid = '' or ISNULL(cost_manager_bid) or a.cost_officer_bid = '' or ISNULL(cost_officer_bid) or a.cost_leader_bid = '' or ISNULL(cost_leader_bid))
+			</if>
+			<if test="designLeaderBid == '' and designLeaderBid != null">
+				and 
+				(a.design_leader_bid = '' or ISNULL(design_leader_bid))
+			</if>
+			${sqlMap.dsf}
+		</where>
+		ORDER BY a.workflow_status ASC,a.update_date DESC
+	</select>
+	
+	<select id="findAllList" resultType="Project">
+		SELECT 
+		<include refid="projectColumns"/>
+		FROM btg_project a
+		<include refid="projectJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_project(
+			id,
+			name,
+			code,
+			location,
+			area_id,
+			province,
+			city,
+			town,
+			business_line,
+			compy,
+			start_time,
+			end_time,
+			status,
+			project_manager_bid,
+			regional_manager_bid,
+			pc_director_bid,
+			coordinator_leader_bid,
+			operation_specialist_bid,
+			general_manager_aid,
+			regional_manager_aid,
+			local_manager_aid,
+			general_manager_mobile,
+			regional_manager_mobile,
+			local_manager_mobile,
+			material_staff_bid,
+			construct_staff_bid,
+			material_staff_mobile,
+			construct_staff_mobile,
+			cost_manager_bid,
+			cost_officer_bid,
+			cost_leader_bid,
+			cost_manager_mobile,
+			cost_officer_mobile,
+			cost_leader_mobile,
+			designer,
+			design_leader_bid,
+			designer_mobile,
+			design_leader_mobile,
+			report,
+			is_report,
+			is_attach_unit,
+			weekly_report_required,
+			attach_unit,
+			workflow_id,
+			workflow_status,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			address,
+			adminstaff_bid
+		) VALUES (
+			#{id},
+			#{name},
+			#{code},
+			#{location},
+			#{area.id},
+			#{province},
+			#{city},
+			#{town},
+			#{businessLine},
+			#{compy},
+			#{startTime},
+			#{endTime},
+			#{status},
+			#{projectManagerBid},
+			#{regionalManagerBid},
+			#{pcDirectorBid},
+			#{coordinatorLeaderBid},
+			#{operationSpecialistBid},
+			#{generalManagerAid},
+			#{regionalManagerAid},
+			#{localManagerAid},
+			#{generalManagerMobile},
+			#{regionalManagerMobile},
+			#{localManagerMobile},
+			#{materialStaffBid},
+			#{constructStaffBid},
+			#{materialStaffMobile},
+			#{constructStaffMobile},
+			#{costManagerBid},
+			#{costOfficerBid},
+			#{costLeaderBid},
+			#{costManagerMobile},
+			#{costOfficerMobile},
+			#{costLeaderMobile},
+			#{designer},
+			#{designLeaderBid},
+			#{designerMobile},
+			#{designLeaderMobile},
+			#{report},
+			#{isReport},
+			#{isAttachUnit},
+			#{weeklyReportRequired},
+			#{attachUnit},
+			#{workflowid},
+			#{workflowstatus},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{address},
+			#{adminstaffbid}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_project SET 	
+			name = #{name},
+			code = #{code},
+			location = #{location},
+			area_id = #{area.id},
+			province = #{province},
+			city = #{city},
+			town = #{town},
+			business_line = #{businessLine},
+			compy = #{compy},
+			start_time = #{startTime},
+			end_time = #{endTime},
+			status = #{status},
+			project_manager_bid = #{projectManagerBid},
+			regional_manager_bid = #{regionalManagerBid},
+			pc_director_bid = #{pcDirectorBid},
+			coordinator_leader_bid = #{coordinatorLeaderBid},
+			operation_specialist_bid = #{operationSpecialistBid},
+			general_manager_aid = #{generalManagerAid},
+			regional_manager_aid = #{regionalManagerAid},
+			local_manager_aid = #{localManagerAid},
+			general_manager_mobile = #{generalManagerMobile},
+			regional_manager_mobile = #{regionalManagerMobile},
+			local_manager_mobile = #{localManagerMobile},
+			material_staff_bid = #{materialStaffBid},
+			construct_staff_bid = #{constructStaffBid},
+			material_staff_mobile = #{materialStaffMobile},
+			construct_staff_mobile = #{constructStaffMobile},
+			cost_manager_bid = #{costManagerBid},
+			cost_officer_bid = #{costOfficerBid},
+			cost_leader_bid = #{costLeaderBid},
+			cost_manager_mobile = #{costManagerMobile},
+			cost_officer_mobile = #{costOfficerMobile},
+			cost_leader_mobile = #{costLeaderMobile},
+			designer = #{designer},
+			design_leader_bid = #{designLeaderBid},
+			designer_mobile = #{designerMobile},
+			design_leader_mobile = #{designLeaderMobile},
+			report = #{report},
+			is_report = #{isReport},
+			is_attach_unit = #{isAttachUnit},
+			weekly_report_required = #{weeklyReportRequired},
+			attach_unit = #{attachUnit},
+			workflow_id = #{workflowid},
+			workflow_status = #{workflowstatus},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			address = #{address},
+			adminstaff_bid = #{adminstaffbid}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="addProject">
+		UPDATE btg_project SET
+			compy = #{compy},
+			general_manager_aid = #{generalManagerAid},
+			regional_manager_aid = #{regionalManagerAid},
+			local_manager_aid = #{localManagerAid},
+			general_manager_mobile = #{generalManagerMobile},
+			regional_manager_mobile = #{regionalManagerMobile},
+			local_manager_mobile = #{localManagerMobile},
+			report = #{report},
+			is_report = #{isReport},
+			is_attach_unit = #{isAttachUnit},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			status = #{status}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="addcost">
+		UPDATE btg_project SET
+			cost_manager_bid = #{costManagerBid},
+			cost_officer_bid = #{costOfficerBid},
+			cost_leader_bid = #{costLeaderBid},
+			cost_manager_mobile = #{costManagerMobile},
+			cost_officer_mobile = #{costOfficerMobile},
+			cost_leader_mobile = #{costLeaderMobile},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	
+	<!--修改设计主管 -->
+	<update id="adddesign">
+		UPDATE btg_project SET
+			design_leader_bid = #{designLeaderBid},
+			design_leader_mobile = #{designLeaderMobile},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<!--修改项目人员信息-->
+	<update id="updateProjectPersonnel">
+		UPDATE btg_project SET
+		<if test="projectManagerBid != null and projectManagerBid != ''">
+				project_manager_bid = #{projectManagerBid},
+		</if>
+		<if test="regionalManagerBid != null and regionalManagerBid != ''">
+				regional_manager_bid = #{regionalManagerBid},
+		</if>
+		<if test="pcDirectorBid != null and pcDirectorBid != ''">
+				pc_director_bid = #{pcDirectorBid},
+		</if>
+		<if test="coordinatorLeaderBid != null and coordinatorLeaderBid != ''">
+				coordinator_leader_bid = #{coordinatorLeaderBid},
+		</if>
+		<if test="operationSpecialistBid != null and operationSpecialistBid != ''">
+				operation_specialist_bid = #{operationSpecialistBid},
+		</if>
+		<if test="adminstaffbid != null and adminstaffbid != ''">
+				adminstaff_bid = #{adminstaffbid},
+		</if>
+		<if test="materialStaffBid != null and materialStaffBid != ''">
+				material_staff_bid = #{materialStaffBid},
+		</if>
+		<if test="constructStaffBid != null and constructStaffBid != ''">
+				construct_staff_bid = #{constructStaffBid},
+		</if>
+			update_by = #{updateBy.id},
+			update_date = #{updateDate}
+			WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_project SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id =#{id}
+	</update>
+	
+	<update id="updateWorkflow">
+		<choose>
+			<when test="workflowid != null and workflowid != ''">
+				UPDATE btg_project SET 
+					workflow_id = #{workflowid},
+					workflow_status=#{workflowstatus}
+				WHERE id =#{id}
+			</when>
+			<otherwise>
+				UPDATE btg_project SET 
+					workflow_status=#{workflowstatus}
+				WHERE id =#{id}
+			</otherwise>
+		</choose>
+	</update>
+	
+	<select id="findProjectByUser" resultType="Project">
+		SELECT 
+		<include refid="projectColumns"/>
+		FROM btg_project a
+		<include refid="projectJoins"/>
+		<where>
+			a.project_manager_bid = #{projectManagerBid}
+			and
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		ORDER BY a.update_date DESC
+	</select>
+	
+	<select id="findProjectByLoginName" resultType="Map">				    	
+    	SELECT 
+  			a.p_id AS "pid",
+			a.name AS "name",
+			a.location AS "location",
+			s.AccumulateRevenue,
+			s.AccumulateVisa
+		FROM btg_pro_project a 
+		LEFT JOIN btg_project_mapping pm on a.p_id=pm.project_id
+	  	LEFT JOIN btg_schedule_mapping sm on sm.subproject_id=pm.subproject_id
+    	LEFT JOIN (select t.id,SUM(t.AccumulateRevenue) AS "AccumulateRevenue",SUM(t.AccumulateVisa) AS "AccumulateVisa" 
+					from btg_exe_schedule t ORDER BY t.update_date DESC) s on s.id=sm.schedule_id
+		<where>
+			a.project_manager_bid = #{projectManagerBid} 
+			and 
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+    	GROUP BY a.p_id
+    	ORDER BY a.update_date DESC
+	</select>
+	
+	<select id="findByProjectName" resultType="Project">		
+		select t.id,t.`name`,t.cost_manager_bid from btg_project t
+		<where> 
+			t.del_flag = #{DEL_FLAG_NORMAL}
+			and
+			t.workflow_status=#{workflowstatus}
+		</where>
+		ORDER BY t.update_date DESC
+	</select>
+	
+	<select id="findBysubProjectId" resultType="Project">		
+		select 
+		<include refid="projectColumns"/>
+		from btg_project a
+		LEFT JOIN btg_project_mapping m on m.project_id=a.id
+		<include refid="projectJoins"/>
+		<where> 
+			m.subproject_id=#{subProjectId} 
+			and 
+			a.del_flag = #{delFlag}
+		</where>
+	</select>
+	
+	
+	
+	
+	<!-- 根据项目名称进行分组  (gb -> group by) -->
+	<select id="gbProByName" parameterType="map" resultType="map">
+		select pro.`name` as proName,pro.id as proID,pro.code as code,pro.address as proAddress
+ 			from btg_project pro 
+ 		where 
+ 			pro.del_flag = #{delFlag}
+ 			and
+ 			pro.workflow_status=#{workflowstatus}
+ 			group by pro.`name`
+	</select>
+	
+	<!--项目人员汇总-->	
+	<select id="getPersonList" parameterType="String" resultType="Map">
+		SELECT 
+			  a.name AS "project_manager",
+			  b.name AS "regional_manager",
+			  c.name AS "pc_director",
+			  d.name AS "coordinator_leader",
+			  x.general_manager_aid AS "general_manager",
+			  x.regional_manager_aid AS "regional_manageraid",
+			  x.local_manager_aid AS "local_manager",
+			  h.name AS "material_staff",
+			  i.name AS "construct_staff",
+			  j.name AS "cost_manager",
+			  k.name AS "cost_officer",
+			  l.name AS "cost_leader",
+			  (select group_concat(distinct m.`name`) from btg_project p 
+					LEFT JOIN btg_subproject sub on sub.project_id =p.id
+					LEFT JOIN sys_user m ON m.id = sub.designer
+					where p.id=#{id}) AS "designer",
+			  x.design_leader_bid AS "design_leader",
+			  p.name AS "operation_specialist",
+			  a.phone AS "project_manager_phone",
+			  
+			  c.phone AS "pc_director_phone",
+			  d.phone AS "coordinator_leader_phone",
+			  x.general_manager_mobile AS "general_manager_phone",
+			  x.regional_manager_mobile AS "regional_manager_phone",
+			  x.local_manager_mobile AS "local_manager_phone",
+			  h.phone AS "material_staff_phone",
+			  i.phone AS "construct_staff_phone",
+			  j.phone AS "cost_manager_phone",
+			  k.phone AS "cost_officer_phone",
+			  l.phone AS "cost_leader_phone",
+			  (select group_concat(distinct m.phone) from btg_project p 
+					LEFT JOIN btg_subproject sub on sub.project_id =p.id
+					LEFT JOIN sys_user m ON m.id = sub.designer
+					where p.id=#{id}) AS "designer_phone",
+			  n.phone AS "design_leader_phone",
+			  p.phone AS "operation_specialist_phone"
+		FROM btg_project x
+			LEFT JOIN sys_user a ON a.id = x.project_manager_bid
+			LEFT JOIN sys_user b ON b.id = x.regional_manager_bid
+			LEFT JOIN sys_user c ON c.id = x.pc_director_bid
+			LEFT JOIN sys_user d ON d.id = x.coordinator_leader_bid
+			<!--LEFT JOIN sys_user e ON e.name = x.general_manager_aid
+			LEFT JOIN sys_user g ON g.name = x.local_manager_aid-->
+			LEFT JOIN sys_user h ON h.id = x.material_staff_bid
+			LEFT JOIN sys_user i ON i.id = x.construct_staff_bid
+			LEFT JOIN sys_user j ON j.id = x.cost_manager_bid
+			LEFT JOIN sys_user k ON k.id = x.cost_officer_bid
+			LEFT JOIN sys_user l ON l.id = x.cost_leader_bid
+			LEFT JOIN sys_user m ON m.id = x.designer
+			LEFT JOIN sys_user n ON n.id = x.design_leader_bid
+			LEFT JOIN sys_user p ON p.id = x.operation_specialist_bid
+		WHERE 
+		 	x.id = #{id}
+		AND
+		 	x.del_flag = 0
+	</select>
+	
+	<!--项目施工图-->	
+	<select id="getProAttachmentList" parameterType="map" resultType="Map">
+		SELECT
+			b.project_id,
+			a.name AS "projectname",
+			a.location,
+			b.id AS subproject_id,
+			b.house_type,
+			b.building,
+			c.id,
+			c.name,
+			c.attach_type,
+			c.attach_address,
+			c.attach_url,
+			c.create_by
+			FROM
+			btg_project AS a ,
+			btg_subproject AS b ,
+			btg_attachment AS c
+		WHERE
+			a.id = b.project_id AND
+			a.del_flag = 0 AND
+			b.id = c.type AND
+			c.del_flag = 0 AND
+			a.workflow_status=#{workflowstatus}
+	</select>
+	<!--根据设计主管Id 筛选 获取项目list -->
+	<select id="findListByDesignLeaderBid" resultType="Project">
+		SELECT 
+			a.id AS "id",
+			a.name AS "name",
+			a.code AS "code",
+			a.location AS "location",
+			a.area_id AS "area.id",
+			p5.ProvinceName AS "province",
+			c5.ProvinceName AS "city",
+			t5.ProvinceName AS "town",
+			d.label AS "businessLine",
+			a.compy AS "compy",
+			a.start_time AS "startTime",
+			a.end_time AS "endTime",
+			a.project_manager_bid AS "projectManagerBid",
+			a.regional_manager_bid AS "regionalManagerBid",
+			a.pc_director_bid AS "pcDirectorBid",
+			a.coordinator_leader_bid AS "coordinatorLeaderBid",
+			a.operation_specialist_bid AS "operationSpecialistBid",
+			a.general_manager_aid AS "generalManagerAid",
+			a.regional_manager_aid AS "regionalManagerAid",
+			a.local_manager_aid AS "localManagerAid",
+			a.general_manager_mobile AS "generalManagerMobile",
+			a.regional_manager_mobile AS "regionalManagerMobile",
+			a.local_manager_mobile AS "localManagerMobile",
+			a.material_staff_bid AS "materialStaffBid",
+			a.construct_staff_bid AS "constructStaffBid",
+			a.material_staff_mobile AS "materialStaffMobile",
+			a.construct_staff_mobile AS "constructStaffMobile",
+			um.name AS "costManagerBid",
+			uo.name AS "costOfficerBid",
+			ul.name AS "costLeaderBid",
+			a.cost_manager_mobile AS "costManagerMobile",
+			a.cost_officer_mobile AS "costOfficerMobile",
+			a.cost_leader_mobile AS "costLeaderMobile",
+			ud.name AS "designer",
+			a.design_leader_bid AS "designLeaderBid",
+			a.designer_mobile AS "designerMobile",
+			a.design_leader_mobile AS "designLeaderMobile",
+			a.report AS "report",
+			a.is_report AS "isReport",
+			a.is_attach_unit AS "isAttachUnit",
+			a.weekly_report_required AS "weeklyReportRequired",
+			a.workflow_id AS "workflowid",
+			a.workflow_status AS "workflowstatus",
+			a.attach_unit AS "attachUnit"
+		FROM btg_project a
+		<include refid="joins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="workflowstatus != null and workflowstatus != ''">
+				and a.workflow_status=#{workflowstatus}
+			</if>
+			<if test="designLeaderBid != null and designLeaderBid != ''">
+				and find_in_set(#{designLeaderBid},a.design_leader_bid)
+			</if>
+		</where>
+		ORDER BY a.workflow_status ASC,a.update_date DESC
+	</select>
+	<!-- 更新项目更新时间和更新人 -->
+	<update id="traceUpdateUser">
+		UPDATE btg_project
+		SET update_by = #{updateBy.id},
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<select id="findMyProjects" resultType="Project">
+		SELECT
+		<include refid="projectGeneralInfoColumns" />
+		FROM btg_project a
+		<include refid="joins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND a.name LIKE
+				<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="workflowstatus != null and workflowstatus != ''">
+				and
+				a.workflow_status=#{workflowstatus}
+			</if>
+			 and a.create_by=#{currentUser.id}
+		</where>
+		ORDER BY (a.workflow_status+0) asc,a.update_date DESC
+	</select>
+
+	<select id="findUnAuditProjects" resultType="Project">
+		SELECT
+		<include refid="projectGeneralInfoColumns" />
+		FROM btg_project a
+		<include refid="joins"/>
+		join btg_act_current_task act on act.entry_id=a.id
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND a.name LIKE
+				<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="workflowstatus != null and workflowstatus != ''">
+				and
+				a.workflow_status=#{workflowstatus}
+			</if>
+			and act.user_id = #{currentUser.id}
+		</where>
+		ORDER BY (a.workflow_status+0) asc,a.update_date DESC
+	</select>
+
+	<select id="findAuditDoneProjects" resultType="Project">
+		SELECT
+		<include refid="projectGeneralInfoColumns" />
+		FROM btg_project a
+		<include refid="joins"/>
+			left join v_project_member_str memberstr on memberstr.id=a.id
+			left join btg_act_done_task adt on adt.entry_id=a.id
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND a.name LIKE
+				<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="workflowstatus != null and workflowstatus != ''">
+				and
+				a.workflow_status=#{workflowstatus}
+			</if>
+			<if test="createBy !=null and createBy.id != null and createBy.id != ''">
+			<![CDATA[ and (FIND_IN_SET(#{createBy.id},memberstr.member_list_str)>0 
+				or adt.user_id = #{currentUser.id}
+				or a.create_by=#{currentUser.id}) ]]>
+			</if>
+		</where>
+		GROUP BY a.id
+		ORDER BY (a.workflow_status+0) asc,a.update_date DESC
+	</select>
+	
+	<!-- 根据已有的生产单显示相关的项目列表数据 -->
+	<select id="getListForProjectByJGC" resultType="Project">
+		SELECT 
+		<include refid="projectGeneralInfoColumns"/>
+		from btg_project a
+		<include refid="joins"/>
+		LEFT JOIN btg_production b ON b.project_id = a.id
+		LEFT JOIN btg_supplier c ON c.id = b.supp 
+		LEFT JOIN sys_user e on e.id=c.business_preson
+		LEFT JOIN btg_subproject f ON f.project_id = a.id
+		LEFT JOIN btg_attachment g ON g.type = f.id
+		WHERE e.id = #{memberListStr}
+		GROUP BY a.id
+	</select>
+		
+	<!-- 与项目人员相关项目 -->
+	<select id="getListForProject" resultType="Project">
+		SELECT * FROM (
+			SELECT * FROM (
+				SELECT 
+				a.id AS "id",
+				a. NAME AS "name",
+				a. CODE AS "code",
+				a.location AS "location",
+				a.area_id AS "area.id",
+				d.label AS "businessLine",
+				a.workflow_id AS "workflowid",
+				a.workflow_status AS "workflowstatus",
+				a.del_flag AS "delflag",
+				a.update_date AS "updatedate",
+				concat_ws(
+					',',
+					a.project_manager_bid,
+					a.regional_manager_bid,
+					a.pc_director_bid,
+					a.coordinator_leader_bid,
+					a.general_manager_aid,
+					a.regional_manager_aid,
+					a.local_manager_aid,
+					a.material_staff_bid,
+					a.construct_staff_bid,
+					a.cost_manager_bid,
+					a.cost_officer_bid,
+					a.design_leader_bid,
+					a.cost_leader_bid,
+					a.designer,
+					a.design_leader_bid,
+					a.operation_specialist_bid,
+					a.adminstaff_bid
+				) AS sub_member_list_str
+			FROM btg_project a 
+			LEFT JOIN sys_dict d ON d.VALUE = a.business_line
+		) tab
+	
+	UNION ALL
+
+	SELECT * FROM (
+		SELECT 
+		pro.id AS "id",
+		pro. NAME AS "name",
+		pro. CODE AS "code",
+		pro.location AS "location",
+		pro.area_id AS "arepro.id",
+		d.label AS "businessLine",
+		pro.workflow_id AS "workflowid",
+		pro.workflow_status AS "workflowstatus",
+		pro.del_flag AS "delflag",
+		pro.update_date AS "updatedate",
+		concat_ws(
+				',',
+				a.designer,
+				a.design_leader_bid
+			) AS sub_member_list_str
+		FROM
+			btg_subproject a left join btg_project pro on a.project_id = pro.id
+			LEFT JOIN sys_dict d ON d.VALUE = pro.business_line
+		) tab
+	) outertable
+		<where>
+			outertable.delflag = #{DEL_FLAG_NORMAL}
+			<if test="workflowstatus != null and workflowstatus != ''">
+				and 
+				outertable.workflowstatus=#{workflowstatus}
+			</if>
+			<if test="name != null and name != ''">
+				and outertable.name LIKE 
+				<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+				and FIND_IN_SET(#{aboutUser.id}, outertable.sub_member_list_str ) > 0
+		</where>
+		group by outertable.id
+		ORDER BY outertable.workflowstatus ASC,outertable.updatedate DESC
+	</select>
+</mapper>

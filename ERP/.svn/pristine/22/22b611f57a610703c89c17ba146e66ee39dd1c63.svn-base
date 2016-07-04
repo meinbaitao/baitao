@@ -1,0 +1,581 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.logistics.dao.LogisticsSendDao">
+    
+	<sql id="logisticsSendColumns">
+		a.id AS "id",
+		a.seriesnumber AS "seriesnumber",
+		a.number AS "number",
+		a.quantity AS "quantity",
+		a.weight AS "weight",
+		a.theory_weight AS "theoryWeight",
+		a.send_factory AS "sendFactory",
+		a.send_address AS "sendAddress",
+		ifnull(a.plan_send_date,"") AS "planSendDate",
+		a.fact_send_date AS "factSendDate",
+		a.require_date AS "requireDate",
+		a.make_user AS "makeUser",
+		a.send_user AS "sendUser",
+		a.send_phone AS "sendPhone",
+		a.receiver_address AS "receiverAddress",
+		a.receiver_user AS "receiverUser",
+		a.receiver_phone AS "receiverPhone",
+		a.carriage_contract_id AS "carriageContractId",
+		a.charge_type AS "chargeType",
+		a.suppliers_id AS "suppliersId",
+		a.drive_name AS "driveName",
+		a.credentials AS "credentials",
+		a.vehicle_length AS "vehicleLength",
+		a.require_weight AS "requireWeight",
+		a.vehicle_number AS "vehicleNumber",
+		a.drive_phone AS "drivePhone",
+		a.status AS "status",
+		
+		a.isassure AS "isassure",
+		a.settlement AS "settlement",
+		a.sendremark AS "sendremark",
+		a.receiptremark AS "receiptremark",
+		
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.workflow_id AS "workflowId",
+		a.workflow_status AS "workflowStatus"
+	</sql>
+	
+	<sql id="logisticsSendJoins">
+	</sql>
+    
+	<select id="get" resultType="LogisticsSend">
+		SELECT 
+			<include refid="logisticsSendColumns"/>
+		FROM btg_logistics_send a
+		<include refid="logisticsSendJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findAllList" resultType="LogisticsSend">
+		SELECT 
+			<include refid="logisticsSendColumns"/>
+		FROM btg_logistics_send a
+		<include refid="logisticsSendJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!-- 统计当天添加的数据量  -->
+	<select id="getTodayCount" parameterType="Date" resultType="int">
+		select ifnull(count(*),0) from btg_logistics_send a
+			where 
+		TO_DAYS(a.create_date) = TO_DAYS(#{date});
+	</select>
+	<select id="getThisYearCount" parameterType="Date" resultType="int">
+		select ifnull(count(*),0) from btg_logistics_send a
+			where 
+		YEAR(a.create_date)=YEAR(#{date})
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_logistics_send(
+		id,
+		seriesnumber,
+		number,
+		quantity,
+		weight,
+		theory_weight,
+		send_factory,
+		send_address,
+		plan_send_date,
+		fact_send_date,
+		require_date,
+		make_user,
+		send_user,
+		send_phone,
+		receiver_address,
+		receiver_user,
+		receiver_phone,
+		carriage_contract_id,
+		charge_type,
+		drive_name,
+		suppliers_id,
+		credentials,
+		vehicle_number,
+		vehicle_length,
+		require_weight,
+		drive_phone,
+		status,
+		
+		isassure,
+		settlement,
+		sendremark,
+		receiptremark,
+		
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		workflow_id,
+		workflow_status
+		) VALUES (
+		#{id},
+		#{seriesnumber},
+		#{number},
+		#{quantity},
+		#{weight},
+		#{theoryWeight},
+		#{sendFactory},
+		#{sendAddress},
+		#{planSendDate},
+		#{factSendDate},
+		#{requireDate},
+		#{makeUser},
+		#{sendUser},
+		#{sendPhone},
+		#{receiverAddress},
+		#{receiverUser},
+		#{receiverPhone},
+		#{carriageContractId},
+		#{chargeType},
+		#{driveName},
+		#{suppliersId},
+		#{credentials},
+		#{vehicleNumber},
+		#{vehicleLength},
+		#{requireWeight},
+		#{drivePhone},
+		#{status},
+		
+		#{isassure},
+		#{settlement},
+		#{sendremark},
+		#{receiptremark},
+		
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{workflowid},
+		#{workflowstatus}
+		)
+	</insert>
+		
+	
+	<update id="update">
+		UPDATE btg_logistics_send SET 	
+				update_date = now()
+				<if test="quantity !=null and quantity != ''">
+					,quantity = #{quantity}
+				</if>
+				<if test="weight !=null and weight != ''">
+					,weight = #{weight}
+				</if>
+				<if test="carriageContractId !=null and carriageContractId != ''">
+					,carriage_contract_id = #{carriageContractId}
+				</if>
+				<if test="sendFactory !=null and sendFactory != ''">
+					,send_factory = #{sendFactory}
+				</if>
+				<if test="planSendDate !=null and planSendDate != ''">
+					,plan_send_date = #{planSendDate}
+				</if>
+				<if test="factSendDate !=null and factSendDate != ''">
+					,fact_send_date = #{factSendDate}
+				</if>
+				<if test="requireDate !=null and requireDate != ''">
+					,require_date = #{requireDate}
+				</if>
+				<if test="makeUser !=null and makeUser != ''">
+					,make_user = #{makeUser}
+				</if>
+				<if test="sendUser !=null and sendUser != ''">
+					,send_user = #{sendUser}
+				</if>
+				<if test="sendPhone !=null and sendPhone != ''">
+					,send_phone = #{sendPhone}
+				</if>
+				<if test="status !=null and status != ''">
+					,status = #{status}
+				</if>
+				<if test="driveName !=null and driveName != ''">
+					,drive_name = #{driveName}
+				</if>
+				<if test="drivePhone !=null and drivePhone != ''">
+					,drive_phone = #{drivePhone}
+				</if>
+				<if test="credentials !=null and credentials != ''">
+					,credentials = #{credentials}
+				</if>
+				<if test="vehicleNumber !=null and vehicleNumber != ''">
+					,vehicle_number = #{vehicleNumber}
+				</if>
+				<if test="sendremark !=null and sendremark != ''">
+					,sendremark = #{sendremark}
+				</if>
+				<if test="settlement !=null and settlement != ''">
+					,settlement = #{settlement}
+				</if>
+				<if test="isassure !=null and isassure != ''">
+					,isassure = #{isassure}
+				</if>
+				<if test="receiptremark !=null and receiptremark != ''">
+					,receiptremark = #{receiptremark}
+				</if>
+				<if test="chargeType !=null and chargeType != ''">
+					,charge_type = #{chargeType}
+				</if>
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		<!-- DELETE FROM btg_logistics_send
+		WHERE logistics_send_id = #{logisticssendId} -->
+		UPDATE btg_logistics_send SET 	
+			del_falg = 1
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 查看对应的列表数据 -->
+	<select id="findList" resultType="LogisticsSend">
+		SELECT 
+			<include refid="logisticsSendColumns"/>
+		FROM btg_logistics_send a
+			left join btg_production_logistics_send_mapping plsm on plsm.logistics_send_id=a.id
+		  	left join btg_production p on p.id=plsm.production_id 
+		  	left join btg_project pro on pro.id=p.project_id
+		<where>
+			<if test="seriesnumber != null and seriesnumber != ''">
+				and a.seriesnumber like CONCAT('%', #{seriesnumber}, '%') 
+			</if>
+			<if test="status != null and status != ''">
+				and a.status = #{status}
+			</if>
+		</where>
+		group by a.id
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	<!-- 获取列表数据给到事故单界面 -->
+	<select id="getListToAccident" resultType="LogisticsSend">
+		SELECT 
+		    d.name AS "showSuppliersName",
+			<include refid="logisticsSendColumns"/>
+		FROM btg_logistics_send a
+		LEFT JOIN btg_supplier d ON d.id = a.suppliers_id
+		<include refid="logisticsSendJoins"/>
+		<where>
+			<if test="status != null and status != ''">
+				and a.status = #{status}
+			</if>
+		</where>		
+	</select>
+	<!-- 根据条件获取对应的一条数据 -->
+	<select id="getOne" resultType="LogisticsSend">
+		SELECT 
+			<include refid="logisticsSendColumns"/>
+		FROM btg_logistics_send a
+		<include refid="logisticsSendJoins"/>
+		WHERE (1=1)
+			<if test="status != null and status != ''">
+				and a.status = #{status}
+			</if>
+			<if test="seriesnumber != null and seriesnumber != ''">
+				and a.seriesnumber = #{seriesnumber}
+			</if>
+		limit 0,1
+	</select>
+	
+	<!-- 发货信息汇总 关联表 -->
+	<sql id="sendDataSummaryJoins">
+			left join btg_production_logistics_send_mapping plsm on plsm.logistics_send_id=a.id
+		  	left join btg_production production on production.id=plsm.production_id 
+			left join btg_order_bom_box obbox on obbox.id=production.order_bom_box_id
+		  	left join btg_order_bom_base obbase on obbase.id=obbox.order_bom_id
+			left join btg_subproject sub on sub.id=obbase.sub_proj_id
+			join btg_project project on project.id=sub.project_id
+			left join btg_stone_carriage_contract_base sccb on sccb.id=a.carriage_contract_id
+			left join btg_supplier supp on supp.id=sccb.party_b_name
+			left join btg_supplier productionSupp on productionSupp.id=production.supp
+			left join sys_user suppUser on suppUser.id=productionSupp.business_preson
+	</sql>
+	<sql id="projectMemberJoins">
+		left join v_project_member_str memberstr on memberstr.id=project.id
+	</sql>
+	<!-- 发货信息汇总 -->
+	<select id="sendDataSummary" resultType="LogisticsSend">
+		SELECT 
+			project.name as "project.name",
+			project.id as "project.id",
+			project.address as "project.address",
+			supp.name as "supp.name",
+			production.plan_send_date as "production.planSendDate",
+			<include refid="logisticsSendColumns"/>
+		FROM btg_logistics_send a
+			<include refid="sendDataSummaryJoins"/>
+			<include refid="projectMemberJoins"/>
+		<where> 
+			and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="id != null and id != ''">
+				and a.id = #{id} 
+			</if>
+			<if test="status != null and status != ''">
+				and a.status = #{status}
+			</if>
+			<if test="project != null and project.name!=null and project.name != ''">
+				and project.name like concat('%',#{project.name},'%')
+			</if>
+			<if test="production != null and production.status!=null and production.status != ''">
+				and production.status = #{production.status}
+			</if>
+			<if test="production != null and production.assignto !=null and production.assignto.id != null and production.assignto.id != ''">
+				and production.assignto = #{production.assignto.id}
+			</if>
+			<if test="production != null and production.documentaryby !=null and production.documentaryby.id !=null and production.documentaryby.id != ''">
+				and production.documentaryby = #{production.documentaryby.id}
+			</if>
+			<if test="production != null and production.supp!=null and production.supp.businessPreson!=null and production.supp.businessPreson != ''">
+				and suppUser.id = #{production.supp.businessPreson}
+			</if>
+			<if test="gtVal != null and gtVal != ''">
+				and a.status &gt; #{gtVal}
+			</if>
+			<if test="production != null and production.aboutUser !=null and production.aboutUser.id != null and production.aboutUser.id != ''">
+				<![CDATA[ and (FIND_IN_SET(#{production.aboutUser.id},memberstr.member_list_str)>0) ]]>
+			</if>
+		</where>
+		group by a.id,project.id
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	<select id="sendReceiveList" resultType="LogisticsSend">
+		SELECT 
+			project.name as "project.name",
+			project.id as "project.id",
+			project.address as "project.address",
+			supp.name as "supp.name",
+			production.plan_send_date as "production.planSendDate",
+			<include refid="logisticsSendColumns"/>
+		FROM btg_logistics_send a
+			<include refid="sendDataSummaryJoins"/>
+			left join v_project_member_str memberstr on memberstr.id=project.id
+		<where>
+			and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="id != null and id != ''">
+				and a.id = #{id}
+			</if>
+			<if test="status != null and status != ''">
+				and a.status = #{status}
+			</if>
+			<if test="production != null and production.status!=null and production.status != ''">
+				and production.status = #{production.status}
+			</if>
+			<if test="production != null and production.supp!=null and production.supp.businessPreson!=null and production.supp.businessPreson != ''">
+				and suppUser.id = #{production.supp.businessPreson}
+			</if>
+			<if test="production != null and production.assignto !=null and production.assignto.id != null and production.assignto.id != ''">
+				and production.assignto = #{production.assignto.id}
+			</if>
+			<if test="production != null and production.documentaryby !=null and production.documentaryby.id !=null and production.documentaryby.id != ''">
+				and production.documentaryby = #{production.documentaryby.id}
+			</if>
+			<if test="production != null and production.aboutUser !=null and production.aboutUser.id != null and production.aboutUser.id != ''">
+				<![CDATA[ and (FIND_IN_SET(#{production.aboutUser.id},memberstr.member_list_str)>0) ]]>
+			</if>
+			<if test="gtVal != null and gtVal != ''">
+				and a.status &gt; #{gtVal}
+			</if>
+		</where>
+		group by a.id,project.id
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	<!-- 统计实际发货箱数 -->
+	<select id="countBoxByCondition" resultType="int">
+		select 
+			ifnull(count(a.id),0)
+		 from (
+		SELECT 
+			obbox.id as id
+		FROM btg_logistics_send a
+			<include refid="sendDataSummaryJoins"/>
+			left join v_project_member_str memberstr on memberstr.id=project.id
+		<where>
+			and obbase.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="id != null and id != ''">
+				and a.id = #{id}
+			</if>
+			<if test="status != null and status != ''">
+				and a.status = #{status}
+			</if>
+			<if test="production != null and production.status!=null and production.status != ''">
+				and production.status = #{production.status}
+			</if>
+			<if test="production != null and production.gtEqVal!=null and production.gtEqVal != ''">
+				and production.status &gt;= #{production.gtEqVal}
+			</if>
+			<if test="production != null and production.ltVal!=null and production.ltVal != ''">
+				and production.status &lt; #{production.ltVal}
+			</if>
+			<if test="production != null and production.gtVal!=null and production.gtVal != ''">
+				and production.status &gt; #{production.gtVal}
+			</if>
+			<if test="project != null and project.id!=null and project.id != ''">
+				and project.id = #{project.id}
+			</if>
+			<if test="production != null and production.status!=null and production.status != ''">
+				and production.status = #{production.status}
+			</if>
+			<if test="production != null and production.supp!=null and production.supp.businessPreson!=null and production.supp.businessPreson != ''">
+				and suppUser.id = #{production.supp.businessPreson}
+			</if>
+			<if test="production != null and production.assignto !=null and production.assignto.id != null and production.assignto.id != ''">
+				and production.assignto = #{production.assignto.id}
+			</if>
+			<if test="production != null and production.documentaryby !=null and production.documentaryby.id !=null and production.documentaryby.id != ''">
+				and production.documentaryby = #{production.documentaryby.id}
+			</if>
+			<if test="production != null and production.aboutUser !=null and production.aboutUser.id != null and production.aboutUser.id != ''">
+				<![CDATA[ and (FIND_IN_SET(#{production.aboutUser.id},memberstr.member_list_str)>0) ]]>
+			</if>
+		</where>
+		group by obbox.id ) a
+		limit 0,1
+	</select>
+	
+	<sql id="getLogisticsSendDetailJoins">
+		left join btg_production_logistics_send_mapping plsm on plsm.logistics_send_id=a.id
+		left join btg_production production on production.id=plsm.production_id
+		join btg_supplier supp on supp.id=production.supp
+		left join sys_user suppUser on suppUser.id=supp.business_preson
+		left join btg_order_bom_box obbox on obbox.id=production.order_bom_box_id
+		left join btg_order_bom_base obbase on obbase.id=obbox.order_bom_id
+		left join btg_order_bom_detail obdetail on obdetail.box_no=obbox.box_no and obdetail.order_bom_id=obbox.order_bom_id
+		left join btg_subproject sub on sub.id=obbase.sub_proj_id
+		left join btg_project project on project.id=sub.project_id
+		left join sys_province province on province.ProvinceID=project.province
+	</sql>
+	<select id="getLogisticsSendDetail" resultType="LogisticsSend">
+		select 
+				province.ProvinceName as "production.project.province",							<!-- 省份 -->
+				project.name as "project.name",												<!-- 项目名称 -->
+				project.id as "project.id",													<!-- 项目id -->
+				project.address as "project.address",										<!-- 项目地址 -->
+				sub.id as "sub.id",															<!-- 二级项目id -->
+				sub.building as "sub.building",												<!-- 楼栋号 -->
+				sub.building_display_name as "sub.buildingDisplayName",						<!-- 显示楼栋号 -->
+				sub.stone_expect_date as "sub.stoneExpectDate",								<!-- 石材要求到货时间 -->
+				obbase.order_bom_no as "orderBomBase.orderBomNo",							<!-- 下料单号 -->
+				obbase.order_type as "orderBomBase.orderType",								<!-- 材料类型 -->
+				obbox.box_no as "orderBomBox.boxNo",										<!-- 箱号 -->
+				ifnull(supp.name,"") as "supp.name",										<!-- 加工厂名称 -->
+				ifnull(supp.id,"") as "supp.id",
+				ifnull(supp.business_address,"") as "supp.businessAddress",					<!-- 加工厂地址 -->
+			    ifnull(suppUser.name,"") as "supp.businessPreson",
+				min(ifnull(production.plan_send_date,"1970-01-01")) as "production.planSendDate",
+				production.status as "production.status",
+				<include refid="logisticsSendColumns"/>
+			from 
+				btg_logistics_send a 
+				<include refid="getLogisticsSendDetailJoins"/>
+				<include refid="projectMemberJoins"/>
+			where (1=1) and obbase.del_flag = #{DEL_FLAG_NORMAL}
+				<if test="id !=null and id != ''">
+					and a.id = #{id}
+				</if>
+				<if test="project!=null and project.name !=null and project.name != ''">
+					and project.name = #{project.name}
+				</if>
+				<if test="ids !=null and ids.size > 0 ">
+					and production.id in
+							<foreach collection="ids" item="id" index="i"
+			           			 open="(" close=")" separator=",">
+			           		 			#{id}
+			        		</foreach>
+				</if>
+				<if test="production != null and production.status!=null and production.status != ''">
+					and production.status = #{production.status}
+				</if>
+				<if test="production != null and production.supp!=null and production.supp.businessPreson!=null and production.supp.businessPreson != ''">
+					and suppUser.id = #{production.supp.businessPreson}
+				</if>
+				<if test="production != null and production.assignto !=null and production.assignto.id != null and production.assignto.id != ''">
+					and production.assignto = #{production.assignto.id}
+				</if>
+				<if test="production != null and production.documentaryby !=null and production.documentaryby.id !=null and production.documentaryby.id != ''">
+					and production.documentaryby = #{production.documentaryby.id}
+				</if>
+				<if test="production != null and production.aboutUser !=null and production.aboutUser.id != null and production.aboutUser.id != ''">
+					<![CDATA[ and (FIND_IN_SET(#{production.aboutUser.id},memberstr.member_list_str)>0) ]]>
+				</if>
+				
+			<if test="gbStr !=null and gbStr != '' and gbStr=='getByID'">
+				group by supp.id,obbase.order_type,sub.id
+			</if>
+			<if test="gbStr !=null and gbStr != '' and gbStr=='lsID'">
+				group by a.id
+			</if>
+	</select>
+	
+	<select id="getListLogisticsSendByCondition" resultType="LogisticsSend">
+		SELECT 
+			<include refid="logisticsSendColumns"/>
+		from btg_logistics_send a
+			left join btg_production_logistics_send_mapping plsm on plsm.logistics_send_id=a.id
+			left join btg_production production on production.id=plsm.production_id
+		where (1=1)
+			<if test="ids !=null and ids.size > 0 ">
+				and production.id in
+						<foreach collection="ids" item="id" index="i"
+		           			 open="(" close=")" separator=",">
+		           		 			#{id}
+		        		</foreach>
+			</if>
+			<if test="production != null and production.status!=null and production.status != ''">
+				and production.status = #{production.status}
+			</if>
+			<if test="production != null and production.gtEqVal!=null and production.gtEqVal != ''">
+				and production.status &gt;= #{production.gtEqVal}
+			</if>
+			
+		<if test="gbStr !=null and gbStr != '' and gbStr=='lsID'">
+			group by a.id
+		</if>
+	</select>
+	<!--根据发货单id获取箱信息 -->
+	<select id="getBoxsBylsID" parameterType="String" resultType="map">
+		SELECT obb.id as boxId,obb.box_no as boxNo,obb.order_bom_id as orderBomId FROM btg_logistics_send ls 
+		LEFT JOIN btg_logistics_send_box lsx ON ls.id = lsx.logistics_send_id
+		LEFT JOIN btg_order_bom_box obb ON obb.id = lsx.order_bom_box_id
+		where ls.id = #{lsId} 
+		order by obb.box_no
+	</select>
+</mapper>

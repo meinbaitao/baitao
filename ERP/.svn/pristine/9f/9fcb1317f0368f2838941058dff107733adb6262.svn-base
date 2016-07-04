@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.area.dao.ProvinceDao">
+    
+	<sql id="provinceColumns">
+		a.provinceid AS "provinceid",
+		a.provincename AS "provincename",
+		a.parentid AS "parentid",
+		a.datecreated AS "datecreated",
+		a.dateupdated AS "dateupdated",
+		a.code AS "code"
+	</sql>
+	
+	<sql id="provinceJoins">
+	</sql>
+    
+	<select id="get" resultType="Province">
+		SELECT 
+			<include refid="provinceColumns"/>
+		FROM sys_province a
+		<include refid="provinceJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getProvince" resultType="Province">
+		SELECT 
+			<include refid="provinceColumns"/>
+		FROM sys_province a
+		<include refid="provinceJoins"/>
+		WHERE a.provinceid = #{provinceid}
+	</select>
+	
+	<select id="findList" resultType="Province">
+		SELECT 
+			<include refid="provinceColumns"/>
+		FROM sys_province a
+		<include refid="provinceJoins"/>
+		<where>
+			a.parentid=#{parentid}
+		</where>
+	</select>
+	
+	<select id="findAllList" resultType="Province">
+		SELECT 
+			<include refid="provinceColumns"/>
+		FROM sys_province a
+		<include refid="provinceJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO sys_province(
+			provinceid,
+			provincename,
+			parentid,
+			datecreated,
+			dateupdated,
+			code
+		) VALUES (
+			#{provinceid},
+			#{provincename},
+			#{parentid},
+			#{datecreated},
+			#{dateupdated},
+			#{code}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE sys_province SET 	
+			provinceid = #{provinceid},
+			provincename = #{provincename},
+			parentid = #{parentid},
+			datecreated = #{datecreated},
+			dateupdated = #{dateupdated},
+			code = #{code}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM sys_province
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

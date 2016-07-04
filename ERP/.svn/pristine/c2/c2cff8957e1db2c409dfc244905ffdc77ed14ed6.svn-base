@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.person.dao.CommonPersonDao">
+    
+	<sql id="commonPersonColumns">
+		a.id AS "id",
+		a.address AS "address",
+		a.name AS "name",
+		a.phone AS "phone"
+	</sql>
+	
+	<sql id="commonPersonJoins">
+	</sql>
+    
+	<select id="get" resultType="CommonPerson">
+		SELECT 
+			<include refid="commonPersonColumns"/>
+		FROM btg_common_person a
+		<include refid="commonPersonJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="CommonPerson">
+		SELECT 
+			<include refid="commonPersonColumns"/>
+		FROM btg_common_person a
+		<include refid="commonPersonJoins"/>
+		<where>
+			
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="CommonPerson">
+		SELECT 
+			<include refid="commonPersonColumns"/>
+		FROM btg_common_person a
+		<include refid="commonPersonJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_common_person(
+			id,
+			address,
+			name,
+			phone
+		) VALUES (
+			#{id},
+			#{address},
+			#{name},
+			#{phone}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_common_person SET 	
+			address = #{address},
+			name = #{name},
+			phone = #{phone}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_common_person
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.orbom.dao.OrderBomBoxDao">
+    
+	<sql id="orderBomBoxColumns">
+		a.id AS "id",
+		a.order_bom_id AS "orderBomId",
+		a.box_no AS "boxNo",
+		a.status AS "status"
+	</sql>
+	
+	<sql id="orderBomBoxJoins">
+	</sql>
+    
+	<select id="get" resultType="OrderBomBox">
+		SELECT 
+			<include refid="orderBomBoxColumns"/>
+		FROM btg_order_bom_box a
+		<include refid="orderBomBoxJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OrderBomBox">
+		SELECT 
+			<include refid="orderBomBoxColumns"/>
+		FROM btg_order_bom_box a
+		<include refid="orderBomBoxJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OrderBomBox">
+		SELECT 
+			<include refid="orderBomBoxColumns"/>
+		FROM btg_order_bom_box a
+		<include refid="orderBomBoxJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_order_bom_box(
+			id,
+			order_bom_id,
+			box_no,
+			status
+		) VALUES (
+			#{id},
+			#{orderBomId},
+			#{boxNo},
+			#{status}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_order_bom_box SET 	
+			order_bom_id = #{orderBomId},
+			box_no = #{boxNo},
+			status = #{status}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="updateOneBoxStatus">
+		UPDATE btg_order_bom_box SET
+			status = #{status}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_order_bom_box
+		WHERE id = #{id}
+	</update>
+	
+	<select id="countByMap" parameterType="map" resultType="int">
+		select count(obbox.id) 
+			from btg_order_bom_box obbox 
+		  left join btg_order_bom_base obb on obb.id=obbox.order_bom_id
+  		  left join btg_create_order_demand_mapping codm on codm.order_bom_id=obb.id
+  	 	  left join btg_process_demand pd on pd.ID=codm.create_demand_id
+		where (1=1)
+			<if test="statuss.size()>0 and statuss!=null">
+				and obbox.`status` in 
+				<foreach collection="statuss" item="s" index="i"
+           			 open="(" close=")" separator=",">
+           		 			#{s}
+        		</foreach>
+			</if>
+			<if test="pdID!='' and pdID!=null">
+				and pd.ID=#{pdID}
+			</if>
+	</select>
+	
+</mapper>

@@ -1,0 +1,671 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.production.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bt.modules.orbom.entity.OrderBomBox;
+import com.bt.modules.production.dao.ProductionDao;
+import com.bt.modules.production.entity.Production;
+import com.bt.modules.project.entity.Project;
+import com.bt.modules.project.entity.Subproject;
+import com.bt.modules.supplier.entity.Supplier;
+import com.bt.modules.utils.CommonStatus;
+import com.bt.modules.utils.CommonUtils;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 生产单Service
+ * @author xiaocai
+ * @version 2015-09-21
+ */
+@Service
+@Transactional(readOnly = true)
+public class ProductionService extends CrudService<ProductionDao, Production> {
+
+	@Autowired
+	private ProductionDao productionDao;
+	
+	/**
+	 * start
+	 * 2015年12月1日
+	 */
+	/**
+	 * 获取相应的发货通知的列表的页面
+	 * @param page
+	 * @param entity
+	 * @return
+	 */
+	public Page<Production> sendNoticeList(Page<Production> page, Production production) {
+		production.setStatus(CommonStatus.PRODUCTION_YRK);	//只查看已入库的数据
+		production.setGlfpGB("sendNotice");
+		production.setPage(page);
+		//角色权限数据
+		production = this.productionDataUserUtils(production);
+		//获取相应的列表数据
+		List<Production> listProduction = this.getListByProduction(production);
+		for(Production p:listProduction){	//循环填充界面需要的数据
+			p.setStatus("");
+			p.getExtraData().put("countOrderBase", this.countOrderBase(p));				//设计下料总量
+			p.getExtraData().put("waitIntakeCount", this.waitIntakeCount(p));			//待入库量
+			p.getExtraData().put("hasIntakeCount", this.hasIntakeCount(p));				//已入库量
+			p.getExtraData().put("waitSendCount", this.waitSendCount(p));				//待发货量
+			p.getExtraData().put("waitCarCount", this.waitCarCount(p));					//待派车量
+			p.getExtraData().put("hasCarWaitSendCount", this.hasCarWaitSendCount(p));	//已派车未发量
+			p.getExtraData().put("sendCount", this.sendCount(p));						//在途箱数
+		}
+		page.setList(listProduction);
+		return page;
+	}
+	/**
+	 * 通知发货列表
+	 * @param page
+	 * @param production
+	 * @return
+	 */
+	public Page<Production> carNoticeList(Page<Production> page, Production production) {
+		production.setStatus(CommonStatus.PRODUCTION_DPC);
+		production.setGlfpGB("carNoticeList");
+		production.setPage(page);
+		//获取相应的列表数据
+		production = this.productionDataUserUtils(production);
+		List<Production> listProduction = this.getListByProduction(production);
+		for(Production p:listProduction){	//循环填充界面需要的数据
+			p.setStatus("");
+//			p.getExtraData().put("countOrderBase", this.countOrderBase(p));				//设计下料总量
+//			p.getExtraData().put("waitIntakeCount", this.waitIntakeCount(p));			//待入库量
+//			p.getExtraData().put("hasIntakeCount", this.hasIntakeCount(p));				//已入库量
+//			p.getExtraData().put("waitSendCount", this.waitSendCount(p));				//待发货量
+			p.getExtraData().put("waitCarCount", this.waitCarCount(p));					//待派车量
+//			p.getExtraData().put("hasCarWaitSendCount", this.hasCarWaitSendCount(p));	//已派车未发量
+//			p.getExtraData().put("sendCount", this.sendCount(p));						//在途箱数
+		}
+		page.setList(listProduction);
+		return page;
+	}
+	/**
+	 * 获取箱数据
+	 * @param production
+	 * @return
+	 */
+	public List<Production> getBoxByCondition(Production production) {
+		production.setGlfpGB("box");
+		//获取相应的列表数据
+		return this.getListByProduction(production);
+	}
+	/**
+	 * 对送进来的数据进行楼栋号去重
+	 * @param listProduction
+	 * @return
+	 */
+	public List<Production> removeDuplicateBuildingByList(List<Production> listProduction){
+		Map<String,Production> map = new HashMap<String, Production>();
+		List<Production> listP = new ArrayList<Production>();
+		for(Production production:listProduction){
+			map.put(production.getSub().getId(), production);	//二级项目做主键，防止不同项目的楼栋号重复的情况
+		}
+		for(String key:map.keySet()){
+			listP.add(map.get(key));
+		}
+		return listP;
+	}
+	/**
+	 * ids和getBoxByCondition转成全部的加工单ids
+	 * @param ids
+	 * @param production
+	 * @return
+	 */
+	public List<String> idsAndProductionUtils(List<String> ids,Production production){
+		//所有条件都必须不能为空
+		if(StringUtils.isNotBlank(production.getSub().getId())&&StringUtils.isNotBlank(production.getSupp().getId())
+				&&StringUtils.isNotBlank(production.getOrderBomBase().getOrderType())&&StringUtils.isNotBlank(production.getStatus())){
+			List<Production> listProduction = this.getBoxByCondition(production);
+			Map<String,Object> idMap = new HashMap<String,Object>();
+			for(Production p:listProduction){
+				idMap.put(p.getId(), p);
+			}
+			for(String key:idMap.keySet()){	//添加不重复的ID
+				if(!ids.contains(key)){
+					ids.add(key);
+				}
+			}
+		}
+		return ids;
+	}
+	/**
+	 * 根据加工单id获取对应的工厂地址
+	 * @param productionID
+	 * @return
+	 */
+	public String getSuppSendAddressByID(String productionID){
+		Production production = new Production();
+		production.setId(productionID);
+		List<Production> listProduction = this.getListByProduction(production);
+		String address = "";
+		if(listProduction!=null&&listProduction.size()>0){
+			address = listProduction.get(0).getSupp().getBusinessAddress();	//获取加工厂业务地址
+		}
+		return address;
+	}
+	/**
+	 * 统计下单总箱数
+	 * @return
+	 */
+	public int countOrderBase(Production production){
+		return this.countOrderBomBoxByCondition(production);
+	}
+	/**
+	 * 未入库数量 
+	 * @return
+	 */
+	public int waitIntakeCount(Production production){
+		production = this.cleanStatus(production);
+//		production.setLtStatus(CommonStatus.PRODUCTION_YRK);	//入库前的全部数据
+		production.setStatus(CommonStatus.PRODUCTION_DRK);	//未入库之前的数据
+		return this.countOrderBomBoxByCondition(production);
+	}
+	/**
+	 * 已入库数据
+	 * @return
+	 */
+	public int hasIntakeCount(Production production){
+		production = this.cleanStatus(production);
+//		production.setGtStatus(CommonStatus.PRODUCTION_DRK);	//入库以及入库后的全部数据
+		production.setStatus(CommonStatus.PRODUCTION_YRK);	//已入库之后的数据
+		return this.countOrderBomBoxByCondition(production);
+	}
+	/**
+	 * 待发货数量
+	 * @return
+	 */
+	public int waitSendCount(Production production){
+		production = this.cleanStatus(production);
+		production.setStatus(CommonStatus.PRODUCTION_YRK);	//已入库的数据
+		return this.countOrderBomBoxByCondition(production);
+	}
+	/**
+	 * 待派车数量
+	 * @return
+	 */
+	public int waitCarCount(Production production){
+		production = this.cleanStatus(production);
+		production.setStatus(CommonStatus.PRODUCTION_DPC);	//待派车的数据
+		return this.countOrderBomBoxByCondition(production);
+	}
+	/**
+	 * 已派车未发
+	 * @return
+	 */
+	public int hasCarWaitSendCount(Production production){
+		production = this.cleanStatus(production);
+		production.setStatus(CommonStatus.PRODUCTION_YPCWF);	//已派车的数据
+		return this.countOrderBomBoxByCondition(production);
+	}
+	/**
+	 * 已发货数量
+	 * @return
+	 */
+	public int sendCount(Production production){
+		production = this.cleanStatus(production);
+		production.setStatus(CommonStatus.PRODUCTION_DSH);	//已发货（待收货）的数据
+		return this.countOrderBomBoxByCondition(production);
+	}
+	/**
+	 * 收货数量
+	 * @param production
+	 * @return
+	 */
+	public int receiveCount(Production production){
+		production = this.cleanStatus(production);
+		production.setStatus(CommonStatus.PRODUCTION_YSH);	//已收货的数据
+		return this.countOrderBomBoxByCondition(production);
+	}
+	/**
+	 * 跟进条件统计相应的箱数
+	 * @param production
+	 * @return
+	 */
+	private int countOrderBomBoxByCondition(Production production){
+		return productionDao.countOrderBomBoxByCondition(production);
+	}
+	/**
+	 * 清除状态数据
+	 * @param production
+	 * @return
+	 */
+	private Production cleanStatus(Production production){
+		production.setStatus("");
+		production.setGtVal("");
+		production.setLtVal("");
+		return production;
+	}
+	
+	
+	/**
+	 * 根据已有的生产单显示界面需要的相关列表数据(getListByCondition)
+	 * @param production
+	 * @return
+	 */
+	public List<Production> getListByProduction(Production production){
+		List<Production> listProduction = productionDao.getListByProduction(production);
+		if(listProduction == null){
+			listProduction = new ArrayList<Production>();
+		}
+		return listProduction;
+	}
+	public List<Production> getListForStoneScheduleToSub(Production production){
+		List<Production> listProduction = productionDao.getListForStoneScheduleToSub(production);
+		if(listProduction == null){
+			listProduction = new ArrayList<Production>();
+		}
+		return listProduction;
+	}
+	/**
+	 * 根据已有的生产单显示相关的项目列表数据
+	 * @param page
+	 * @param entity
+	 * @return
+	 */
+	public Page<Production> getListForProject(Page<Production> page, Production entity) {
+		entity.setPage(page);
+		page.setList(this.getListForProject(entity));
+		return page;
+	}
+	/**
+	 * 获取权限筛选数据
+	 * @param page	分页条件
+	 * @param production	加工单默认条件
+	 * @param searchStatus	筛选状态
+	 * @param isStatus		界面状态
+	 * @return
+	 */
+	public Page<Production> getListForProjectByShiro(Page<Production> page, Production production,String searchStatus,String isStatus) {
+		production = this.searchStatusUtils(production, searchStatus,isStatus);
+		production.setGlfpGB("proName");
+		//权限填充	2016-4-19	
+		if(!this.productionPublicRole()){
+			production.setAboutUser(UserUtils.getUser());	
+		}
+		production.setPage(page);
+		page.setList(this.getListForProject(production));
+		return page;
+	}
+	/**
+	 * 获取生产指派的数据
+	 */
+	public Page<Production> getListForProjectToProductionAssign(Page<Production> page, Production production,String searchStatus,String isStatus) {
+		production = this.searchStatusUtils(production, searchStatus,isStatus);
+		production.setGlfpGB("proName");
+		//权限填充	
+		production = this.productionDataUserUtils(production);
+		production.setPage(page);
+		page.setList(this.getListForProject(production));
+		return page;
+	}
+	/**
+	 * 加工厂模块权限数据处理
+	 * 待签收、待生产、库存（待入库、已入库）
+	 * @param page
+	 * @param production
+	 * @param searchStatus
+	 * @param isStatus
+	 * @return
+	 */
+	public Page<Production> getListForProjectToFactory(Page<Production> page, Production production) {
+		production = this.productionDataUserUtils(production);
+		production.setGlfpGB("proName");
+		production.setPage(page);
+		page.setList(this.getListForProject(production));
+		return page;
+	}
+//	/**
+//	 * 加工厂模块权限数据处理
+//	 * 待签收、待生产、库存（待入库、已入库）
+//	 * 加工厂数据查询	条件处理
+//	 * @param production
+//	 */
+//	private Production factoryDataSearchUtils(Production production){
+//		if(this.productionPublicRole()){	//看到全部数据的用户判断
+//			
+//		}else if(UserUtils.verificationRole("gdy")){	//跟单员	只能看到自己相关的数据
+//			production.setDocumentaryby(UserUtils.getUser());
+//		}else if(UserUtils.verificationRole("scjl")){	//生产经理	只能看到自己相关的数据
+//			production.setAssignto(UserUtils.getUser());
+//		}else{	//不能看到全部数据的角色均以加工厂身份查看数据
+//			Supplier supp = new Supplier();
+//			supp.setBusinessPreson(UserUtils.getUser().getId());
+//			production.setSupp(supp);
+//		}
+//		return production;
+//	}
+	/**
+	 * 生产管理权限用户对应数据处理
+	 * @param production
+	 * @return
+	 */
+	public Production productionDataUserUtils(Production production){
+		if(this.productionPublicRole()){	//看到全部数据的用户判断
+			
+		}else if(UserUtils.verificationRole("gdy")){	//跟单员	只能看到自己相关的数据
+			production.setDocumentaryby(UserUtils.getUser());
+		}else if(UserUtils.verificationRole("scjl")){	//生产经理	只能看到自己相关的数据
+			production.setAssignto(UserUtils.getUser());
+		}else if(UserUtils.verificationRole("jgcfzr")){
+			Supplier supp = new Supplier();
+			supp.setBusinessPreson(UserUtils.getUserId());
+			production.setSupp(supp);
+		}else{
+			production.setAboutUser(UserUtils.getUser());
+		}
+		return production;
+	}
+	/**
+	 * 模块数据对应的用户查看权限
+	 * @param production
+	 * @param status
+	 * @param attrID
+	 * @return
+	 */
+	private Production moduleDataUserUtils(Production production,String status,String attrID){
+		production = this.productionDataUserUtils(production);	//加工厂数据筛选
+		if("waitSign".equals(attrID)||"waitProduction".equals(attrID)){	//待签收、待生产	只查看对应状态的数据
+			production.setGtEqVal("");
+			production.setStatus(status);
+		}
+		return production;
+	}
+	/**
+	 * 权限填充（当前用户是否能看到全部数据）
+	 * (总裁办、运营经理、运营中心负责人、区域中心负责人、物流文员、物流经理、成本经理以及admin看到全部数据)
+	 * 2016-4-19
+	 * @return	是-true 否-false
+	 */
+	private boolean productionPublicRole(){
+		return (UserUtils.verificationRole("zcb","yyjl","yyzxfzr","qyzxfzr","wlwy","wljl","cbjl")||User.isAdmin(UserUtils.getUserId()));
+	}
+	/**
+	 * 根据条件获取相应的数据
+	 * @param entity
+	 * @return
+	 */
+	public List<Production> getListForProject(Production production) {
+		List<Production> listP = productionDao.getListForProject(production);
+		if(listP==null){
+			listP = new ArrayList<Production>();
+		}
+		return listP;
+	}
+	/**
+	 * 搜索条件处理
+	 * @param production	赋予条件
+	 * @param searchStatus	筛选条件
+	 * @param status		搜索状态
+	 * @return
+	 */
+	public Production searchStatusUtils(Production production,String searchStatus,String isStatus){
+		if(StringUtils.isNotBlank(searchStatus)){
+			if(CommonStatus.SEARCH_STATUS_DZP.equals(searchStatus)){
+				production.setStatus(isStatus);
+			}else{
+				production.setGtVal(isStatus);
+			}
+		}else{
+			production.setGtEqVal(isStatus);
+		}
+		return production;
+	}
+	/**
+	 * 查看加工单里面的 箱的详情 数据
+	 * @param production
+	 * @return
+	 */
+	public List<Production> getListGBBoxDetail(Production production){
+		production.setGlfpGB("obdetail");
+		List<Production> listP = productionDao.getListForProject(production);
+		if(listP==null){
+			listP = new ArrayList<Production>();
+		}
+		return listP;
+	}
+	
+	/**
+	 * 根据项目Id获取相关的下料单列表数据
+	 * @param proID			项目Id
+	 * @param status		状态数据
+	 * @param isStatus		经过此状态的数据
+	 * @param attrID		界面Id
+	 * @param searchStatus	查询状态（待指派、指派完成）
+	 * @return
+	 */
+	public List<Production> getObbListByProID(String proID,String isStatus,String attrID,String searchStatus){
+		Production production = new Production();
+		production.setGlfpGB("obbase");		//根据下料单进行分组
+		Project project = new Project();
+		project.setId(proID);
+		production.setProject(project);
+		production.setGtEqVal(isStatus);	
+		//页面数据筛选
+		production = this.moduleDataUserUtils(production, isStatus, attrID);
+		//状态数据筛选。
+		if(StringUtils.isNotBlank(searchStatus)){
+			production = this.searchStatusUtils(production, searchStatus,isStatus);
+		}
+		return this.getListForProject(production);
+	}
+	/**
+	 * 获取加工单的详情列表数据
+	 * @param entity
+	 * @return
+	 */
+	public List<Production> getDetail(Production entity) {
+		List<Production> list = productionDao.getDetail(entity);
+		if(list==null){
+			list = new ArrayList<Production>();
+		}
+		return list;
+	}
+	/**
+	 * 根据下料单Id获取相关的加工单详情
+	 * @param production	加工单基本条件
+	 * @param obbId			下料单Id
+	 * @param status		此状态数据
+	 * @param isStatus		此状态流程后的数据
+	 * @param attrVal		页面请求参数
+	 * @return
+	 */
+	public List<Production> getDetailByObbID(String obbId,String isStatus,String attrID) {
+		Production production = new Production();
+		OrderBomBox obb = new OrderBomBox();
+		obb.setOrderBomId(obbId);
+		production.setOrderBomBox(obb);
+		production.setGtEqVal(isStatus);
+		//页面数据筛选
+		production = this.moduleDataUserUtils(production, isStatus, attrID);
+		return this.getDetail(production);
+	}
+	
+	/**
+	 * 批量插入数据
+	 * @param listPD
+	 */
+	@Transactional(readOnly = false)
+	public void batchInsert(List<Production> listPD){
+		for(Production pd:listPD){
+			productionDao.insert(pd);
+		}
+	}
+	/**
+	 * 批量修改数据
+	 * @param listPD
+	 */
+	@Transactional(readOnly = false)
+	public void batchUpdate(List<Production> listP){
+		for(Production pd:listP){
+			productionDao.update(pd);
+		}
+	}
+	/**
+	 * 根据下料单ID直接修改全部相关数据的状态以及相关字段
+	 * @param p
+	 */
+	@Transactional(readOnly = false)
+	public void updateStatusByOBBaseIDs(Production p){
+//		productionDao.updateStatusByOBBaseIDs(p);
+		p.setGlfpGB("production");
+		List<Production> list = this.getIdsByObbIds(p);//productionDao.getIdsByObbIds(p);
+		for(Production obj:list){
+			p.setId(obj.getId());
+			productionDao.update(p);
+		}
+	}
+	/**
+	 * 根据下料单ids返回相应的加工单
+	 * @param p
+	 * @return
+	 */
+	public List<Production> getIdsByObbIds(Production p){
+		List<Production> list = productionDao.getIdsByObbIds(p);
+		if(list==null){
+			list = new ArrayList<Production>();
+		}
+		return list;
+	}
+	/**
+	 * 修改公共方法
+	 * 根据下料单ID直接修改全部相关数据的状态以及相关字段
+	 * @param obbaseIDs	接收界面传过来的下料单IDs
+	 * @param sub	二级项目相关信息    石材要求到货时间
+	 * @param suggestion1	运营主管 审核意见
+	 * @param changeStatus		需要改的相关状态
+	 * @param originStatus		需要被修改的相关状态（即：原状态）
+	 */
+	@Transactional(readOnly = false)
+	public void updateStatusByOBBaseIDsUtils(String obbaseIDs,Subproject sub,
+										String directorremarks,String amaldarremarks,
+										String changeStatus,String originStatus){
+		List<String> listIDs=CommonUtils.stringToList(obbaseIDs);
+		if(listIDs.size()==0){
+			return;
+		}
+		//组装实体条件
+		Production p = new Production();
+		p.setIds(listIDs);
+		p.setStatus(changeStatus);
+		p.setSub(sub);
+		p.setDirectorremarks(directorremarks);
+		p.setOriginStatus(originStatus);
+		p.setAmaldarremarks(amaldarremarks);
+		//根据下料单ID直接修改全部相关数据的状态以及相关字段
+		this.updateStatusByOBBaseIDs(p);
+	}
+	/**
+	 * 实体工具类
+	 */
+	public Production getIdsByObbIdsProductionUtils(String obbaseIDs,Subproject sub,
+			String changeStatus,String originStatus,String suppUserId){
+		List<String> listIDs=CommonUtils.stringToList(obbaseIDs);
+		if(listIDs.size()==0){
+			return new Production();
+		}
+		//组装实体条件
+		Production p = new Production();
+		p.setIds(listIDs);
+		p.setStatus(changeStatus);
+		p.setSub(sub);
+		p.setOriginStatus(originStatus);
+		if(StringUtils.isNotBlank(suppUserId)){
+			Supplier supp = new Supplier();
+			supp.setBusinessPreson(suppUserId);
+			p.setSupp(supp);
+		}
+		if(UserUtils.verificationRole("scjl")){
+			p.setScjl(UserUtils.getUser());
+		}
+		return p;
+	}
+	/**
+	 * 供应商根据下料单id修改数据单
+	 * @param obbaseIDs
+	 * @param sub
+	 * @param changeStatus
+	 * @param originStatus
+	 * @param suppId
+	 */
+	@Transactional(readOnly = false)
+	public void updateStatusByOBBaseIDsToSupp(String obbaseIDs,Subproject sub,
+										String changeStatus,String originStatus,String suppUserId){
+		List<String> listIDs=CommonUtils.stringToList(obbaseIDs);
+		if(listIDs.size()==0){
+			return;
+		}
+		Supplier supp = new Supplier();
+		supp.setBusinessPreson(suppUserId);
+		//组装实体条件
+		Production p = new Production();
+		p.setIds(listIDs);
+		p.setStatus(changeStatus);
+		p.setSub(sub);
+		p.setOriginStatus(originStatus);
+		p.setSupp(supp);
+		//根据下料单ID直接修改全部相关数据的状态以及相关字段
+		this.updateStatusByOBBaseIDs(p);
+	}
+	/**
+	 * 根据IDS获取相应的列表数据
+	 * @param ids
+	 * @return
+	 */
+//	public List<Production> getByIDs(List<String> ids){
+//		List<Production> listP = productionDao.getByIDs(ids);
+//		if(listP==null){
+//			return new ArrayList<Production>();
+//		}else{
+//			return listP;
+//		}
+//	}
+	
+	public Production get(String id) {
+		return super.get(id);
+	}
+	
+	public List<Production> findList(Production production) {
+		return super.findList(production);
+	}
+	
+	public Page<Production> findPage(Page<Production> page, Production production) {
+		return super.findPage(page, production);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(Production production) {
+		super.save(production);
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(Production production) {
+		super.delete(production);
+	}
+	/**
+	 * end 2015年12月1日
+	 */
+	
+	/**
+	 * 判断是否已经生成过结算单
+	 * @return
+	 */
+	public int countManufSettlement(String orderId){
+		return productionDao.countManufSettlement(orderId);
+	}
+}

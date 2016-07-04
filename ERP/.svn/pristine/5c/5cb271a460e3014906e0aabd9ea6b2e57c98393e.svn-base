@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.LaboritemsDao">
+    
+	<sql id="laboritemsColumns">
+		a.id AS "id",
+		a.origin_id AS "originId",
+		a.contract_id AS "contractId",
+		a.sub_id as "sub.id",
+		a.seriesnumber AS "seriesnumber",
+		a.name AS "name",
+		a.standard AS "standard",
+		a.length AS "length",
+		a.width AS "width",
+		a.heigh AS "heigh",
+		a.unit AS "unit",
+		
+		a.colligate_price AS "colligatePrice",
+		a.colligate_price_stone AS "colligatePriceStone",
+		a.colligate_price_skeleton AS "colligatePriceSkeleton",
+		a.contract_colligate_price AS "contractColligatePrice",
+		a.contract_price_stone AS "contractPriceStone",
+		a.contract_price_skeleton AS "contractPriceSkeleton",
+		<!-- 
+		a.process_one AS "processOne",
+		a.process_two AS "processTwo",
+		a.process_three AS "processThree",
+		a.process_four AS "processFour",
+		a.process_price_one AS "processPriceOne",
+		a.process_price_two AS "processPriceTwo",
+		a.process_price_three AS "processPriceThree",
+		a.process_price_four AS "processPriceFour", 
+		-->
+		
+		a.pre_number AS "preNumber",
+		a.number_ratio AS "numberRatio",
+		a.after_number AS "afterNumber",
+		a.price_ratio AS "priceRatio",
+		a.standard_price AS "standardPrice",
+		a.contract_price AS "contractPrice",
+		a.price_difference AS "priceDifference",
+		a.budget_price AS "budgetPrice"
+	</sql>
+	
+	<sql id="laboritemsJoins">
+	</sql>
+    
+	<select id="get" resultType="Laboritems">
+		SELECT 
+			<include refid="laboritemsColumns"/>
+		FROM btg_con_laboritems a
+		<include refid="laboritemsJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getByCondition" resultType="Laboritems">
+		SELECT 
+			<include refid="laboritemsColumns"/>
+		FROM btg_con_laboritems a
+		<include refid="laboritemsJoins"/>
+		<where>
+			<if test="contractId != null and contractId != ''">
+				AND a.contract_id = #{contractId}
+			</if>
+			<if test="sub != null and sub.id!=null and sub.id != ''">
+				AND a.sub_id = #{sub.id}
+			</if>
+		</where>
+	</select>
+	
+	<select id="findList" resultType="Laboritems">
+		SELECT 
+			<include refid="laboritemsColumns"/>
+		FROM btg_con_laboritems a
+		<include refid="laboritemsJoins"/>
+		<where>
+			<if test="contractId != null and contractId != ''">
+				AND a.contract_id = #{contractId}
+			</if>
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		order by a.seriesnumber
+	</select>
+	
+	<select id="findAllList" resultType="Laboritems">
+		SELECT 
+			<include refid="laboritemsColumns"/>
+		FROM btg_con_laboritems a
+		<include refid="laboritemsJoins"/>
+		<where>
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_con_laboritems(
+			id,
+			origin_id,
+			contract_id,
+			sub_id,
+			seriesnumber,
+			name,
+			standard,
+			length,
+			width,
+			heigh,
+			unit,
+			colligate_price,
+			colligate_price_stone,
+			colligate_price_skeleton,
+			contract_colligate_price,
+			contract_price_stone,
+			contract_price_skeleton,
+			<!-- 
+			process_one,
+			process_two,
+			process_three,
+			process_four,
+			process_price_one,
+			process_price_two,
+			process_price_three,
+			process_price_four,
+			-->
+			pre_number,
+			number_ratio,
+			after_number,
+			price_ratio,
+			standard_price,
+			contract_price,
+			price_difference,
+			budget_price
+		) VALUES (
+			#{id},
+			#{originId},
+			#{contractId},
+			#{sub.id},
+			#{seriesnumber},
+			#{name},
+			#{standard},
+			#{length},
+			#{width},
+			#{heigh},
+			#{unit},
+			#{colligatePrice},
+			#{colligatePriceStone},
+			#{colligatePriceSkeleton},
+			#{contractColligatePrice},
+			#{contractPriceStone},
+			#{contractPriceSkeleton},
+			<!-- 
+			#{processOne},
+			#{processTwo},
+			#{processThree},
+			#{processFour},
+			#{processPriceOne},
+			#{processPriceTwo},
+			#{processPriceThree},
+			#{processPriceFour},
+			-->
+			#{preNumber},
+			#{numberRatio},
+			#{afterNumber},
+			#{priceRatio},
+			#{standardPrice},
+			#{contractPrice},
+			#{priceDifference},
+			#{budgetPrice}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_con_laboritems SET 	
+			origin_id = #{originId},
+			contract_id = #{contractId},
+			sub_id = #{sub.id},
+			seriesnumber = #{seriesnumber},
+			name = #{name},
+			standard = #{standard},
+			length = #{length},
+			width = #{width},
+			heigh = #{heigh},
+			unit = #{unit},
+			colligate_price = #{colligatePrice},
+			colligate_price_stone = #{colligatePriceStone},
+			colligate_price_skeleton = #{colligatePriceSkeleton},
+			contract_colligate_price = #{contractColligatePrice},
+			contract_price_stone = #{contractPriceStone},
+			contract_price_skeleton = #{contractPriceSkeleton},
+			<!-- 
+			process_one = #{processOne},
+			process_two = #{processTwo},
+			process_three = #{processThree},
+			process_four = #{processFour},
+			process_price_one = #{processPriceOne},
+			process_price_two = #{processPriceTwo},
+			process_price_three = #{processPriceThree},
+			process_price_four = #{processPriceFour},
+			-->
+			pre_number = #{preNumber},
+			number_ratio = #{numberRatio},
+			after_number = #{afterNumber},
+			price_ratio = #{priceRatio},
+			standard_price = #{standardPrice},
+			contract_price = #{contractPrice},
+			price_difference = #{priceDifference},
+			budget_price = #{budgetPrice}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_con_laboritems 
+		WHERE id = #{id}
+	</update>
+	
+	<update id="deleteBySubId">
+		DELETE FROM btg_con_laboritems 
+		WHERE sub_id = #{sub.id}
+	</update>
+	
+</mapper>

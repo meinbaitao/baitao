@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.viewcontractprogress.dao.ViewContractProgressDao">
+    
+	<sql id="viewContractProgressColumns">
+		a.pid AS "pid",
+		a.pname AS "pname",
+		a.pcode AS "pcode",
+		a.plocation AS "plocation",
+		a.parea_name AS "pareaName",
+		a.pprovince AS "pprovince",
+		a.pcity AS "pcity",
+		a.ptown AS "ptown",
+		a.pbusinessline AS "pbusinessline",
+		a.pstatus AS "pstatus",
+		a.starttime AS "starttime",
+		a.endtime AS "endtime",
+		a.prmanagername AS "prmanagername",
+		a.pcmanagername AS "pcmanagername",
+		a.psmaterialname AS "psmaterialname",
+		a.pcconstructname AS "pcconstructname",
+		a.prflag AS "prflag",
+		a.pcompy AS "pcompy",
+		a.pjmanagername AS "pjmanagername",
+		a.general_manager_mobile AS "generalManagerMobile",
+		a.pjamanagername AS "pjamanagername",
+		a.regional_manager_mobile AS "regionalManagerMobile",
+		a.pjfmanagername AS "pjfmanagername",
+		a.local_manager_mobile AS "localManagerMobile",
+		a.preport AS "preport",
+		a.pisreport AS "pisreport",
+		a.pisattachunit AS "pisattachunit",
+		a.pdesignmanager AS "pdesignmanager",
+		a.pdesignerbname AS "pdesignerbname",
+		a.pcostmanagername AS "pcostmanagername",
+		a.pcostmanagermobile AS "pcostmanagermobile",
+		a.pcostgrouper AS "pcostgrouper",
+		a.pcostleader AS "pcostleader",
+		a.pzbpercent AS "pzbpercent",
+		a.contractid AS "contractid",
+		a.contractname AS "contractname",
+		a.contractcost AS "contractcost",
+		a.contractastone AS "contractastone",
+		a.contractecost AS "contractecost",
+		a.contractearea AS "contractearea",
+		a.contractprepayratio AS "contractprepayratio",
+		a.signedcounterparty AS "signedcounterparty",
+		a.operationunit AS "operationunit",
+		a.contractattachunit AS "contractattachunit",
+		a.attachfeeratio AS "attachfeeratio",
+		a.signeddate AS "signeddate",
+		a.completiondate AS "completiondate",
+		a.paycollectionratio AS "paycollectionratio",
+		a.contractsettlearea AS "contractsettlearea",
+		a.contractsettleamount AS "contractsettleamount",
+		a.contractsettledate AS "contractsettledate",
+		a.stamptaxapplied AS "stamptaxapplied",
+		a.certapplied AS "certapplied",
+		a.certexpirydate AS "certexpirydate",
+		a.taxratio AS "taxratio",
+		a.contractremark AS "contractremark",
+		a.workflowid AS "workflowid",
+		a.workflowstatus AS "workflowstatus",
+		a.attachunit AS "attachunit",
+		a.paddress  As "paddress"
+	</sql>
+	
+	<sql id="viewContractProgressJoins">
+	</sql>
+    
+	<select id="get" resultType="ViewContractProgress">
+		SELECT 
+			<include refid="viewContractProgressColumns"/>
+		FROM view_contract_progress a
+		<include refid="viewContractProgressJoins"/>
+		WHERE a.pid = #{id}
+	</select>
+	
+	<select id="findList" resultType="ViewContractProgress">
+		SELECT 
+			<include refid="viewContractProgressColumns"/>
+		FROM view_contract_progress a
+		<include refid="viewContractProgressJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ViewContractProgress">
+		SELECT 
+			<include refid="viewContractProgressColumns"/>
+		FROM view_contract_progress a
+		<include refid="viewContractProgressJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO view_contract_progress(
+			pid,
+			pname,
+			pcode,
+			plocation,
+			parea_name,
+			pprovince,
+			pcity,
+			ptown,
+			pbusinessline,
+			pstatus,
+			starttime,
+			endtime,
+			prmanagername,
+			pcmanagername,
+			psmaterialname,
+			pcconstructname,
+			prflag,
+			pcompy,
+			pjmanagername,
+			general_manager_mobile,
+			pjamanagername,
+			regional_manager_mobile,
+			pjfmanagername,
+			local_manager_mobile,
+			preport,
+			pisreport,
+			pisattachunit,
+			pdesignmanager,
+			pdesignerbname,
+			pcostmanagername,
+			pcostmanagermobile,
+			pcostgrouper,
+			pcostleader,
+			pzbpercent,
+			contractid,
+			contractname,
+			contractcost,
+			contractastone,
+			contractecost,
+			contractearea,
+			contractprepayratio,
+			signedcounterparty,
+			operationunit,
+			contractattachunit,
+			attachfeeratio,
+			signeddate,
+			completiondate,
+			paycollectionratio,
+			contractsettlearea,
+			contractsettleamount,
+			contractsettledate,
+			stamptaxapplied,
+			certapplied,
+			certexpirydate,
+			taxratio,
+			contractremark,
+			workflowid,
+			workflowstatus,
+			attachunit
+		) VALUES (
+			#{pid},
+			#{pname},
+			#{pcode},
+			#{plocation},
+			#{pareaName},
+			#{pprovince},
+			#{pcity},
+			#{ptown},
+			#{pbusinessline},
+			#{pstatus},
+			#{starttime},
+			#{endtime},
+			#{prmanagername},
+			#{pcmanagername},
+			#{psmaterialname},
+			#{pcconstructname},
+			#{prflag},
+			#{pcompy},
+			#{pjmanagername},
+			#{generalManagerMobile},
+			#{pjamanagername},
+			#{regionalManagerMobile},
+			#{pjfmanagername},
+			#{localManagerMobile},
+			#{preport},
+			#{pisreport},
+			#{pisattachunit},
+			#{pdesignmanager},
+			#{pdesignerbname},
+			#{pcostmanagername},
+			#{pcostmanagermobile},
+			#{pcostgrouper},
+			#{pcostleader},
+			#{pzbpercent},
+			#{contractid},
+			#{contractname},
+			#{contractcost},
+			#{contractastone},
+			#{contractecost},
+			#{contractearea},
+			#{contractprepayratio},
+			#{signedcounterparty},
+			#{operationunit},
+			#{contractattachunit},
+			#{attachfeeratio},
+			#{signeddate},
+			#{completiondate},
+			#{paycollectionratio},
+			#{contractsettlearea},
+			#{contractsettleamount},
+			#{contractsettledate},
+			#{stamptaxapplied},
+			#{certapplied},
+			#{certexpirydate},
+			#{taxratio},
+			#{contractremark},
+			#{workflowid},
+			#{workflowstatus},
+			#{attachunit}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE view_contract_progress SET 	
+			pid = #{pid},
+			pname = #{pname},
+			pcode = #{pcode},
+			plocation = #{plocation},
+			parea_name = #{pareaName},
+			pprovince = #{pprovince},
+			pcity = #{pcity},
+			ptown = #{ptown},
+			pbusinessline = #{pbusinessline},
+			pstatus = #{pstatus},
+			starttime = #{starttime},
+			endtime = #{endtime},
+			prmanagername = #{prmanagername},
+			pcmanagername = #{pcmanagername},
+			psmaterialname = #{psmaterialname},
+			pcconstructname = #{pcconstructname},
+			prflag = #{prflag},
+			pcompy = #{pcompy},
+			pjmanagername = #{pjmanagername},
+			general_manager_mobile = #{generalManagerMobile},
+			pjamanagername = #{pjamanagername},
+			regional_manager_mobile = #{regionalManagerMobile},
+			pjfmanagername = #{pjfmanagername},
+			local_manager_mobile = #{localManagerMobile},
+			preport = #{preport},
+			pisreport = #{pisreport},
+			pisattachunit = #{pisattachunit},
+			pdesignmanager = #{pdesignmanager},
+			pdesignerbname = #{pdesignerbname},
+			pcostmanagername = #{pcostmanagername},
+			pcostmanagermobile = #{pcostmanagermobile},
+			pcostgrouper = #{pcostgrouper},
+			pcostleader = #{pcostleader},
+			pzbpercent = #{pzbpercent},
+			contractid = #{contractid},
+			contractname = #{contractname},
+			contractcost = #{contractcost},
+			contractastone = #{contractastone},
+			contractecost = #{contractecost},
+			contractearea = #{contractearea},
+			contractprepayratio = #{contractprepayratio},
+			signedcounterparty = #{signedcounterparty},
+			operationunit = #{operationunit},
+			contractattachunit = #{contractattachunit},
+			attachfeeratio = #{attachfeeratio},
+			signeddate = #{signeddate},
+			completiondate = #{completiondate},
+			paycollectionratio = #{paycollectionratio},
+			contractsettlearea = #{contractsettlearea},
+			contractsettleamount = #{contractsettleamount},
+			contractsettledate = #{contractsettledate},
+			stamptaxapplied = #{stamptaxapplied},
+			certapplied = #{certapplied},
+			certexpirydate = #{certexpirydate},
+			taxratio = #{taxratio},
+			contractremark = #{contractremark},
+			workflowid = #{workflowid},
+			workflowstatus = #{workflowstatus},
+			attachunit = #{attachunit}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM view_contract_progress
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

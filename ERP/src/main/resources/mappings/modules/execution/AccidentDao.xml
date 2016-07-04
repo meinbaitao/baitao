@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.execution.dao.AccidentDao">
+    
+	<sql id="accidentColumns">
+		a.id AS "id",
+		a.project_id AS "projectId",
+		a.problem_type AS "problemType",
+		a.problem_comment AS "problemComment",
+		a.punish_manager_bid AS "punishManagerBid",
+		a.supply_price AS "supplyPrice",
+		a.punish_price AS "punishPrice",
+		a.company_type AS "companyType",
+		a.status AS "status",
+		a.attch_url AS "attchUrl",
+		a.is_influenct AS "isInfluenct",
+		a.is_supply AS "isSupply",
+		a.is_punish AS "isPunish",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="accidentJoins">
+	</sql>
+    
+	<select id="get" resultType="Accident">
+		SELECT 
+			<include refid="accidentColumns"/>
+		FROM btg_exe_accident a
+		<include refid="accidentJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Accident">
+		SELECT 
+			<include refid="accidentColumns"/>
+		FROM btg_exe_accident a
+		<include refid="accidentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Accident">
+		SELECT 
+			<include refid="accidentColumns"/>
+		FROM btg_exe_accident a
+		<include refid="accidentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_exe_accident(
+			id,
+			project_id,
+			problem_type,
+			problem_comment,
+			punish_manager_bid,
+			supply_price,
+			punish_price,
+			company_type,
+			status,
+			attch_url,
+			is_influenct,
+			is_supply,
+			is_punish,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{projectId},
+			#{problemType},
+			#{problemComment},
+			#{punishManagerBid},
+			#{supplyPrice},
+			#{punishPrice},
+			#{companyType},
+			#{status},
+			#{attchUrl},
+			#{isInfluenct},
+			#{isSupply},
+			#{isPunish},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_exe_accident SET 
+			problem_type = #{problemType},
+			problem_comment = #{problemComment},
+			punish_manager_bid = #{punishManagerBid},
+			supply_price = #{supplyPrice},
+			punish_price = #{punishPrice},
+			company_type = #{companyType},
+			status = #{status},
+			attch_url = #{attchUrl},
+			is_influenct = #{isInfluenct},
+			is_supply = #{isSupply},
+			is_punish = #{isPunish},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_exe_accident SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<select id="findListByProjectId" resultType="Map">
+		SELECT 
+			a.id,
+			a.project_id AS "projectId",
+      		a.problem_comment AS "problemComment",
+      		a.problem_type AS "problemType",
+      		a.supply_price AS "supplyPrice",
+	      	a.punish_price AS "punishPrice",
+	      	a.status as "status",
+	      	a.punish_manager_bid AS "punishManagerBid",
+	      	a.create_date AS "createDate",
+	      	p.name AS "name"
+		FROM btg_exe_accident a
+		LEFT JOIN btg_pro_project p on p.p_id=a.project_id
+		<where>
+			<if test="projectId != null and projectId != ''">
+				a.project_id =#{projectId}
+				and
+			</if>
+			p.del_flag = #{DEL_FLAG_NORMAL}
+			and
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<if test="projectId == null or projectId == ''">
+			GROUP BY a.project_id
+		</if>
+	  	ORDER BY a.update_date DESC
+	</select>
+</mapper>

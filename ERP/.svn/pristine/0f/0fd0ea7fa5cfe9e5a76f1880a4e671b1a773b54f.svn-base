@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.supplier.dao.SupplierDao">
+    
+	<sql id="supplierColumns">
+		a.id AS "id",
+		a.seriesnumber AS "seriesnumber",
+		a.name AS "name",
+		a.supplier_type AS "supplierType",
+		a.srange AS "srange",
+		a.register_address AS "registerAddress",
+		a.register_fund AS "registerFund",
+		a.fund_type AS "fundType",
+		a.business_address AS "businessAddress",
+		a.fax AS "fax",
+		a.legal_preson AS "legalPreson",
+		a.legal_tel AS "legalTel",
+		a.legal_phone AS "legalPhone",
+		a.legal_email AS "legalEmail",
+		a.business_preson AS "businessPreson",
+		a.business_tel AS "businessTel",
+		a.business_phone AS "businessPhone",
+		a.business_email AS "businessEmail",
+		a.area AS "area",
+		a.settlement_type AS "settlementType",
+		a.certificate AS "certificate",
+		a.account_bank AS "accountBank",
+		a.account_name AS "accountName",
+		a.account AS "account",
+		a.tax_number AS "taxNumber",
+		a.permit AS "permit",
+		a.found_data AS "foundData",
+		a.business_type AS "businessType",
+		a.nature_type AS "natureType",
+		a.people_number AS "peopleNumber",
+		a.manage_number AS "manageNumber",
+		a.other_number AS "otherNumber",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.code AS "code"
+	</sql>
+	
+	<sql id="supplierJoins">
+		LEFT JOIN sys_user businessPreson ON businessPreson.id = a.business_preson
+	</sql>
+    
+	<select id="get" resultType="Supplier">
+		SELECT 
+			businessPreson.name AS "businessPresonName",
+			<include refid="supplierColumns"/>
+		FROM btg_supplier a
+		<include refid="supplierJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Supplier">
+		SELECT 
+			<include refid="supplierColumns"/>
+		FROM btg_supplier a
+		<include refid="supplierJoins"/>
+		<where>
+			<if test="search != null and search != ''">
+				and a.seriesnumber LIKE concat('%',#{search},'%')
+				OR a.name LIKE concat('%',#{search},'%')
+			</if>
+			<if test="supplierType != null and supplierType != ''">
+				AND a.supplier_type = #{supplierType}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Supplier">
+		SELECT 
+			<include refid="supplierColumns"/>
+		FROM btg_supplier a
+		<include refid="supplierJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_supplier(
+			id,
+			seriesnumber,
+			name,
+			supplier_type,
+			srange,
+			register_address,
+			register_fund,
+			fund_type,
+			business_address,
+			fax,
+			legal_preson,
+			legal_tel,
+			legal_phone,
+			legal_email,
+			business_preson,
+			business_tel,
+			business_phone,
+			business_email,
+			area,
+			settlement_type,
+			certificate,
+			account_bank,
+			account_name,
+			account,
+			tax_number,
+			permit,
+			found_data,
+			business_type,
+			nature_type,
+			people_number,
+			manage_number,
+			other_number,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			code
+		) VALUES (
+			#{id},
+			#{seriesnumber},
+			#{name},
+			#{supplierType},
+			#{srange},
+			#{registerAddress},
+			#{registerFund},
+			#{fundType},
+			#{businessAddress},
+			#{fax},
+			#{legalPreson},
+			#{legalTel},
+			#{legalPhone},
+			#{legalEmail},
+			#{businessPreson},
+			#{businessTel},
+			#{businessPhone},
+			#{businessEmail},
+			#{area},
+			#{settlementType},
+			#{certificate},
+			#{accountBank},
+			#{accountName},
+			#{account},
+			#{taxNumber},
+			#{permit},
+			#{foundData},
+			#{businessType},
+			#{natureType},
+			#{peopleNumber},
+			#{manageNumber},
+			#{otherNumber},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{code}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_supplier SET 	
+			seriesnumber = #{seriesnumber},
+			name = #{name},
+			supplier_type = #{supplierType},
+			srange = #{srange},
+			register_address = #{registerAddress},
+			register_fund = #{registerFund},
+			fund_type = #{fundType},
+			business_address = #{businessAddress},
+			fax = #{fax},
+			legal_preson = #{legalPreson},
+			legal_tel = #{legalTel},
+			legal_phone = #{legalPhone},
+			legal_email = #{legalEmail},
+			business_preson = #{businessPreson},
+			business_tel = #{businessTel},
+			business_phone = #{businessPhone},
+			business_email = #{businessEmail},
+			area = #{area},
+			settlement_type = #{settlementType},
+			certificate = #{certificate},
+			account_bank = #{accountBank},
+			account_name = #{accountName},
+			account = #{account},
+			tax_number = #{taxNumber},
+			permit = #{permit},
+			found_data = #{foundData},
+			business_type = #{businessType},
+			nature_type = #{natureType},
+			people_number = #{peopleNumber},
+			manage_number = #{manageNumber},
+			other_number = #{otherNumber},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			del_flag = #{delFlag},
+			code = #{code}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_supplier
+		WHERE id = #{id}
+	</update>
+	<select id="getByType" resultType="Supplier">
+		SELECT 
+			a.id AS "id",
+			a.seriesnumber AS "seriesnumber",
+			a.name AS "name",
+			a.supplier_type AS "supplierType",
+			a.business_preson AS "businessPreson",
+			a.business_tel AS "businessTel",
+			a.business_phone AS "businessPhone",
+			a.code AS "code"
+		FROM btg_supplier a
+		where a.supplier_type = #{supplierType}
+	</select>
+</mapper>

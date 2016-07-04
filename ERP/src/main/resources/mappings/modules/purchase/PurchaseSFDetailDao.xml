@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.purchase.dao.PurchaseSFDetailDao">
+    
+	<sql id="purchaseSfDetailColumns">
+		a.id AS "id",
+		a.seriesnumber AS "seriesnumber",
+		a.purchase_id as "purchaseurchase.id",
+		a.type AS "type",
+		a.fcount AS "fcount",
+		a.fweight AS "fweight",
+		a.scount AS "scount",
+		a.sweight AS "sweight",
+		a.create_date AS "createDate",
+		a.create_by AS "createBy.id",
+		a.update_date AS "updateDate",
+		a.update_by AS "updateBy.id",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="purchaseSfDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="PurchaseSFDetail">
+		SELECT 
+			<include refid="purchaseSfDetailColumns"/>
+		FROM btg_purchase_sf_detail a
+		<include refid="purchaseSfDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="PurchaseSFDetail">
+		SELECT 
+			p.seriesnumber as "purchase.seriesnumber",p.mtype as "purchase.mtype",
+			p.count as "purchase.count",
+			<include refid="purchaseSfDetailColumns"/>
+		FROM btg_purchase_sf_detail a
+			join btg_purchase p on p.id=a.purchase_id
+		<include refid="purchaseSfDetailJoins"/>
+		<where>
+			<if test="purchase != null and purchase != ''">
+				<if test="purchase.status != null and purchase.status != ''">
+					and p.status=#{purchase.status}
+				</if>
+				<if test="purchase.type != null and purchase.type != ''">
+					and p.type=#{purchase.type}
+				</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="PurchaseSFDetail">
+		SELECT 
+			<include refid="purchaseSfDetailColumns"/>
+		FROM btg_purchase_sf_detail a
+		<include refid="purchaseSfDetailJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_purchase_sf_detail(
+			id,
+			seriesnumber,
+			purchase_id,
+			type,
+			fcount,
+			fweight,
+			scount,
+			sweight,
+			create_date,
+			create_by,
+			update_date,
+			update_by
+		) VALUES (
+			#{id},
+			#{seriesnumber},
+			#{purchase.id},
+			#{type},
+			#{fcount},
+			#{fweight},
+			#{scount},
+			#{sweight},
+			#{createDate},
+			#{createBy.id},
+			#{updateDate},
+			#{updateBy.id}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_purchase_sf_detail SET 	
+			create_date = #{updateDate}
+			<if test="fcount != null and fcount != ''">
+				,fcount = #{fcount}
+			</if>
+			<if test="fweight != null and fweight != ''">
+				,fweight = #{fweight}
+			</if>
+			<if test="scount != null and scount != ''">
+				,scount = #{scount}
+			</if>
+			<if test="sweight != null and sweight != ''">
+				,sweight = #{sweight}
+			</if>
+			<if test="updateBy != null and updateBy != ''">
+				,update_by = #{updateBy.id}
+			</if>
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		<!-- DELETE FROM btg_purchase_sf_detail
+		WHERE id = #{id}-->
+		UPDATE btg_purchase_sf_detail SET 	
+			del_falg = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<select id="getSFDetailByPID" parameterType="String" resultType="PurchaseSFDetail">
+		SELECT 
+			<include refid="purchaseSfDetailColumns"/>
+		FROM btg_purchase_sf_detail a
+		<include refid="purchaseSfDetailJoins"/>
+		<where>
+			and a.Purchase_ID = #{PID}
+		</where>		
+	</select>
+	<!-- 统计相应天数的数据 -->
+	<select id="getToDaysCount" parameterType="Date" resultType="int">
+		select count(b.seriesnumber) from (select a.seriesnumber from btg_purchase_sf_detail a 
+			where 
+ 				TO_DAYS(a.create_date) = TO_DAYS(#{date})
+		GROUP BY a.seriesnumber) b
+	</select>
+</mapper>

@@ -1,0 +1,62 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<c:set var="contextPath" value="${pageContext.request.contextPath}" />
+
+<div class="nav-operate images-list" >
+  <ul >
+    <li class="all-line">
+      <span class="tab-name">楼栋号:</span>
+      <label>${buildingSchedule.buildNo}</label>
+    </li>
+    <li class="li-images">
+      <span class="tab-name">南立面:</span>
+      <c:choose>
+        <c:when test="${empty buildingSchedule.schedulePicSouth}">
+          <img src="${ctxStatic}/images/buildingSchelduleDefaultIcon.jpg" width="300" height="400" />
+        </c:when>
+        <c:otherwise>
+          <img src="${contextPath}/${buildingSchedule.schedulePicSouth}" width="300" height="400" />
+        </c:otherwise>
+      </c:choose>
+
+    </li>
+    <li  class="li-images">
+      <span class="tab-name">北立面:</span>
+
+      <c:choose>
+        <c:when test="${empty buildingSchedule.schedulePicSouth}">
+          <img src="${ctxStatic}/images/buildingSchelduleDefaultIcon.jpg" width="300" height="400" />
+        </c:when>
+        <c:otherwise>
+          <img src="${contextPath}/${buildingSchedule.schedulePicNorth}" width="300" height="400" />
+        </c:otherwise>
+      </c:choose>
+    </li>
+
+
+
+    <li  class="li-images">
+      <span class="tab-name">东立面:</span>
+
+      <c:choose>
+        <c:when test="${empty buildingSchedule.schedulePicSouth}">
+          <img src="${ctxStatic}/images/buildingSchelduleDefaultIcon.jpg" width="300" height="400" />
+        </c:when>
+        <c:otherwise>
+          <img src="${contextPath}/${buildingSchedule.schedulePicEast}" width="300" height="400" />
+        </c:otherwise>
+      </c:choose>
+    </li>
+    <li  class="li-images">
+      <span class="tab-name">西立面:</span>
+      <c:choose>
+        <c:when test="${empty buildingSchedule.schedulePicSouth}">
+          <img src="${ctxStatic}/images/buildingSchelduleDefaultIcon.jpg" width="300" height="400" />
+        </c:when>
+        <c:otherwise>
+          <img src="${contextPath}/${buildingSchedule.schedulePicWest}" width="300" height="400" />
+        </c:otherwise>
+      </c:choose>
+    </li>
+  </ul>
+</div>

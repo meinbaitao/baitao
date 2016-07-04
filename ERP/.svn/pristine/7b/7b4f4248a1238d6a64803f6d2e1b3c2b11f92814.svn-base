@@ -1,0 +1,551 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.inventory.dao.InventoryDao">
+    
+	<sql id="inventoryColumns">
+		a.id AS "id",
+		ifnull(a.material_type,"") AS "materialType",
+		ifnull(a.material_id,"") AS "materialId",
+		ifnull(a.material_no,"") AS "materialNo",
+		ifnull(a.material_name,"") AS "materialName",
+		a.quantity AS "quantity",
+		a.batchno AS "batchno",
+		a.shelf AS "shelf",
+		a.depot_id AS "depot.id",
+		a.depot_place_id AS "depotPlaceId",
+		a.fock_quantity AS "fockQuantity",
+		a.mtomo AS "mtomo",
+		
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.workflow_id AS "workflowId",
+		a.workflow_status AS "workflowStatus"
+	</sql>
+	
+	<sql id="inventoryJoins">
+	</sql>
+    
+	<select id="get" resultType="Inventory">
+		SELECT 
+			<include refid="inventoryColumns"/>
+		FROM btg_inventory a
+		<include refid="inventoryJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Inventory">
+		SELECT 
+			<include refid="inventoryColumns"/>
+		FROM btg_inventory a
+		<include refid="inventoryJoins"/>
+		<where>
+			a.quantity > 0
+			<if test="quantity != null and quantity != ''">
+				and a.quantity >= #{quantity}
+			</if>
+			<if test="depot != null and depot.id != '' and depot.id != null">
+				and a.depot_id = #{depot.id}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.material_type DESC,a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Inventory">
+		SELECT 
+			<include refid="inventoryColumns"/>
+		FROM btg_inventory a
+		<include refid="inventoryJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_inventory(
+			id,
+			material_type,
+			material_id,
+			material_no,
+			material_name,
+			quantity,
+			batchno,
+			shelf,
+			depot_id,
+			depot_place_id,
+			fock_quantity,
+			mtomo,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			workflow_id,
+			workflow_status
+		) VALUES (
+			#{id},
+			#{materialType},
+			#{materialId},
+			#{materialNo},
+			#{materialName},
+			#{quantity},
+			#{batchno},
+			#{shelf},
+			#{depot.id},
+			#{depotPlaceId},
+			#{fockQuantity},
+			#{mtomo},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{workflowid},
+			#{workflowstatus}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_inventory SET 
+			update_date = now()
+			<if test="quantity != null and quantity != '' || quantity==0">
+				,quantity = #{quantity}
+			</if>
+			<if test="fockQuantity != null and fockQuantity != ''">
+				,fock_quantity = #{fockQuantity}
+			</if>	
+			<!-- material_type = #{materialType},
+			material_id = #{materialId},
+			quantity = #{quantity},
+			batchno = #{batchno},
+			shelf = #{shelf},
+			depot_id = #{depotId},
+			depot_place_id = #{depotPlaceId},
+			fock_quantity = #{fockQuantity},
+			mtomo = #{mtomo} -->
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_inventory
+		WHERE id = #{id}
+	</update>
+	
+	
+	<!-- -->
+	<!-- 修改库存数量 -->
+	<update id="updateQuantity">
+		UPDATE btg_inventory SET 	
+			quantity = #{quantity},
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<!-- 统计当天添加的数据量  -->
+	<select id="getTodayCount" parameterType="Date" resultType="int">
+		select count(*) from btg_inventory a
+			where 
+		TO_DAYS(a.create_date) = TO_DAYS(#{date});
+	</select>
+	<!-- 获取相应的单条数据  -->
+	<select id="getByOne" resultType="Inventory">
+		select 
+		<include refid="inventoryColumns"/>
+		 from btg_inventory a
+			where a.del_flag=#{DEL_FLAG_NORMAL}
+			<if test="id != null and id != ''">
+				and a.id = #{id}
+			</if>
+			<if test="materialName != null and materialName != ''">
+				and a.material_name = #{materialName}
+			</if>
+			<if test="materialType != null and materialType != ''">
+				and a.material_type = #{materialType}
+			</if>
+			<if test="materialNo != null and materialNo != ''">
+				and a.material_no = #{materialNo}
+			</if>
+			<if test="depot != null and depot.id != null and depot.id != ''">
+				and a.depot_id = #{depot.id}
+			</if>
+			limit 0,1
+	</select>
+	<!-- 查看库存数据 -->
+	<select id="getPageData" resultType="Inventory">
+		SELECT 
+				depot.name as "depot.depotName",
+			<include refid="inventoryColumns"/>
+		FROM btg_inventory a 
+			left join btg_depot depot on depot.id=a.depot_id
+		<include refid="inventoryJoins"/>
+		<where>
+			<if test="quantity != null and quantity != ''">
+				and a.quantity >= #{quantity}
+			</if>
+			<if test="depot != null and depot.id != '' and depot.id != null">
+				and a.depot_id = #{depot.id}
+			</if>
+			<if test="depot != null and depot.depotName != '' and depot.depotName != null">
+				and depot.name like CONCAT('%', #{depot.depotName}, '%') 
+			</if>
+			<if test="ids !=null and ids.size > 0 ">
+				and a.id in
+						<foreach collection="ids" item="id" index="i"
+		           			 open="(" close=")" separator=",">
+		           		 			#{id}
+		        		</foreach>
+			</if>
+			<if test="listMaterialNos != null and listMaterialNos.size > 0">
+				and a.material_no in
+						<foreach collection="listMaterialNos" item="no" index="i"
+			       			 open="(" close=")" separator=",">
+			       		 			#{no}
+			    		</foreach>
+			</if>
+		</where>
+		ORDER BY a.material_type DESC,a.update_date DESC
+	</select>
+	
+	<!-- 石材 领料界面项目列表 -->
+	<select id="getSCInvDataByCondition" resultType="Inventory">
+		select 
+			project.id as "project.id",
+			project.name as "project.name",
+			sub.id as "sub.id",
+			sub.house_type as "sub.houseType",
+			sub.building as "sub.building",
+			sub.building_display_name as "sub.buildingDisplayName",
+			obdetail.box_no as "orderBomDetail.boxNo", 
+			sum(obdetail.count) as "orderBomDetail.count",
+			ifnull(obdetail.standard_desc,"") as "orderBomDetail.standardDesc",
+			ifnull(obdetail.standard_radius,"") as "orderBomDetail.standardRadius",
+			ifnull(obdetail.standard_long,"") as "orderBomDetail.standardLong",
+			ifnull(obdetail.standard_width,"") as "orderBomDetail.standardWidth",
+			ifnull(obdetail.standard_depth,"") as "orderBomDetail.standardDepth",
+			ifnull(obdetail.process_chart_no,"") as "orderBomDetail.processChartNo",
+			ifnull(obdetail.remark,"") as "orderBomDetail.remark",
+			ifnull(obdetail.unit,"") as "orderBomDetail.unit",
+			obbase.order_type as "orderBomBase.orderType",
+			<include refid="inventoryColumns"/>
+		from  btg_inventory a 
+			left join btg_depot depot on depot.id=a.depot_id 
+			left join btg_subproject sub on sub.id=depot.sub_id 
+			join btg_project project on project.id=depot.project_id 
+			left join btg_order_bom_detail obdetail on obdetail.id=a.material_id
+			left join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+		where (1=1) and obbase.del_flag=#{DEL_FLAG_NORMAL}
+			<!-- <if test="depot != null and depot.depotUser != '' and depot.depotUser != null">
+				and depot.user_id=#{depot.depotUser.id}
+			</if> -->
+			<if test="project != null and project.name != '' and project.name != null">
+				and project.name = #{project.name}
+			</if>
+			<if test="sub != null and sub.houseType != '' and sub.houseType != null">
+				and sub.house_type = #{sub.houseType}
+			</if>
+			<if test="materialNo != null and materialNo != ''">
+				and a.material_no = #{materialNo}
+			</if>
+			<!-- <if test="materialId != null and materialId != ''">
+				and a.material_Id = #{materialId}
+			</if> -->
+			<if test="sub != null and sub.building != '' and sub.building != null">
+				and sub.building = #{sub.building}
+			</if>
+			<if test="orderBomDetail != null and orderBomDetail.boxNo !=null and orderBomDetail.boxNo != ''">
+				and obdetail.box_no = #{orderBomDetail.boxNo}
+			</if>
+			<if test="orderBomBase != null and orderBomBase.orderType !=null and orderBomBase.orderType != ''">
+				and obbase.order_type = #{orderBomBase.orderType}
+			</if>
+			<if test="listMaterialTypes != null and listMaterialTypes.size > 0">
+				and a.material_type in
+						<foreach collection="listMaterialTypes" item="m" index="i"
+			       			 open="(" close=")" separator=",">
+			       		 			#{m}
+			    		</foreach>
+			</if>
+		<choose>
+			<when test="groupByStr != null and groupByStr != '' and groupByStr == 'projectName'">
+				group by project.name
+			</when>
+			<when test="groupByStr != null and groupByStr != '' and groupByStr == 'houseType'">
+				group by sub.house_type
+			</when>
+			<when test="groupByStr != null and groupByStr != '' and groupByStr == 'building'">
+				group by sub.building
+			</when>
+			<when test="groupByStr != null and groupByStr != '' and groupByStr == 'inv'">
+				group by a.id
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+		order by obdetail.box_no
+		
+		
+		<!-- select 
+			project.name as "project.name",
+			obbase.house_type as "orderBomBase.housetype",
+			obbase.building as "orderBomBase.building",
+			material.name as "material.name",
+			material.type as "material.type",
+			material.model as "material.model",
+			material.unit as "material.unit",
+			obbox.box_no as "orderBomBox.boxNo",
+			obbox.id as "orderBomBox.id",
+			<include refid="inventoryColumns"/>
+		 from btg_inventory a 
+		 	left join btg_material material on material.series_number=a.material_no
+			left join btg_depot depot on depot.id=a.depot_id
+			left join btg_order_bom_box obbox on obbox.id=a.material_id
+			left join btg_order_bom_base obbase on obbase.id=obbox.order_bom_id
+			left join btg_subproject sub on sub.id=obbase.sub_proj_id
+			join btg_project project on project.id=sub.project_id
+		where depot.user_id=#{depot.depotUser.id}
+			<if test="project != null and project.name != '' and project.name != null">
+				and project.name = #{project.name}
+			</if>
+			<if test="orderBomBase != null and orderBomBase.houseType != '' and orderBomBase.houseType != null">
+				and obbase.house_type = #{orderBomBase.houseType}
+			</if>
+			<if test="orderBomBase != null and orderBomBase.uniformMaterielType != '' and orderBomBase.uniformMaterielType != null">
+				and obbase.uniform_materiel_type = #{orderBomBase.uniformMaterielType}
+			</if>
+			<if test="orderBomBox != null and orderBomBox.boxNo != '' and orderBomBox.boxNo != null">
+				and obbox.box_no = #{orderBomBox.boxNo}
+			</if>
+			<if test="listMaterialTypes != null and listMaterialTypes.size > 0">
+				and a.material_type in
+						<foreach collection="listMaterialTypes" item="m" index="i"
+			       			 open="(" close=")" separator=",">
+			       		 			#{m}
+			    		</foreach>
+			</if>
+		<choose>
+			<when test="groupByStr == 'projectName'">
+				group by project.name
+			</when>
+			<when test="groupByStr == 'house_type'">
+				group by obbase.house_type
+			</when>
+			<when test="groupByStr == 'Building'">
+				group by obbase.Building
+			</when>
+			<when test="groupByStr == 'box_no'">
+				group by obbox.box_no
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose> -->
+	</select>
+	
+	
+	<!-- 2015年11月16日 -->
+	<!-- 钢辅料 领料界面项目列表 -->
+	<select id="getGFLInvDataByCondition" resultType="Inventory">
+		select 
+			project.id as "project.id",
+			project.name as "project.name",
+			sub.id as "sub.id",
+			sub.house_type as "sub.houseType",
+			sub.building as "sub.building",
+			sub.building_display_name as "sub.buildingDisplayName",
+			<include refid="inventoryColumns"/>
+		from  btg_inventory a 
+			left join btg_depot depot on depot.id=a.depot_id 
+			left join btg_subproject sub on sub.id=depot.sub_id 
+			join btg_project project on project.id=depot.project_id 
+		where (1=1) and project.del_flag=#{DEL_FLAG_NORMAL}
+			<!-- <if test="depot != null and depot.depotUser != '' and depot.depotUser != null">
+				and depot.user_id=#{depot.depotUser.id}
+			</if> -->
+			<if test="project != null and project.name != '' and project.name != null">
+				and project.name = #{project.name}
+			</if>
+			<if test="sub != null and sub.houseType != '' and sub.houseType != null">
+				and sub.house_type = #{sub.houseType}
+			</if>
+			<if test="sub != null and sub.building != '' and sub.building != null">
+				and sub.building = #{sub.building}
+			</if>
+			<if test="listMaterialTypes != null and listMaterialTypes.size > 0">
+				and a.material_type in
+						<foreach collection="listMaterialTypes" item="m" index="i"
+			       			 open="(" close=")" separator=",">
+			       		 			#{m}
+			    		</foreach>
+			</if>
+			<if test="listMaterialNos != null and listMaterialNos.size > 0">
+				and a.material_no in
+						<foreach collection="listMaterialNos" item="no" index="i"
+			       			 open="(" close=")" separator=",">
+			       		 			#{no}
+			    		</foreach>
+			</if>
+			<if test="materialName != null and materialName != '' ">
+				and a.material_name = #{materialName}
+			</if>
+		<choose>
+			<when test="groupByStr != null and groupByStr != '' and groupByStr == 'projectName'">
+				group by project.name
+			</when>
+			<when test="groupByStr != null and groupByStr != '' and groupByStr == 'houseType'">
+				group by sub.house_type
+			</when>
+			<when test="groupByStr != null and groupByStr != '' and groupByStr == 'building'">
+				group by sub.building
+			</when>
+			<when test="groupByStr != null and groupByStr != '' and groupByStr == 'inv'">
+				group by a.id
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	<!-- 统计下料相关数据 -->
+	<select id="getObbaseDataByID" resultType="Inventory">
+		select 
+			sum(obdetail.count) as "orderBomDetail.count",
+			ifnull(obdetail.standard_desc,"") as "orderBomDetail.size",
+			ifnull(obdetail.unit,"") as "orderBomDetail.unit",
+			ifnull(obdetail.box_no,"") as "orderBomDetail.boxNo",
+			ifnull(obdetail.materiel_no,"") as "orderBomDetail.materielNo",
+			ifnull(obdetail.standard_desc,"") as "orderBomDetail.standardDesc",
+			ifnull(obdetail.standard_radius,"") as "orderBomDetail.standardRadius",
+			ifnull(obdetail.standard_long,"") as "orderBomDetail.standardLong",
+			ifnull(obdetail.standard_width,"") as "orderBomDetail.standardWidth",
+			ifnull(obdetail.standard_depth,"") as "orderBomDetail.standardDepth",
+			ifnull(obdetail.process_chart_no,"") as "orderBomDetail.processChartNo",
+			ifnull(obdetail.remark,"") as "orderBomDetail.remark",
+			ifnull(obdetail.unit,"") as "orderBomDetail.unit",
+			<include refid="inventoryColumns"/>
+			from btg_inventory a
+				join btg_depot depot on depot.id=a.depot_id
+				join btg_order_bom_base obbase on obbase.sub_proj_id=depot.sub_id
+				left join btg_order_bom_detail obdetail 
+									on obdetail.order_bom_id=obbase.id 
+									<!-- and obdetail.materiel_name=a.material_name -->
+									and obdetail.materiel_no=a.material_no
+			where (1=1) and obbase.del_flag=#{DEL_FLAG_NORMAL}
+			<if test="ids !=null and ids.size > 0 ">
+				and a.id in
+						<foreach collection="ids" item="id" index="i"
+		           			 open="(" close=")" separator=",">
+		           		 			#{id}
+		        		</foreach>
+			</if>
+			<if test="id != null and id != ''">
+				and a.id = #{id}
+			</if>
+			<!-- <if test="materialName != null and materialName != ''">
+				and a.material_name = #{materialName}
+			</if>
+			<if test="materialType != null and materialType != ''">
+				and a.material_type = #{materialType}
+			</if>
+			<if test="materialNo != null and materialNo != ''">
+				and a.material_no = #{materialNo}
+			</if>
+			<if test="depot != null and depot.id != null and depot.id != ''">
+				and a.depot_id = #{depot.id}
+			</if> -->
+		GROUP BY a.id	
+	</select>
+	<select id="getInventoryOutQuantity" resultType="Inventory">
+		select 
+			sum(sbdetail.quantity) as "outQuantity",
+			<include refid="inventoryColumns"/>
+			from btg_inventory a
+				left join btg_standing_book_detail sbdetail on sbdetail.inventory_id=a.id
+				left join btg_standing_book standingbook on standingbook.id=sbdetail.standing_book_id
+			where (1=1) and a.del_flag=#{DEL_FLAG_NORMAL}
+			<if test="ids !=null and ids.size > 0 ">
+				and a.id in
+						<foreach collection="ids" item="id" index="i"
+		           			 open="(" close=")" separator=",">
+		           		 			#{id}
+		        		</foreach>
+			</if>
+			<if test="id != null and id != ''">
+				and a.id = #{id}
+			</if>
+			<if test="tranType != null and tranType != ''">
+				and standingbook.tran_type = #{tranType}
+			</if>
+			<if test="materialName != null and materialName != ''">
+				and a.material_name = #{materialName}
+			</if>
+			<if test="materialType != null and materialType != ''">
+				and a.material_type = #{materialType}
+			</if>
+			<if test="materialNo != null and materialNo != ''">
+				and a.material_no = #{materialNo}
+			</if>
+			<if test="depot != null and depot.id != null and depot.id != ''">
+				and a.depot_id = #{depot.id}
+			</if>
+		GROUP BY a.id	
+	</select>
+	<!-- 根据相应的条件获取库存量 -->
+	<select id="getQuantityByCondition" resultType="Inventory">
+		select 
+			 <include refid="inventoryColumns"/>
+			from btg_inventory a 
+				left join btg_depot depot on depot.id=a.depot_id
+				left join btg_subproject sub on sub.id=depot.sub_id
+				left join btg_project project on project.id=depot.project_id
+				<if test="materialType=='sc'">
+					join btg_order_bom_detail obdetail on obdetail.id = a.material_id
+					join btg_order_bom_base obbase on obbase.id=obdetail.order_bom_id
+				</if>
+			where (1=1) and a.del_flag=#{DEL_FLAG_NORMAL}
+				<if test="materialName != null and materialName != ''">
+					and a.material_name = #{materialName}
+				</if>
+				<if test="materialNo != null and materialNo != ''">
+					and a.material_no = #{materialNo}
+				</if>
+				<!-- <if test="depot != null and depot.depotUser != '' and depot.depotUser != null">
+					and depot.user_id=#{depot.depotUser.id}
+				</if> -->
+				<if test="project != null and project.name != '' and project.name != null">
+					and project.name = #{project.name}
+				</if>
+				<if test="sub != null and sub.houseType != '' and sub.houseType != null">
+					and sub.house_type = #{sub.houseType}
+				</if>
+				<if test="sub != null and sub.building != '' and sub.building != null">
+					and sub.building = #{sub.building}
+				</if>
+				<if test="materialType=='sc' and orderBomBase!=null and orderBomBase.orderType!=null and orderBomBase.orderType!=''">
+					and obbase.order_type=#{orderBomBase.orderType}
+				</if>
+				
+				<if test="groupByStr != null and groupByStr == 'materialId'">
+					group by a.material_id
+				</if>
+				<if test="groupByStr != null and groupByStr == 'materialNo'">
+					group by a.material_no
+				</if>
+			
+	</select>
+</mapper>

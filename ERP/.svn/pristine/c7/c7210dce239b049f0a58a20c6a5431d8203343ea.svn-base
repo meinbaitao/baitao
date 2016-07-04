@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.supplier.dao.UserSuppMappingDao">
+    
+	<sql id="userSuppMappingColumns">
+		a.id AS "id",
+		a.user_id AS "user.id",
+		a.supp_id AS "supp.id",
+		u2.name AS "user.name"
+	</sql>
+	
+	<sql id="userSuppMappingJoins">
+		LEFT JOIN sys_user u2 ON u2.id = a.user_id
+	</sql>
+    
+    
+    <select id="userSuppMappingListPage" resultType="UserSuppMapping">
+		SELECT 
+			a.id AS "id",
+			
+			user.id AS "user.id",
+			user.name AS "user.name",
+			
+			supp.id AS "supp.id",
+			supp.seriesnumber AS "supp.seriesnumber",
+			supp.name AS "supp.name",
+			suppUser.name AS "supp.businessPreson",
+			supp.business_tel AS "supp.businessTel",
+			supp.remarks AS "supp.remarks"
+			
+		FROM btg_supplier supp
+			left join btg_user_supp_mapping a on a.supp_id = supp.id
+			left join sys_user user on user.id = a.user_id
+			left join sys_user suppUser on suppUser.id = supp.business_preson
+			where (1=1)
+		<if test="user!=null and user.id!=null and user.id!=''">
+			and a.user_id = #{user.id}
+		</if>
+		<if test="supp!=null and supp.supplierType!=null and supp.supplierType!=''">
+			and supp.supplier_Type = #{supp.supplierType}
+		</if>
+		<if test="supp!=null and supp.name!=null and supp.name!=''">
+			and supp.name like concat('%', #{supp.name}, '%')
+		</if>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	<select id="userSuppMappingList" resultType="UserSuppMapping">
+		SELECT 
+			a.id AS "id",
+			
+			user.id AS "user.id",
+			user.name AS "user.name",
+			
+			supp.id AS "supp.id",
+			supp.seriesnumber AS "supp.seriesnumber",
+			ifnull(supp.name,"") AS "supp.name",
+			ifnull(suppUser.name,"") AS "supp.businessPreson",
+			ifnull(supp.business_tel,"") AS "supp.businessTel",
+			supp.remarks AS "supp.remarks"
+			
+		FROM btg_supplier supp
+			left join btg_user_supp_mapping a on a.supp_id = supp.id
+			left join sys_user user on user.id = a.user_id
+			left join sys_user suppUser on suppUser.id = supp.business_preson
+			where (1=1)
+		<if test="user!=null and user.id!=null and user.id!=''">
+			and a.user_id = #{user.id}
+		</if>
+		<if test="supp!=null and supp.supplierType!=null and supp.supplierType!=''">
+			and supp.supplier_Type = #{supp.supplierType}
+		</if>
+	</select>
+	<!-- 根据条件返回单条数据 -->
+	<select id="getOne" resultType="UserSuppMapping">
+		SELECT 
+			a.id AS "id",
+			
+			user.id AS "user.id",
+			user.name AS "user.name",
+			
+			supp.id AS "supp.id",
+			supp.seriesnumber AS "supp.seriesnumber",
+			supp.name AS "supp.name",
+			suppUser.name AS "supp.businessPreson",
+			supp.business_tel AS "supp.businessTel",
+			supp.remarks AS "supp.remarks"
+			
+		FROM btg_supplier supp
+			left join btg_user_supp_mapping a on a.supp_id = supp.id
+			left join sys_user user on user.id = a.user_id
+			left join sys_user suppUser on suppUser.id = supp.business_preson
+			where 
+			(1=1)
+		<!-- <if test="user!=null and user.id!=null and user.id!=''">
+			and a.user_id = #{user.id}
+		</if> -->
+		<if test="supp!=null and supp.id!=null and supp.id!=''">
+			and a.supp_id = #{supp.id}
+		</if>
+		<if test="supp!=null and supp.supplierType!=null and supp.supplierType!=''">
+			and supp.supplier_type = #{supp.supplierType}
+		</if>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+    
+    
+    
+	<select id="get" resultType="UserSuppMapping">
+		SELECT 
+			<include refid="userSuppMappingColumns"/>
+		FROM btg_user_supp_mapping a
+		<include refid="userSuppMappingJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="UserSuppMapping">
+		SELECT 
+			<include refid="userSuppMappingColumns"/>
+		FROM btg_user_supp_mapping a
+		<include refid="userSuppMappingJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="UserSuppMapping">
+		SELECT 
+			<include refid="userSuppMappingColumns"/>
+		FROM btg_user_supp_mapping a
+		<include refid="userSuppMappingJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_user_supp_mapping(
+			id,
+			user_id,
+			supp_id
+		) VALUES (
+			#{id},
+			#{user.id},
+			#{supp.id}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_user_supp_mapping SET 	
+			user_id = #{user.id}
+		WHERE supp_id = #{supp.id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_user_supp_mapping
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

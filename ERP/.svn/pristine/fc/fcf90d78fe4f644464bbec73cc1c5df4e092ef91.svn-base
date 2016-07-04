@@ -1,0 +1,42 @@
+package com.bt.modules.test.impdata;
+
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.bt.common.utils.MsgSocketClient;
+import com.bt.modules.impdata.proxy.ImpDataProxyClient;
+import com.bt.modules.test.basic.BasicTest;
+
+public class ImpDataTest extends BasicTest {
+	
+	@Autowired
+	private ImpDataProxyClient client;
+	
+
+	@Test
+	public void testImpTestData(){
+		int key = 1;
+		switch (key) {
+		case 1:
+			client.impTestData();
+			break;
+
+		default:
+			break;
+		}
+		
+	}
+	
+	
+	@Test
+	public void testSendSocketMsg(){
+		
+		for (int i = 0; i < 10; i++) {
+			MsgSocketClient.sendUser("发送消息-----------"+i, "admin");
+		}
+		
+	}
+	
+	
+	
+}

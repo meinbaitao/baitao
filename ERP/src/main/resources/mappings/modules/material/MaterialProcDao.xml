@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.material.dao.MaterialProcDao">
+    
+	<sql id="materialProcColumns">
+		a.id as "id",
+		a.type AS "type",
+		a.name AS "name",
+		a.seriesnumber AS "seriesnumber",
+		a.procspec as "procspec", 
+		a.speclength as "speclength",
+		a.specwidth as "specwidth",
+		a.specheight as "specheight",
+		a.unit as "unit",
+		a.comment as "comment",
+		a.isdeleted as "isdeleted",
+		a.version as "version",
+		a.createts as "createts",
+		a.updatets as "updatets",
+		a.updateby as "updateby",
+		a.taxrate as "taxrate",
+		a.invoicetype as "invoicetype",
+		a.pictureth as "pictureth",
+		a.materialsurfdecoration as "materialsurfdecoration",
+		a.prices as "prices",
+		a.housetype as "housetype"
+	</sql>
+	
+	<sql id="materialProcJoins">
+	</sql>
+	<!-- 石材加工标准库的数据新增 -->
+	<insert id="insert">
+		INSERT INTO btg_material_proc(
+			id,
+			type,
+			name,
+			seriesnumber,
+			procspec,
+			prices,
+			speclength,
+			specwidth,
+			specheight,
+			unit,
+			comment,
+			isdeleted,
+			version,
+			createts,
+			updatets,
+			updateby,
+			taxrate,
+			invoicetype,
+			pictureth,
+			materialsurfdecoration,
+			housetype
+		) VALUES (
+			#{id},
+			#{type},
+			#{name},
+			#{seriesnumber},
+			#{procspec},
+			#{prices},
+			#{speclength},
+			#{specwidth},
+			#{specheight},
+			#{unit},
+			#{comment},
+			0,
+			1,
+			#{createdts},
+			#{updatedts},
+			#{updateby},
+			#{taxrate},
+			#{invoicetype},
+			#{pictureth},
+			#{materialsurfdecoration},
+			#{housetype}
+		)
+	</insert>
+	
+	<!-- 石材加工标准库的查询  -->
+	<select id="findList" resultType="MaterialProc">
+		SELECT 
+			<include refid="materialProcColumns"/>
+		FROM btg_material_proc a
+		<include refid="materialProcJoins"/>
+		<where>
+			
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+    
+	<select id="get" resultType="MaterialProc">
+		SELECT 
+			<include refid="materialProcColumns"/>
+		FROM btg_material_proc a
+		<include refid="materialProcJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	
+	<!--
+	<select id="findList" resultType="Material">
+		SELECT 
+			<include refid="materialColumns"/>
+		FROM bt_material a
+		<include refid="materialJoins"/>
+		<where>
+			
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	-->
+	<select id="findAllList" resultType="MaterialProc">
+		SELECT 
+			<include refid="materialProcColumns"/>
+		FROM btg_material_proc a
+		<include refid="materialProcJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<update id="update">
+		UPDATE btg_material_proc SET 	
+			type = #{type},
+			name = #{name},
+			seriesnumber = #{seriesnumber},
+			procspec = #{procspec},
+			speclength = #{speclength},
+			specwidth = #{specwidth},
+			specheight = #{specheight},
+			unit = #{unit},
+			comment = #{comment},
+			isdeleted = #{isdeleted},
+			updatets = #{updatedts},
+			updateby = #{updateby},
+			taxrate = #{taxrate},
+			invoicetype = #{invoicetype},
+			pictureth = #{pictureth},
+			materialsurfdecoration = #{materialsurfdecoration},
+			housetype = #{housetype}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		<!-- DELETE FROM btg_material_proc
+		WHERE materialproc_id = #{id}-->
+		UPDATE btg_material_proc SET 	
+			del_falg = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

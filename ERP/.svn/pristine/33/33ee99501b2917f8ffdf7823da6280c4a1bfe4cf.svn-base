@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.contract.dao.OtherContractDetailDao">
+    
+	<sql id="otherContractDetailColumns">
+		a.id AS "id",
+		a.contract_id AS "contractId",
+		a.pay_stage AS "payStage",
+		a.pay_clause AS "payClause",
+		a.pay_ratio AS "payRatio",
+		a.price AS "price",
+		a.remark AS "remark"
+	</sql>
+	
+	<sql id="otherContractDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="OtherContractDetail">
+		SELECT 
+			<include refid="otherContractDetailColumns"/>
+		FROM btg_other_contract_detail a
+		<include refid="otherContractDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OtherContractDetail">
+		SELECT 
+			<include refid="otherContractDetailColumns"/>
+		FROM btg_other_contract_detail a
+		<include refid="otherContractDetailJoins"/>
+		<where>
+			
+			<if test="contractId != null and contractId != ''">
+				AND a.contract_id = #{contractId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				order by a.pay_stage
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OtherContractDetail">
+		SELECT 
+			<include refid="otherContractDetailColumns"/>
+		FROM btg_other_contract_detail a
+		<include refid="otherContractDetailJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_other_contract_detail(
+			id,
+			contract_id,
+			pay_stage,
+			pay_clause,
+			pay_ratio,
+			price,
+			remark
+		) VALUES (
+			#{id},
+			#{contractId},
+			#{payStage},
+			#{payClause},
+			#{payRatio},
+			#{price},
+			#{remark}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_other_contract_detail SET 	
+			pay_stage = #{payStage},
+			pay_clause = #{payClause},
+			pay_ratio = #{payRatio},
+			price = #{price},
+			remark = #{remark}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM btg_other_contract_detail
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

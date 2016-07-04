@@ -1,0 +1,122 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.contract.service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.bt.modules.contract.entity.ConYearContract;
+import com.bt.modules.contract.dao.ConYearContractDao;
+import com.bt.modules.contract.dao.ContractAccountDao;
+import com.bt.modules.utils.SeriesNumberUtils;
+
+/**
+ * 年度合同Service
+ * @author yhh
+ * @version 2015-08-14
+ */
+@Service
+@Transactional(readOnly = true)
+public class ConYearContractService extends CrudService<ConYearContractDao, ConYearContract> {
+
+	public static final String BEAN_NAME = "com.bt.modules.contract.service.ConYearContractService";
+	
+	@Autowired
+	private ConYearContractDao conYearContractDao;
+	
+	@Autowired
+	private ContractAccountDao contractAccountDao;
+	
+	public ConYearContract get(String id) {
+		return super.get(id);
+	}
+	
+	/**
+	 * 判断记录是否存在
+	 * @param id
+	 * @return
+	 */
+	public boolean isExist(String id){
+		ConYearContract entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = conYearContractDao.get(id);
+		}
+		if(entity == null){
+			return false;
+		}
+		return true;
+	}
+	
+	public List<ConYearContract> findList(ConYearContract conYearContract) {
+		return super.findList(conYearContract);
+	}
+	
+	public Page<ConYearContract> findPage(Page<ConYearContract> page, ConYearContract conYearContract) {
+		return super.findPage(page, conYearContract);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(ConYearContract conYearContract) {
+		if(isExist(conYearContract.getId())){
+			conYearContract.setIsNewRecord(false);
+			super.save(conYearContract);
+		}else{
+			conYearContract.setIsNewRecord(true);
+			String seriesnumber = createSeriesnumber(conYearContract);
+			conYearContract.setContractNo(seriesnumber);
+			super.save(conYearContract);
+		}
+	}
+	
+	/**
+	 * 生成合同编号
+	 * @param entity
+	 * @return
+	 */
+	public String createSeriesnumber(ConYearContract entity){
+		String department = entity.getDepartment();
+		String fristType = entity.getFristType();
+		String partyBCode = entity.getPartyBCode();
+		if(StringUtils.isNotBlank(department)){
+			department = contractAccountDao.getContractAccountTypeById(department);
+		}
+		if(StringUtils.isNotBlank(fristType)){
+			fristType = contractAccountDao.getContractAccountTypeById(fristType);
+		}
+		
+		String prefix = department + "-" + fristType + "-";
+		if(StringUtils.isNotBlank(partyBCode)){
+			prefix = prefix + partyBCode + "-";
+		}
+		String date = DateUtils.getDate("yyyyMMdd");
+		int count = conYearContractDao.getTodayCount(date);
+		String number = SeriesNumberUtils.createSeriesNumber(prefix,date, count);
+		return number;
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(ConYearContract conYearContract) {
+		super.delete(conYearContract);
+	}
+	
+	/**
+	 * 由合同编号获取合同
+	 * @param mcb
+	 * @return
+	 */
+	public ConYearContract getByContractId(ConYearContract	mcb){
+		return conYearContractDao.getByContractId(mcb);
+	}
+	
+	public ConYearContract getByTeamName(ConYearContract cyc){
+		return conYearContractDao.getByTeamName(cyc);
+	}
+}

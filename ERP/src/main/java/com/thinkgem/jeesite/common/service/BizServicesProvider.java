@@ -1,0 +1,78 @@
+package com.thinkgem.jeesite.common.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.bt.modules.accident.service.AccidentManageService;
+import com.bt.modules.contract.service.JiaContractService;
+import com.bt.modules.contract.service.LaborDemandService;
+import com.bt.modules.contract.service.LaborcontractService;
+import com.bt.modules.contract.service.PurchasingContractBaseService;
+import com.bt.modules.contract.service.StoneCarriageContractBaseService;
+import com.bt.modules.finance.service.LaborSettlementService;
+import com.bt.modules.finance.service.TransportationSettlementService;
+import com.bt.modules.orbom.service.OrderBomBaseService;
+import com.bt.modules.project.service.ProjectService;
+import com.bt.modules.project.service.SubProjectService;
+import com.bt.modules.purchase.service.PurchaseService;
+import com.bt.modules.report.weekly.mianly.service.ProjWeeklyReportService;
+import com.bt.modules.todotask.service.TodoTaskRedirectMappingService;
+import com.thinkgem.jeesite.modules.taskmapping.service.ActCurrentTaskService;
+
+/**
+ * 用来提供整个系统的业务服务方法
+ * 方便后期拓展维护
+ * @author 许俊雄
+ *
+ */
+@Component
+public class BizServicesProvider {
+	//当前任务
+	@Autowired
+	protected ActCurrentTaskService currentTaskService;
+	//下料单
+	@Autowired
+	protected OrderBomBaseService orderBomBaseService;
+	//业务跳转映射
+	@Autowired
+	protected TodoTaskRedirectMappingService todoTaskRedirectMappingService;
+	//事故管理
+	@Autowired
+	protected AccidentManageService accidentManageService;
+	//周报管理
+	@Autowired
+	protected ProjWeeklyReportService weeklyReportService;
+	//劳务需求
+	@Autowired
+	protected LaborDemandService laborDemandService;
+	//劳务需求
+	@Autowired
+	protected LaborcontractService laborcontractService;
+	//甲方合同
+	@Autowired
+	protected JiaContractService jiaContractService;
+	//采购
+	@Autowired
+	protected PurchaseService purchaseService;
+	//采购合同
+	@Autowired
+	protected PurchasingContractBaseService pcBaseService;
+	//石材运输合同管理
+	@Autowired
+	protected StoneCarriageContractBaseService aContractService;
+	//运费登记
+	@Autowired
+	protected TransportationSettlementService transSService;
+	//劳务结算
+	@Autowired
+	protected LaborSettlementService laborSettlementService ;
+	
+	/**
+	 * 一级项目Service
+	 */
+	@Autowired
+	protected ProjectService projectService;
+	
+	@Autowired
+	protected SubProjectService subProjectService; // 二级项目
+}

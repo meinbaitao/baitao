@@ -1,0 +1,36 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.contract.entity;
+
+import com.bt.modules.supplier.entity.Supplier;
+
+/**
+ * stonecarry1Entity
+ * @author yhh
+ * @version 2015-08-11
+ */
+public class StoneCarriageContractBase extends ConContainDetail<StoneCarriageContractBase, StoneCarriageContractDetail> {
+	
+	private static final long serialVersionUID = 1L;
+	
+	private Supplier supp = new Supplier();			//供应商
+	
+	public StoneCarriageContractBase() {
+		super();
+	}
+
+	public StoneCarriageContractBase(String id){
+		super(id);
+	}
+
+	public Supplier getSupp() {
+		return supp;
+	}
+
+	public void setSupp(Supplier supp) {
+		this.supp = supp;
+	}
+	
+
+}

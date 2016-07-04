@@ -1,0 +1,117 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.finance.dao;
+
+import java.util.List;
+import java.util.Map;
+
+import com.thinkgem.jeesite.common.persistence.CrudDao;
+import com.thinkgem.jeesite.common.persistence.annotation.MyBatisDao;
+import com.bt.modules.contract.entity.ManufContractDetail;
+import com.bt.modules.finance.entity.ManufOrderBom;
+import com.bt.modules.finance.entity.ManufSettlement;
+import com.bt.modules.finance.entity.ManufSettlementMapping;
+import com.bt.modules.logistics.entity.LogisticsDetail;
+import com.bt.modules.material.entity.SettlementMaterial;
+import com.bt.modules.orbom.entity.OrderBomBase;
+
+/**
+ * 生产结算单DAO接口
+ * @author yhh
+ * @version 2015-10-15
+ */
+@MyBatisDao
+public interface ManufSettlementDao extends CrudDao<ManufSettlement> {
+	
+	/**
+	 * 由发货通知单id获取需生成结算单
+	 * @param seriesnumber 发货通知单号
+	 * @return
+	 *
+	public List<ManufSettlement> createSettlementList(String logisticsId);
+	
+	/**
+	 * 获取发货物料
+	 * @param logisticsDetail
+	 * @return
+	 */
+	public List<LogisticsDetail> findSettlementDetailList(Map<String,Object> parameter);
+	
+	/**
+	 * 查结算单处理几种下料单类型
+	 * @param manufSettlement
+	 * @return
+	 *
+	public List<LogisticsDetail> findOrderBomTypeList(ManufSettlement manufSettlement);
+	
+	/**
+	 * 查加工厂有效加工项的价格
+	 * @param parameter(加工厂id,下料单下单时间)
+	 * @return
+	 */
+	public List<ManufContractDetail> findContractPriceList(Map<String,Object> parameter);
+	
+	/**
+	 * 查结算单关联下料单
+	 * @param manufSettlement
+	 * @return
+	 */
+	public List<ManufSettlementMapping> findOrderBomList(ManufSettlement manufSettlement);
+	
+	/**
+	 * 查下料单所属项目,加工厂
+	 * @param manufOrderBom
+	 * @return
+	 */
+	public List<ManufOrderBom> findManufOrderBom(String orderBomId);
+	
+	/**
+	 * 查询当天生成编号数
+	 * @param date
+	 * @return
+	 */
+	public int getTodayCount(String date);
+	
+	/**
+	 * 查询结算单加工项编号
+	 * @param settlementMap
+	 * @return
+	 */
+	public List<String> getSettlementItem(String materialNo);
+	
+	/**
+	 * 查询所有可配置物料编号
+	 * @param settlementMap
+	 * @return
+	 */
+	public List<String> getAllMaterialNoItem(Map<String, String> map);
+	
+	/**
+	 * 根据类型查询物料编号
+	 * @param settlementMap
+	 * @return
+	 */
+	public List<String> getMaterialNoByType(Map<String, String> map);
+	
+	/**
+	 * 查询类型加工项编号列表
+	 * @param itemType
+	 * @return
+	 */
+	public List<String> getTypeSettlementItem(Map<String, String> map);
+	
+	/**
+	 * 查询编号对应的加工项名称
+	 * @param itemCode
+	 * @return
+	 */
+	public String getSettlementName(Map<String, String> map);
+	
+	/**
+	 * 查询下料单加工图号
+	 * @param detail
+	 * @return
+	 */
+	public String getprocessChartNo(LogisticsDetail detail);
+}

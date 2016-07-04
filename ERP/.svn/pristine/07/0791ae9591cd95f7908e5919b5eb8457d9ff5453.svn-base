@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bt.modules.finance.dao.ManufSettlementDetailDao">
+    
+	<sql id="manufSettlementDetailColumns">
+		a.id AS "id",
+		a.mapping_id AS "mappingId",
+		a.manuf_name AS "manufName",
+		a.length AS "length",
+		a.width AS "width",
+		a.heigh AS "heigh",
+		a.unit AS "unit",
+		a.number AS "number",
+		a.price AS "price",
+		a.sum AS "sum",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="manufSettlementDetailJoins">
+	</sql>
+    
+	<select id="get" resultType="ManufSettlementDetail">
+		SELECT 
+			<include refid="manufSettlementDetailColumns"/>
+		FROM btg_manuf_settlement_detail a
+		<include refid="manufSettlementDetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="ManufSettlementDetail">
+		SELECT 
+			<include refid="manufSettlementDetailColumns"/>
+		FROM btg_manuf_settlement_detail a
+		<include refid="manufSettlementDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="mappingId != null and mappingId != ''">
+				AND a.mapping_id = #{mappingId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.manuf_name DESC,a.update_date ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ManufSettlementDetail">
+		SELECT 
+			<include refid="manufSettlementDetailColumns"/>
+		FROM btg_manuf_settlement_detail a
+		<include refid="manufSettlementDetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO btg_manuf_settlement_detail(
+			id,
+			mapping_id,
+			manuf_name,
+			length,
+			width,
+			heigh,
+			unit,
+			number,
+			price,
+			sum,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{mappingId},
+			#{manufName},
+			#{length},
+			#{width},
+			#{heigh},
+			#{unit},
+			#{number},
+			#{price},
+			#{sum},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE btg_manuf_settlement_detail SET 	
+			mapping_id = #{mappingId},
+			manuf_name = #{manufName},
+			unit = #{unit},
+			number = #{number},
+			price = #{price},
+			sum = #{sum},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE btg_manuf_settlement_detail SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,590 @@
+/**
+ * Copyright &copy; 2012-2014 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.bt.modules.orbom.service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.bt.common.exceptions.BusinessException;
+import com.bt.modules.inventory.entity.Inventory;
+import com.bt.modules.inventory.entity.StandingBookDetail;
+import com.bt.modules.inventory.service.StandingBookDetailService;
+import com.bt.modules.orbom.entity.OrderBomBase;
+import com.bt.modules.orbom.entity.OrderBomDetail;
+import com.bt.modules.orbom.impl.OrderBomDetailImpl;
+import com.bt.modules.orbom.dao.OrderBomDetailDao;
+import com.bt.modules.project.entity.Project;
+import com.bt.modules.project.entity.Subproject;
+import com.bt.modules.project.service.SubProjectService;
+import com.bt.modules.utils.CommonConstant;
+import com.bt.modules.utils.MathUtil;
+
+/**
+ * 下料单明细表Service
+ * 
+ * @author ljp
+ * @version 2015-08-05
+ */
+@Service
+@Transactional(readOnly = true)
+public class OrderBomDetailService extends
+		CrudService<OrderBomDetailDao, OrderBomDetail> implements
+		OrderBomDetailImpl {
+
+	@Autowired
+	private OrderBomDetailDao orderBomDetailDao;
+	@Autowired
+	private SubProjectService subProjectService; // 二级项目信息
+	@Autowired
+	private StandingBookDetailService standingBookDetailService; // 库存记录
+
+	public OrderBomDetail get(String id) {
+		return super.get(id);
+	}
+
+	public List<OrderBomDetail> findList(OrderBomDetail orderBomDetail) {
+		return super.findList(orderBomDetail);
+	}
+
+	public Page<OrderBomDetail> findPage(Page<OrderBomDetail> page,
+			OrderBomDetail orderBomDetail) {
+		return super.findPage(page, orderBomDetail);
+	}
+
+	@Transactional(readOnly = false)
+	public void insert(OrderBomDetail orderBomDetail) {
+		orderBomDetailDao.insert(orderBomDetail);
+	}
+
+	@Transactional(readOnly = false)
+	public void save(OrderBomDetail orderBomDetail) {
+		super.save(orderBomDetail);
+	}
+
+	@Transactional(readOnly = false)
+	public void delete(OrderBomDetail orderBomDetail) {
+		super.delete(orderBomDetail);
+	}
+
+	@Transactional(readOnly = false)
+	public void deleteByOId(OrderBomDetail orderBomDetail) {
+		orderBomDetailDao.deleteByOId(orderBomDetail);
+	}
+
+	/**
+	 * 提供给采购
+	 * 
+	 * @param orderBomDetail
+	 * @return
+	 */
+	public List<OrderBomDetail> findListForPurchase(
+			OrderBomDetail orderBomDetail) {
+		return orderBomDetailDao.findListForPurchase(orderBomDetail);
+	}
+
+	/**
+	 * 查询箱号
+	 * 
+	 * @param orderBomBase
+	 * @return
+	 */
+	public List<OrderBomDetail> findBoxNo(OrderBomDetail orderBomDetail) {
+		return orderBomDetailDao.findBoxNo(orderBomDetail);
+	}
+
+	/**
+	 * 获取明细对象
+	 * 
+	 * @param orderBomBase
+	 * @return
+	 */
+	public OrderBomDetail getOrderBomDetail(OrderBomDetail orderBomDetail) {
+		List<OrderBomDetail> list = orderBomDetailDao
+				.getOrderBomDetail(orderBomDetail);
+		OrderBomDetail obd = null;
+		if (list != null && list.size() > 0) {
+			obd = list.get(0);
+		} else {
+			obd = new OrderBomDetail();
+		}
+		return obd;
+	}
+
+	public List<String> findBoxesByOrderId(String orderBomId) {
+		return orderBomDetailDao.findBoxesByOrderId(orderBomId);
+	}
+
+	/**
+	 * 查看库存列表数据
+	 * 
+	 * @param orderBomDetail
+	 * @return
+	 */
+	public List<OrderBomDetail> getListForGFLToInventory(
+			OrderBomDetail orderBomDetail) {
+		List<OrderBomDetail> listOBDetail = orderBomDetailDao
+				.getListToInventory(orderBomDetail);
+		if (listOBDetail == null) {
+			listOBDetail = new ArrayList<OrderBomDetail>();
+		}
+		return listOBDetail;
+	}
+
+	/**
+	 * 
+	 * @param orderBomDetail
+	 * @param imt
+	 * @return
+	 */
+	@Transactional(readOnly = false)
+	public List<OrderBomDetail> getListToInventory(
+			OrderBomDetail orderBomDetail, String imt) {
+		OrderBomBase orderBomBase = orderBomDetail.getOrderBomBase() == null ? new OrderBomBase()
+				: orderBomDetail.getOrderBomBase();
+		if (CommonConstant.INVENTORY_MATERIAL_TYPE_GFL.equals(imt)) {
+			orderBomBase.setOrderType(CommonConstant.OrderBomBase_PURCHASE);
+			orderBomBase.setGbStr("aid");
+		} else if (CommonConstant.INVENTORY_MATERIAL_TYPE_SC.equals(imt)) {
+			orderBomDetail.setLsgtVal(CommonConstant.OrderBomBase_PURCHASE);
+			orderBomBase.setGbStr("boxNo");
+		}
+		orderBomDetail.setOrderBomBase(orderBomBase);
+		List<OrderBomDetail> listOBDetail = orderBomDetailDao
+				.getListToInventory(orderBomDetail);
+		if (listOBDetail == null) {
+			listOBDetail = new ArrayList<OrderBomDetail>();
+		} else if (listOBDetail.size() > 0) {
+			// 循环统计相关的值
+			listOBDetail = this.listOBDetailExtraDataUtils(listOBDetail);
+		}
+		return listOBDetail;
+	}
+
+	/**
+	 * 获取箱的详情数据
+	 * 
+	 * @param orderBomDetail
+	 * @return
+	 */
+	@Transactional(readOnly = false)
+	public List<OrderBomDetail> getBoxDetail(OrderBomDetail orderBomDetail) {
+		OrderBomBase orderBomBase = new OrderBomBase();
+		orderBomDetail.setLsgtVal(CommonConstant.OrderBomBase_PURCHASE);
+		orderBomBase.setGbStr("aid");
+		orderBomDetail.setOrderBomBase(orderBomBase);
+		List<OrderBomDetail> listOBDetail = orderBomDetailDao
+				.getListToInventory(orderBomDetail);
+		if (listOBDetail == null) {
+			listOBDetail = new ArrayList<OrderBomDetail>();
+		} else if (listOBDetail.size() > 0) {
+			// 循环统计相关的值
+			listOBDetail = this.listOBDetailExtraDataUtils(listOBDetail);
+		}
+		return listOBDetail;
+	}
+
+	// 循环统计相关的值
+	public List<OrderBomDetail> listOBDetailExtraDataUtils(
+			List<OrderBomDetail> listOBDetail) {
+		OrderBomDetail orderBomDetail = listOBDetail.get(0);// 获取一个带有一级和二级的数据
+		Project project = orderBomDetail.getProject();
+		Subproject sub = orderBomDetail.getSub();
+		if (StringUtils.isBlank(sub.getBuilding())
+				|| StringUtils.isBlank(project.getName())) {
+			return listOBDetail;
+		}
+		// Subproject subproject =
+		// subProjectService.getOneByProjectNameAndBuild(projectName,building);
+		StandingBookDetail standingBookDetail;
+		Inventory inv;
+		for (OrderBomDetail obdetail : listOBDetail) { // 循环操作列表数据
+			// 组装必要的查询条件
+			inv = new Inventory();
+			inv.setMaterialNo(obdetail.getMaterielNo());
+			inv.setMaterialName(obdetail.getMaterielName());
+			inv.setProject(project);
+			inv.setSub(sub);
+
+			standingBookDetail = new StandingBookDetail();
+			standingBookDetail.setInventory(inv);
+			// 进行统计相关数值并赋值
+			int hasClaimCountQuantity = standingBookDetailService
+					.hasClaimCountQuantity(standingBookDetail);// 已领料数量
+			int countOrderBomBase = this.countOrderBomBase(obdetail);// 下单总量
+			int notClaimCountQuantity = countOrderBomBase
+					- hasClaimCountQuantity;// 未领料数量
+			int exceedCount = 0;// 超领料数量
+			if (notClaimCountQuantity < 0) {
+				exceedCount = notClaimCountQuantity * -1;
+				notClaimCountQuantity = 0;
+			}
+			obdetail.getExtraData().put("hasClaimCountQuantity",
+					hasClaimCountQuantity); // 已领料数量
+			obdetail.getExtraData().put("notClaimCountQuantity",
+					notClaimCountQuantity); // 未领料数量
+			obdetail.getExtraData().put("exceedCount", exceedCount); // 超领料数量
+			obdetail.getExtraData().put("countOrderBomBase", countOrderBomBase);
+		}
+		return listOBDetail;
+	}
+
+	/**
+	 * 设计下单总量
+	 * 
+	 * @param orderBomDetail
+	 * @return
+	 */
+	public int countOrderBomBase(OrderBomDetail orderBomDetail) {
+		return this.countByCondition(orderBomDetail);
+	}
+
+	/**
+	 * 根据条件统计相应的下料总量
+	 * 
+	 * @param orderBomDetail
+	 * @return
+	 */
+	public int countByCondition(OrderBomDetail orderBomDetail) {
+		return orderBomDetailDao.countByCondition(orderBomDetail);
+	}
+
+	@Transactional(readOnly = false)
+	public void update(OrderBomDetail orderBomDetail) {
+		orderBomDetailDao.update(orderBomDetail);
+	}
+
+	/**
+	 * 根据下料单id查询立面方向
+	 * 
+	 * @param orderBomDetail
+	 * @return
+	 */
+	public List<String> selectOutsideWallOrientation(String orderBomId) {
+		return orderBomDetailDao.selectOutsideWallOrientation(orderBomId);
+	}
+
+	@Override
+	public String area(OrderBomDetail orderBomDetail) throws BusinessException {
+		// TODO Auto-generated method stub
+		double standardLong = MathUtil.doubleUtils(orderBomDetail.getStandardLong());
+		double standardWidth = MathUtil.doubleUtils(orderBomDetail.getStandardWidth());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		
+		double area = MathUtil.scaleDouble(
+				(standardLong * standardWidth * count) / 1000000d, 2);
+		return area + "";
+	}
+
+	@Override
+	public String yzarea(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		double yzarea = 0;
+		String materialNo = orderBomDetail.getMaterielNo();
+		double standardLong = MathUtil.doubleUtils(orderBomDetail.getStandardLong());
+		double standardWidth = MathUtil.doubleUtils(orderBomDetail.getStandardWidth());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		
+		if (materialNo.contains("ZD01") || materialNo.contains("ZS01")) {
+			yzarea = MathUtil.scaleDouble((3.14 * standardLong * standardWidth * count) / 4 / 1000000d,2);
+		} else if (materialNo.contains("ZD02") || materialNo.contains("ZS02")
+				|| materialNo.contains("YLM01") || materialNo.contains("GLZ01")
+				|| materialNo.contains("GLZ02")) {
+			yzarea = MathUtil.scaleDouble((3.14 * standardLong * standardWidth * count) / 2 / 1000000d,2);
+		} else {
+			yzarea = MathUtil.scaleDouble((3.14 * standardLong * standardWidth * count) / 1000000d,2);
+		}
+		return yzarea + "";
+	}
+
+	@Override
+	public String volume(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		double standardLong = MathUtil.doubleUtils(orderBomDetail.getStandardLong());
+		double standardWidth = MathUtil.doubleUtils(orderBomDetail.getStandardWidth());
+		double standardDepth = MathUtil.doubleUtils(orderBomDetail.getStandardDepth());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		
+		double volume = MathUtil.scaleDouble(
+				((standardLong * standardWidth) / 10000) * standardDepth
+						* count / 100000d, 3);
+		return volume + "";
+	}
+
+	@Override
+	public String rohlingArea(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		double rohlingLong = MathUtil.doubleUtils(orderBomDetail.getRohlingLong());
+		double rohlingWidth = MathUtil.doubleUtils(orderBomDetail.getRohlingWidth());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		
+		double rohlingArea = MathUtil.scaleDouble(
+				(rohlingLong * rohlingWidth * count) / 1000000d, 2);
+		return rohlingArea + "";
+	}
+
+	@Override
+	public String rohlingVolume(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		double rohlingLong = MathUtil.doubleUtils(orderBomDetail.getRohlingLong());
+		double rohlingWidth = MathUtil.doubleUtils(orderBomDetail.getRohlingWidth());
+		double rohlingDepth = MathUtil.doubleUtils(orderBomDetail.getRohlingDepth());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		
+		double rohlingVolume = MathUtil.scaleDouble(
+				((rohlingLong * rohlingWidth) / 10000) * rohlingDepth * count
+						/ 100000d, 3);
+		return rohlingVolume + "";
+	}
+
+	@Override
+	public String openAngleOne(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		double openAngleMLeftOne;
+		double openAngleMRightOne;
+		String leftOpenAngle = orderBomDetail.getLeftOpenAngle();
+		String rightOpenAngle = orderBomDetail.getRightOpenAngle();
+		double standardWidth = MathUtil.doubleUtils(orderBomDetail.getStandardWidth());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		
+		if (leftOpenAngle.equals("A")) {
+			openAngleMLeftOne = (count * standardWidth) / 1000d;
+		} else {
+			openAngleMLeftOne = 0.00;
+		}
+		if (rightOpenAngle.equals("B")) {
+			openAngleMRightOne = (count * standardWidth) / 1000d;
+		} else {
+			openAngleMRightOne = 0.00;
+		}
+		double openAngleOne = MathUtil.scaleDouble(openAngleMLeftOne
+				+ openAngleMRightOne, 2);
+		return openAngleOne + "";
+	}
+
+	@Override
+	public String openAngleTwo(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		double openAngleMLeftTwo;
+		double openAngleMRightTwo;
+		String leftOpenAngle = orderBomDetail.getLeftOpenAngle();
+		String rightOpenAngle = orderBomDetail.getRightOpenAngle();
+		double standardWidth = MathUtil.doubleUtils(orderBomDetail.getStandardWidth());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		
+		if (leftOpenAngle.equals("C")) {
+			openAngleMLeftTwo = (count * standardWidth) / 1000d;
+		} else {
+			openAngleMLeftTwo = 0.00;
+		}
+		if (rightOpenAngle.equals("D")) {
+			openAngleMRightTwo = (count * standardWidth) / 1000d;
+		} else {
+			openAngleMRightTwo = 0.00;
+		}
+		double openAngleTwo = MathUtil.scaleDouble(openAngleMLeftTwo
+				+ openAngleMRightTwo, 2);
+		return openAngleTwo + "";
+	}
+
+	@Override
+	public String openSlotM1(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		double openSlotM = 0;
+		double standardLong = MathUtil.doubleUtils(orderBomDetail.getStandardLong());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		String remark = orderBomDetail.getRemark();
+		if (StringUtils.isBlank(remark)) {
+			remark = "";
+		}
+		
+		if (remark.equals("K25mm")) {
+			openSlotM = MathUtil.scaleDouble((count * standardLong) / 1000d, 2);
+		} else {
+			openSlotM = 0;
+		}
+		return openSlotM + "";
+	}
+
+	@Override
+	public String openSlotM2(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		double openSlotM = 0;
+		String processChartNo = orderBomDetail.getProcessChartNo();
+		double standardLong = MathUtil.doubleUtils(orderBomDetail.getStandardLong());
+		double standardWidth = MathUtil.doubleUtils(orderBomDetail.getStandardWidth());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		if (StringUtils.isBlank(processChartNo)) {
+			processChartNo = "";
+		}
+		
+		if (processChartNo.equals("JG-01")) {
+			openSlotM = MathUtil.scaleDouble(
+					(standardLong + standardWidth*2 - 15*2)* count / 1000d, 2);
+		} else if (processChartNo.equals("JG-02")) {
+			openSlotM = MathUtil.scaleDouble(
+					(standardLong + standardWidth - 15) * count / 1000d, 2);
+		} else if (processChartNo.equals("JG-03")) {
+			openSlotM = MathUtil.scaleDouble(standardWidth * 2 * count / 1000d,
+					2);
+		} else if (processChartNo.equals("JG-04")) {
+			openSlotM = MathUtil.scaleDouble(standardWidth * count / 1000d, 2);
+		} else if (processChartNo.equals("JG-05")) {
+			openSlotM = MathUtil.scaleDouble(
+					(standardLong + standardWidth - 15) * count / 1000d, 2);
+		} else if (processChartNo.equals("JG-06")) {
+			openSlotM = MathUtil.scaleDouble(standardLong * count / 1000d, 2);
+		} else if (processChartNo.equals("JG-07")) {
+			openSlotM = MathUtil.scaleDouble(standardWidth * count / 1000d, 2);
+		} else {
+			openSlotM = 0;
+		}
+		return openSlotM + "";
+	}
+
+	@Override
+	public String wdight1(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		double standardLong = MathUtil.doubleUtils(orderBomDetail.getStandardLong());
+		double standardWidth = MathUtil.doubleUtils(orderBomDetail.getStandardWidth());
+		double standardDepth = MathUtil.doubleUtils(orderBomDetail.getStandardDepth());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		
+		double wdight = MathUtil.scaleDouble(
+				((standardLong * standardWidth * standardDepth) / 1000000)
+						* count * 2.85d, 2);
+		return wdight + "";
+	}
+
+	@Override
+	public String wdight2(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		double standardLong = MathUtil.doubleUtils(orderBomDetail.getStandardLong());
+		double lineDensity = MathUtil.doubleUtils(orderBomDetail.getLineDensity());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		double wdight = MathUtil.scaleDouble(standardLong * lineDensity * count
+					/ 1000d, 2);
+		return wdight + "";
+	}
+	
+	@Override
+	public String wdight3(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		double rohlingLong = MathUtil.doubleUtils(orderBomDetail.getRohlingLong());
+		double lineDensity = MathUtil.doubleUtils(orderBomDetail.getLineDensity());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		
+		double wdight = MathUtil.scaleDouble(rohlingLong * lineDensity * count
+					/ 1000d, 2);
+		return wdight + "";
+	}
+	
+	@Override
+	public String cutAngleCount(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		String cutAngleCount;
+		int cutLeftnum;
+		int cutRightnum;
+		String cutLeft = orderBomDetail.getCutTurnLeft();
+		String cutRight = orderBomDetail.getCutTurnRight();
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		
+		if (cutLeft.equals("A")) {
+			cutLeftnum = count;
+		} else if (cutLeft.equals("C")) {
+			cutLeftnum = count;
+		} else if (cutLeft.equals("E")) {
+			cutLeftnum = count;
+		} else if (cutLeft.equals("按图切")) {
+			cutLeftnum = count;
+		} else {
+			cutLeftnum = 0;
+		}
+
+		if (cutRight.equals("B")) {
+			cutRightnum = count;
+		} else if (cutRight.equals("D")) {
+			cutRightnum = count;
+		} else if (cutRight.equals("F")) {
+			cutRightnum = count;
+		} else if (cutRight.equals("按图切")) {
+			cutRightnum = count;
+		} else {
+			cutRightnum = 0;
+		}
+		cutAngleCount = cutLeftnum + cutRightnum + "";
+		return cutAngleCount;
+	}
+
+	@Override
+	public String turnAngleCount(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		String turnAngleCount;
+		int turnLeftnum;
+		int turnRightnum;
+		String turnLeft = orderBomDetail.getCutTurnLeft();
+		String turnRight = orderBomDetail.getCutTurnRight();
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		
+		if (turnLeft.equals("Q1")) {
+			turnLeftnum = count;
+		} else {
+			turnLeftnum = 0;
+		}
+		if (turnRight.equals("Q2")) {
+			turnRightnum = count;
+		} else {
+			turnRightnum = 0;
+		}
+		turnAngleCount = turnLeftnum + turnRightnum + "";
+		return turnAngleCount;
+	}
+
+	@Override
+	public String isFamilyLine(String standardRadius) {
+		// TODO Auto-generated method stub
+		String isFamilyLine = "";
+		if (StringUtils.isNotBlank(standardRadius)) {
+			isFamilyLine = "是";
+		} else {
+			isFamilyLine = "否";
+		}
+		return isFamilyLine;
+	}
+
+	@Override
+	public String reversedAngleLong(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		double reversedAngleLong = 0;
+		double standardLong = MathUtil.doubleUtils(orderBomDetail.getStandardLong());
+		int reversedAngleCount = MathUtil.intUtils(orderBomDetail.getReversedAngleCount());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+
+		reversedAngleLong = MathUtil.scaleDouble(standardLong
+					* reversedAngleCount * count / 1000d, 2);
+		return reversedAngleLong + "";
+	}
+
+	@Override
+	public String waterSlotM(OrderBomDetail orderBomDetail) throws BusinessException{
+		// TODO Auto-generated method stub
+		double waterSlotM = 0;
+		String materialNo = orderBomDetail.getMaterielNo();
+		double standardLong = MathUtil.doubleUtils(orderBomDetail.getStandardLong());
+		int count = MathUtil.intUtils(orderBomDetail.getCount());
+		
+		if (materialNo.contains("X12")) {
+			waterSlotM = (standardLong*count)/1000d;
+			return waterSlotM+"";
+		}else {
+			return "";
+		}
+	}
+}
